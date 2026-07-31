@@ -1,0 +1,186 @@
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Stethoscope, User, Lock, Mail, Phone, ShieldCheck, ArrowRight } from 'lucide-react';
+import { api } from '../../api/client';
+import { showToast } from '../../components/ui/Toast';
+
+export const Register: React.FC = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    qualification: '',
+    specialization: '',
+    bmdcNumber: '',
+    workplace: '',
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.bmdcNumber || !formData.qualification) {
+      showToast.error('Please fill all mandatory doctor registration fields.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await api<{ success: boolean; message: string }>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(formData),
+      });
+
+      if (res.success) {
+        showToast.success('Doctor account registered successfully! Please sign in.');
+        navigate('/login');
+      }
+    } catch (err: any) {
+      showToast.error(err.message || 'Registration failed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div className="sm:mx-auto sm:w-full sm:max-w-lg relative z-10 text-center space-y-2">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-medical-600 to-medical-400 flex items-center justify-center text-white mx-auto shadow-lg shadow-medical-600/30">
+          <Stethoscope className="w-8 h-8" />
+        </div>
+        <h2 className="text-3xl font-black text-white tracking-tight">Doctor Registration</h2>
+        <p className="text-xs text-slate-400">
+          Create your verified doctor profile with BMDC credentials
+        </p>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg relative z-10">
+        <div className="bg-slate-800/90 backdrop-blur-xl py-8 px-6 shadow-2xl rounded-3xl border border-slate-700/60 sm:px-10 space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                  Doctor Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Dr. Full Name"
+                  className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-medical-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                  BMDC Registration Number *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.bmdcNumber}
+                  onChange={(e) => setFormData({ ...formData, bmdcNumber: e.target.value })}
+                  placeholder="e.g. A-12345"
+                  className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-medical-500 font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="doctor@example.com"
+                  className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-medical-500 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                  Phone Number *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="0171..."
+                  className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-medical-500 font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                  Qualifications *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.qualification}
+                  onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+                  placeholder="e.g. MBBS, FCPS"
+                  className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-medical-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                  Specialization *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.specialization}
+                  onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+                  placeholder="e.g. Medicine Specialist"
+                  className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-medical-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                Password *
+              </label>
+              <input
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="At least 6 characters"
+                className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-medical-500 font-mono"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-2.5 bg-medical-500 hover:bg-medical-600 text-white font-bold rounded-xl text-sm shadow-md shadow-medical-500/25 transition-all flex items-center justify-center gap-2"
+            >
+              {isLoading ? <span>Registering...</span> : <span>Complete Doctor Registration</span>}
+            </button>
+          </form>
+
+          <div className="text-center pt-2">
+            <p className="text-xs text-slate-400">
+              Already registered?{' '}
+              <Link to="/login" className="text-medical-400 hover:text-medical-300 font-bold">
+                Sign In
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
