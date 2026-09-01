@@ -3,6 +3,14 @@ import { connectDatabase } from './config/db';
 import { ENV } from './config/env';
 import { seedDatabase } from './seeds/seed';
 
+process.on('unhandledRejection', (reason) => {
+  console.error('[Unhandled Rejection]', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('[Uncaught Exception]', error);
+});
+
 const startServer = async () => {
   try {
     await connectDatabase();
@@ -11,9 +19,10 @@ const startServer = async () => {
     await seedDatabase(false);
 
     const app = createApp();
-    app.listen(ENV.PORT, () => {
-      console.log(`[DocRx Backend] Server running in ${ENV.NODE_ENV} mode on port ${ENV.PORT}`);
-      console.log(`[DocRx Backend] Health check: http://localhost:${ENV.PORT}/api/health`);
+    const port = Number(ENV.PORT) || 5000;
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`[DocRx Backend] Server running in ${ENV.NODE_ENV} mode on port ${port}`);
+      console.log(`[DocRx Backend] Health check: http://localhost:${port}/api/health`);
     });
   } catch (error) {
     console.error('[DocRx Backend] Server startup failed:', error);
