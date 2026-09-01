@@ -846,7 +846,7 @@ export const NewPrescription: React.FC = () => {
         {/* ========================================================= */}
         {/* RIGHT COLUMN: Real-Time Interactive Live Preview Pad     */}
         {/* ========================================================= */}
-        <div className={`xl:col-span-6 sticky top-24 print:static print:w-full print:p-0 print:m-0 ${mobileTab === 'preview' ? 'block' : 'hidden xl:block'}`}>
+        <div className={`prescription-print-parent xl:col-span-6 sticky top-24 print:!block print:!static print:!w-full print:!p-0 print:!m-0 ${mobileTab === 'preview' ? 'block' : 'hidden xl:block'}`}>
           <div className="no-print flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Live Prescription Pad Preview ({paperSize})

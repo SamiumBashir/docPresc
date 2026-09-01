@@ -129,7 +129,7 @@ export const PublicPrescriptionView: React.FC = () => {
         </div>
 
         {/* Prescription Pad */}
-        <div className="flex justify-center">
+        <div className="prescription-print-parent flex justify-center print:!block print:!w-full print:p-0 print:m-0">
           <LivePrescriptionPad
             doctor={prescription.doctorSnapshot as any}
             chamber={chamber}

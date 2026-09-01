@@ -199,7 +199,7 @@ export const PrescriptionView: React.FC = () => {
       </div>
 
       {/* Render Prescription Pad */}
-      <div className="bg-slate-100/60 p-4 sm:p-8 rounded-3xl border border-slate-200 flex justify-center">
+      <div className="prescription-print-parent bg-slate-100/60 p-4 sm:p-8 rounded-3xl border border-slate-200 flex justify-center print:bg-transparent print:border-none print:p-0 print:m-0 print:!block print:!w-full">
         <LivePrescriptionPad
           doctor={doctor}
           chamber={chamber}
