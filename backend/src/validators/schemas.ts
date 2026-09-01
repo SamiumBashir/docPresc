@@ -3,10 +3,10 @@ import { z } from 'zod';
 export const RegisterDoctorSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
-  phone: z.string().min(10, 'Phone must be at least 10 characters'),
+  phone: z.string().min(5, 'Phone must be at least 5 digits').optional().or(z.literal('')),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   qualification: z.string().min(2, 'Qualification is required (e.g. MBBS)'),
-  specialization: z.string().min(2, 'Specialization is required'),
+  specialization: z.string().optional().default('General Physician'),
   bmdcNumber: z.string().min(3, 'BMDC Registration Number is required'),
   workplace: z.string().optional(),
 });
@@ -14,11 +14,20 @@ export const RegisterDoctorSchema = z.object({
 export const LoginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
+  rememberMe: z.boolean().optional(),
+});
+
+export const ForgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+export const ResetPasswordSchema = z.object({
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 export const PatientSchema = z.object({
   name: z.string().min(2, 'Patient name is required'),
-  phone: z.string().min(6, 'Valid phone number is required'),
+  phone: z.string().optional().default(''),
   email: z.string().email().optional().or(z.literal('')),
   age: z.coerce.number().min(0).max(130, 'Age must be between 0 and 130'),
   gender: z.enum(['Male', 'Female', 'Other']),

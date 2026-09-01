@@ -26,7 +26,7 @@ const PatientSchema: Schema = new Schema(
     patientId: { type: String, required: true, index: true },
     doctorId: { type: Schema.Types.ObjectId, ref: 'Doctor', required: true, index: true },
     name: { type: String, required: true, trim: true, index: true },
-    phone: { type: String, required: true, trim: true, index: true },
+    phone: { type: String, trim: true, default: '' },
     email: { type: String, lowercase: true, trim: true },
     dob: { type: Date },
     age: { type: Number, required: true, min: 0, max: 130 },

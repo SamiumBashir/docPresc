@@ -16,12 +16,14 @@ A modern, fast, and production-ready **Digital Prescription Management Web Appli
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack & Structure
 
-- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, Lucide Icons
-- **Backend**: Node.js, Express.js, TypeScript, Zod Validation, JWT Auth
-- **Database**: MongoDB & Mongoose *(with auto in-memory database fallback for zero-config run)*
-- **Export**: jsPDF, html2canvas, QR Code
+```
+Prescription/
+├── backend/    # Node.js, Express, TypeScript, MongoDB API (Port 5000)
+├── frontend/   # Doctor & Chamber Prescription Web App (Port 5173)
+└── admin/      # Enterprise Admin Management Dashboard (Port 5174)
+```
 
 ---
 
@@ -33,17 +35,18 @@ A modern, fast, and production-ready **Digital Prescription Management Web Appli
 git clone https://github.com/SamiumBashir/docPresc.git
 cd docPresc
 
-# Install all dependencies (Root, Backend & Frontend)
+# Install all dependencies (Backend, Frontend & Admin)
 npm run install:all
 ```
 
-### 2. Run Development Server
+### 2. Run Development Servers
 ```bash
-# Starts both Backend (port 5000) and Frontend (port 5173) concurrently:
+# Starts Backend (5000), Frontend (5173), and Admin (5174) concurrently:
 npm run dev
 ```
 
-- **Frontend**: [http://localhost:5173](http://localhost:5173)
+- **Doctor Portal (Frontend)**: [http://localhost:5173](http://localhost:5173)
+- **Admin Management Portal**: [http://localhost:5174](http://localhost:5174)
 - **Backend API**: [http://localhost:5000/api](http://localhost:5000/api)
 
 ---

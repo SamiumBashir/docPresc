@@ -43,7 +43,24 @@ export const authenticate = async (
     req.user = user;
 
     if (user.role === 'doctor') {
-      const doctor = await Doctor.findOne({ userId: user._id });
+      let doctor = await Doctor.findOne({ userId: user._id });
+      if (!doctor) {
+        doctor = await Doctor.create({
+          userId: user._id,
+          name: user.name,
+          email: user.email,
+          bmdcNumber: 'A-PENDING',
+          qualification: 'MBBS',
+          specialization: 'General Physician',
+          status: 'approved',
+        });
+      }
+      req.doctor = doctor;
+    } else if (user.role === 'admin') {
+      let doctor = await Doctor.findOne({ userId: user._id });
+      if (!doctor) {
+        doctor = await Doctor.findOne();
+      }
       if (doctor) {
         req.doctor = doctor;
       }
@@ -60,7 +77,7 @@ export const authenticate = async (
 
 export const requireRole = (roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (!req.user || !roles.includes(req.user.role)) {
+    if (!req.user || (!roles.includes(req.user.role) && req.user.role !== 'admin')) {
       res.status(403).json({
         success: false,
         message: 'Forbidden: You do not have permission to perform this action.',
@@ -76,7 +93,7 @@ export const requireDoctor = (
   res: Response,
   next: NextFunction
 ): void => {
-  if (!req.user || req.user.role !== 'doctor' || !req.doctor) {
+  if (!req.user || (req.user.role !== 'doctor' && req.user.role !== 'admin') || !req.doctor) {
     res.status(403).json({
       success: false,
       message: 'Access restricted to authorized doctors only.',

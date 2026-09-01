@@ -30,58 +30,131 @@
 /* Medical Prescription Pad Watermark styling */
 .rx-pad-watermark {
   position: absolute;
-  top: 50%;
+  top: 52%;
   left: 50%;
-  transform: translate(-50%, -50%) rotate(-30deg);
-  font-size: 140px;
-  font-weight: 900;
-  color: rgba(0, 139, 163, 0.035);
+  transform: translate(-50%, -50%) rotate(-25deg);
+  width: 85%;
+  max-width: 600px;
+  text-align: center;
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(15, 23, 42, 0.04);
   pointer-events: none;
   user-select: none;
-  font-family: 'Inter', serif;
+  font-family: 'Inter', 'Hind Siliguri', sans-serif;
   z-index: 0;
+  word-break: break-word;
 }
 
-/* Custom Print Rules - Fits exact A4 and A5 paper without clipping or clutter */
+/* Custom Print Rules - Fits exact A4 and Letter paper without clipping or clutter */
 @media print {
   @page {
-    margin: 10mm;
+    margin: 5mm;
     size: auto;
   }
 
-  body {
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .rx-pad-watermark {
+    color: rgba(0, 0, 0, 0.045) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body, html {
     background: #ffffff !important;
     color: #000000 !important;
     padding: 0 !important;
     margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
-  /* Hide all app chrome */
+  /* Hide all app chrome, sidebars, headers, action bars, inputs, buttons, modals, and toasts */
   nav,
   aside,
   header,
+  footer,
   .no-print,
   button,
   .toast-container {
     display: none !important;
   }
 
-  .print-only {
+  /* Reset layout containers so only the pad prints */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
     display: block !important;
   }
 
-  .prescription-print-container {
+  /* Make sure prescription pad takes the full printable area with clean borders and padding */
+  .prescription-print-container,
+  #prescription-pad {
     box-shadow: none !important;
     border: none !important;
     width: 100% !important;
     max-width: 100% !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
+    padding: 6mm 8mm !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    position: static !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    min-height: calc(100vh - 10mm) !important;
+  }
+
+  /* Preserve grid systems inside the pad */
+  .prescription-print-container .grid {
+    display: grid !important;
+  }
+
+  .prescription-print-container .grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .prescription-print-container .grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .prescription-print-container .grid-cols-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  }
+
+  .prescription-print-container .col-span-4 {
+    grid-column: span 4 / span 4 !important;
+  }
+
+  .prescription-print-container .col-span-8 {
+    grid-column: span 8 / span 8 !important;
+  }
+
+  /* Remove scroll wrapper container artifacts */
+  .rx-pad-scroll-wrapper {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
     padding: 0 !important;
+    margin: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
   }
 
   /* Prevent page breaks inside table rows or clinical blocks */
   .rx-avoid-break {
-    page-break-inside: avoid;
-    break-inside: avoid;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }

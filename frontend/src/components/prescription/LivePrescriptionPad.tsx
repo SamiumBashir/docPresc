@@ -17,7 +17,7 @@ interface LivePrescriptionPadProps {
   followUp?: { duration: string; date?: string; notes?: string };
   prescriptionId?: string;
   shareToken?: string;
-  paperSize?: 'A4' | 'A5';
+  paperSize?: 'A4' | 'Letter' | 'A5';
   createdAt?: string | Date;
 }
 
@@ -47,94 +47,118 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
 
   const publicUrl = `${window.location.origin}/prescription/share/${shareToken}`;
 
+  const chamberName =
+    chamber?.name ||
+    (typeof doctor?.defaultChamberId === 'object'
+      ? (doctor.defaultChamberId as any).name
+      : (doctor as any)?.chamberName) ||
+    '';
+
+  const formatDoctorName = (name?: string) => {
+    if (!name) return 'Dr. Moshfiqur Rahman';
+    const trimmed = name.trim();
+    if (/^dr\.?/i.test(trimmed)) {
+      return trimmed.replace(/^dr\.?\s*/i, 'Dr. ');
+    }
+    return `Dr. ${trimmed}`;
+  };
+
+  const doctorDisplayName = formatDoctorName(doctor?.name);
+
   return (
     <div
       id="prescription-pad"
-      className={`prescription-print-container relative bg-white text-slate-900 shadow-xl border border-slate-200/80 rounded-xl overflow-hidden mx-auto transition-all duration-300 ${
-        paperSize === 'A5'
+      className={`prescription-print-container relative bg-white text-slate-900 shadow-xl border border-slate-200/80 rounded-xl overflow-hidden mx-auto transition-all duration-300 flex flex-col justify-between ${
+        paperSize === 'Letter'
+          ? 'w-full max-w-[816px] min-h-[1056px] p-8 text-xs'
+          : paperSize === 'A5'
           ? 'w-full max-w-[560px] min-h-[792px] p-6 text-[11px]'
           : 'w-full max-w-[794px] min-h-[1123px] p-8 text-xs'
       }`}
       style={{ fontFamily: "'Inter', 'Hind Siliguri', sans-serif" }}
     >
-      {/* Background Watermark */}
+      {/* Background Chamber Name Watermark */}
       {doctor?.settings?.showWatermark !== false && (
-        <div className="rx-pad-watermark">Rx</div>
+        <div className="rx-pad-watermark">
+          {chamberName || 'Rx'}
+        </div>
       )}
 
-      {/* HEADER: Doctor & Chamber Branding */}
-      <div className="relative z-10 border-b-2 border-slate-800 pb-4 mb-4">
-        <div className="flex items-start justify-between gap-4">
-          {/* Doctor Info */}
-          <div className="space-y-1">
-            <h2 className="text-xl font-black text-medical-800 tracking-tight leading-tight">
-              {doctor?.name || 'Dr. Moshfiqur Rahman'}
-            </h2>
-            <p className="font-semibold text-slate-700 leading-snug">
-              {doctor?.qualification || 'MBBS (DMC), FCPS (Medicine), CCD (BIRDEM)'}
-            </p>
-            <p className="text-medical-600 font-medium leading-snug">
-              {doctor?.specialization || 'Consultant Physician & Diabetologist'}
-            </p>
-            {doctor?.workplace && (
-              <p className="text-slate-500 text-[11px]">{doctor.workplace}</p>
-            )}
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[10px] tracking-wide mt-1">
-              <span>BMDC REG. NO:</span>
-              <span className="text-medical-700">{doctor?.bmdcNumber || 'A-54321'}</span>
+      {/* TOP SECTION: Header + Patient Bar */}
+      <div>
+        {/* HEADER: Doctor & Chamber Branding */}
+        <div className="relative z-10 border-b-2 border-slate-800 pb-4 mb-4">
+          <div className="flex items-start justify-between gap-4">
+            {/* Doctor Info */}
+            <div className="space-y-1">
+              <h2 className="text-xl font-black text-medical-800 tracking-tight leading-tight">
+                {doctorDisplayName}
+              </h2>
+              <p className="font-semibold text-slate-700 leading-snug">
+                {doctor?.qualification || 'MBBS (DMC), FCPS (Medicine), CCD (BIRDEM)'}
+              </p>
+              <p className="text-medical-600 font-medium leading-snug">
+                {doctor?.specialization || 'Consultant Physician & Diabetologist'}
+              </p>
+              {doctor?.workplace && (
+                <p className="text-slate-500 text-[11px]">{doctor.workplace}</p>
+              )}
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[10px] tracking-wide mt-1">
+                <span>BMDC REG. NO:</span>
+                <span className="text-medical-700">{doctor?.bmdcNumber || 'A-54321'}</span>
+              </div>
+            </div>
+
+            {/* Chamber Info */}
+            <div className="text-right space-y-1 max-w-[280px]">
+              <h3 className="font-bold text-slate-900 text-sm">
+                {chamberName || 'Consultation Chamber'}
+              </h3>
+              <p className="text-slate-600 text-[11px] leading-tight">
+                {chamber?.address ||
+                  (typeof doctor?.defaultChamberId === 'object'
+                    ? (doctor.defaultChamberId as any).address
+                    : (doctor as any)?.chamberAddress) ||
+                  doctor?.workplace ||
+                  'Medical Plaza, Dhanmondi, Dhaka'}
+              </p>
+              {(chamber?.phone || doctor?.phone) && (
+                <p className="text-slate-500 text-[11px] font-mono">
+                  Phone: {chamber?.phone || doctor?.phone}
+                </p>
+              )}
+              {(chamber?.visitingHours || (typeof doctor?.defaultChamberId === 'object' && (doctor.defaultChamberId as any).visitingHours)) && (
+                <p className="text-medical-700 text-[11px] font-medium">
+                  Time: {chamber?.visitingHours || (doctor?.defaultChamberId as any)?.visitingHours}
+                </p>
+              )}
             </div>
           </div>
+        </div>
 
-          {/* Chamber Info */}
-          <div className="text-right space-y-1 max-w-[280px]">
-            <h3 className="font-bold text-slate-900 text-sm">
-              {chamber?.name || doctor?.defaultChamberId
-                ? (typeof doctor?.defaultChamberId === 'object' ? (doctor.defaultChamberId as any).name : chamber?.name) || 'Consultation Chamber'
-                : 'Consultation Chamber'}
-            </h3>
-            <p className="text-slate-600 text-[11px] leading-tight">
-              {chamber?.address || 'Medical Plaza, Dhanmondi, Dhaka'}
-            </p>
-            <p className="text-slate-500 text-[11px] font-mono">
-              Phone: {chamber?.phone || doctor?.phone || '+880 1712-345678'}
-            </p>
-            {chamber?.visitingHours && (
-              <p className="text-medical-700 text-[11px] font-medium">
-                Time: {chamber.visitingHours}
-              </p>
-            )}
+        {/* PATIENT BAR (Clean 3 Columns: Name, Age/Gender, Date) */}
+        <div className="relative z-10 bg-slate-50/90 border border-slate-200/80 rounded-lg p-2.5 mb-4 grid grid-cols-3 gap-3 text-slate-800">
+          <div>
+            <span className="text-slate-400 font-semibold block text-[10px] uppercase">Patient Name</span>
+            <span className="font-bold truncate block">{patient?.name || '____________________'}</span>
           </div>
-        </div>
-      </div>
-
-      {/* PATIENT BAR */}
-      <div className="relative z-10 bg-slate-50/90 border border-slate-200/80 rounded-lg p-2.5 mb-4 grid grid-cols-2 sm:grid-cols-4 gap-2 text-slate-800">
-        <div>
-          <span className="text-slate-400 font-semibold block text-[10px] uppercase">Patient Name</span>
-          <span className="font-bold truncate block">{patient?.name || '____________________'}</span>
-        </div>
-        <div>
-          <span className="text-slate-400 font-semibold block text-[10px] uppercase">Age / Gender</span>
-          <span className="font-medium">
-            {patient ? `${patient.age} yrs • ${patient.gender}` : '__ yrs • ___'}
-          </span>
-        </div>
-        <div>
-          <span className="text-slate-400 font-semibold block text-[10px] uppercase">Patient ID / Phone</span>
-          <span className="font-mono font-medium truncate block">
-            {patient ? `${patient.patientId} • ${patient.phone}` : 'PAT-________'}
-          </span>
-        </div>
-        <div className="text-right sm:text-right">
-          <span className="text-slate-400 font-semibold block text-[10px] uppercase">Date / Rx ID</span>
-          <span className="font-mono font-bold text-medical-800">
-            {formattedDate} • {prescriptionId}
-          </span>
+          <div className="text-center">
+            <span className="text-slate-400 font-semibold block text-[10px] uppercase">Age / Gender</span>
+            <span className="font-medium">
+              {patient ? `${patient.age} yrs • ${patient.gender}` : '__ yrs • ___'}
+            </span>
+          </div>
+          <div className="text-right">
+            <span className="text-slate-400 font-semibold block text-[10px] uppercase">Date</span>
+            <span className="font-mono font-bold text-medical-800">
+              {formattedDate}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* MAIN TWO-COLUMN BODY */}
-      <div className="relative z-10 grid grid-cols-12 gap-6 min-h-[580px]">
+      <div className="relative z-10 grid grid-cols-12 gap-6 flex-1 min-h-[480px]">
         {/* LEFT COLUMN: Clinical Notes, Vitals, Investigations (Width: 4/12) */}
         <div className="col-span-4 border-r border-slate-200 pr-4 space-y-4">
           {/* Vitals */}
@@ -372,7 +396,6 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
             )}
             <div className="text-[10px] text-slate-500 space-y-0.5 leading-tight">
               <p className="font-semibold text-slate-700">Digital Prescription</p>
-              <p className="font-mono">ID: {prescriptionId}</p>
               <p>Scan to verify original record</p>
             </div>
           </div>
@@ -386,7 +409,7 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
                 <div className="w-36 border-b border-dashed border-slate-400"></div>
               )}
             </div>
-            <p className="font-bold text-slate-900 text-xs">{doctor?.name}</p>
+            <p className="font-bold text-slate-900 text-xs">{doctorDisplayName}</p>
             <p className="text-[10px] text-slate-500">{doctor?.qualification}</p>
             <p className="text-[10px] text-medical-700 font-semibold">BMDC: {doctor?.bmdcNumber}</p>
           </div>

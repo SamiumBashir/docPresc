@@ -8,7 +8,7 @@ export interface IUser {
 }
 
 export interface IDoctorSettings {
-  paperSize: 'A4' | 'A5';
+  paperSize: 'A4' | 'Letter' | 'A5';
   defaultLanguage: 'en' | 'bn';
   defaultFollowUp: string;
   headerVisibility: boolean;

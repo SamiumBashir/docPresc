@@ -29,7 +29,12 @@ export const connectDatabase = async (): Promise<string> => {
     } catch {
       // Local server not running, start embedded MongoMemoryServer
       console.log('[Database] Starting in-memory MongoDB server for zero-config operation...');
-      mongoMemoryServer = await MongoMemoryServer.create();
+      mongoMemoryServer = await MongoMemoryServer.create({
+        instance: {
+          ip: '127.0.0.1',
+          dbName: 'doctor_prescription',
+        },
+      });
       uri = mongoMemoryServer.getUri();
       await mongoose.connect(uri);
       console.log(`[Database] Connected to in-memory MongoDB instance at ${uri}`);

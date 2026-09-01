@@ -8,7 +8,7 @@ interface AuthContextType {
   activeChamber: IChamber | null;
   chambers: IChamber[];
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   setActiveChamber: (chamber: IChamber | null) => void;
   refreshProfile: () => Promise<void>;
@@ -59,13 +59,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshProfile();
   }, [refreshProfile]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe?: boolean) => {
     const res = await api<{
       success: boolean;
       data: { user: IUser; doctor: IDoctor | null; token: string };
     }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, rememberMe }),
     });
 
     if (res.success && res.data) {

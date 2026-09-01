@@ -7,6 +7,8 @@ import { AppLayout } from './components/layout/AppLayout';
 // Auth Pages
 import { Login } from './pages/Auth/Login';
 import { Register } from './pages/Auth/Register';
+import { ForgotPassword } from './pages/Auth/ForgotPassword';
+import { ResetPassword } from './pages/Auth/ResetPassword';
 import { PublicPrescriptionView } from './pages/Public/PublicPrescriptionView';
 
 // Doctor Pages
@@ -64,6 +66,8 @@ export const App: React.FC = () => {
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/prescription/share/:token" element={<PublicPrescriptionView />} />
 
             {/* Authenticated Doctor & Staff Routes */}

@@ -5,8 +5,9 @@ import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../components/ui/Toast';
 
 export const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('docrx_saved_email') || '');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('docrx_remember_me') !== 'false');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -20,23 +21,21 @@ export const Login: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await login(email, password);
+      if (rememberMe) {
+        localStorage.setItem('docrx_saved_email', email);
+        localStorage.setItem('docrx_remember_me', 'true');
+      } else {
+        localStorage.removeItem('docrx_saved_email');
+        localStorage.setItem('docrx_remember_me', 'false');
+      }
+
+      await login(email, password, rememberMe);
       showToast.success('Welcome back!');
       navigate('/dashboard');
     } catch (err: any) {
       showToast.error(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleFillDemo = (demoRole: 'doctor' | 'admin') => {
-    if (demoRole === 'doctor') {
-      setEmail('doctor@prescription.com');
-      setPassword('Doctor123!');
-    } else {
-      setEmail('admin@prescription.com');
-      setPassword('Admin123!');
     }
   };
 
@@ -93,10 +92,30 @@ export const Login: React.FC = () => {
               </div>
             </div>
 
+            {/* Remember Me & Forgot Password */}
+            <div className="flex items-center justify-between text-xs pt-1">
+              <label className="flex items-center gap-2 cursor-pointer select-none text-slate-300 hover:text-white transition-colors">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-medical-500 focus:ring-medical-500/30 focus:ring-offset-0 cursor-pointer accent-medical-500"
+                />
+                <span>Remember me (মনে রাখুন)</span>
+              </label>
+
+              <Link
+                to="/forgot-password"
+                className="text-medical-400 hover:text-medical-300 font-semibold transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 bg-medical-500 hover:bg-medical-600 text-white font-bold rounded-xl text-sm shadow-md shadow-medical-500/25 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
+              className="w-full py-2.5 bg-medical-500 hover:bg-medical-600 text-white font-bold rounded-xl text-sm shadow-md shadow-medical-500/25 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] mt-2"
             >
               {isLoading ? (
                 <span>Signing in...</span>
@@ -109,35 +128,7 @@ export const Login: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick 1-Click Demo Logins */}
-          <div className="pt-4 border-t border-slate-700/60 space-y-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block text-center">
-              Quick 1-Click Demo Accounts
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleFillDemo('doctor')}
-                className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-medical-950/60 border border-slate-700/80 hover:border-medical-600/40 text-left transition-all group"
-              >
-                <p className="text-xs font-bold text-white group-hover:text-medical-400">
-                  Doctor Demo
-                </p>
-                <p className="text-[10px] text-slate-400 truncate">Dr. Moshfiqur Rahman</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleFillDemo('admin')}
-                className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-emerald-950/60 border border-slate-700/80 hover:border-emerald-600/40 text-left transition-all group"
-              >
-                <p className="text-xs font-bold text-white group-hover:text-emerald-400">Admin Demo</p>
-                <p className="text-[10px] text-slate-400 truncate">System Manager</p>
-              </button>
-            </div>
-          </div>
-
-          <div className="text-center pt-2">
+          <div className="text-center pt-4 border-t border-slate-700/60">
             <p className="text-xs text-slate-400">
               New medical practitioner?{' '}
               <Link to="/register" className="text-medical-400 hover:text-medical-300 font-bold">

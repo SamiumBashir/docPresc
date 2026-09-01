@@ -24,16 +24,21 @@ export const createChamber = async (req: AuthRequest, res: Response): Promise<vo
 
   const validated = ChamberSchema.parse(req.body);
 
-  if (validated.isDefault) {
+  const activeChambersCount = await Chamber.countDocuments({ doctorId, status: 'active' });
+  const isFirstChamber = activeChambersCount === 0;
+  const shouldBeDefault = validated.isDefault || isFirstChamber;
+
+  if (shouldBeDefault) {
     await Chamber.updateMany({ doctorId }, { $set: { isDefault: false } });
   }
 
   const chamber = await Chamber.create({
     ...validated,
+    isDefault: shouldBeDefault,
     doctorId,
   });
 
-  if (validated.isDefault) {
+  if (shouldBeDefault) {
     await Doctor.findByIdAndUpdate(doctorId, { defaultChamberId: chamber._id });
   }
 

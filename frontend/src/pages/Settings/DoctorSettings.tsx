@@ -57,6 +57,7 @@ export const DoctorSettings: React.FC = () => {
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none"
               >
                 <option value="A4">A4 (Standard Full Pad - 210 x 297 mm)</option>
+                <option value="Letter">Letter (US / Standard Letter - 216 x 279 mm)</option>
                 <option value="A5">A5 (Compact Pad - 148 x 210 mm)</option>
               </select>
             </div>

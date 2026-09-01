@@ -22,7 +22,7 @@ export const PrescriptionView: React.FC = () => {
   const navigate = useNavigate();
   const [prescription, setPrescription] = useState<IPrescription | null>(null);
   const [doctor, setDoctor] = useState<IDoctor | null>(null);
-  const [paperSize, setPaperSize] = useState<'A4' | 'A5'>('A4');
+  const [paperSize, setPaperSize] = useState<'A4' | 'Letter'>('A4');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -67,15 +67,15 @@ export const PrescriptionView: React.FC = () => {
       });
 
       const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      const isA5 = paperSize === 'A5';
+      const isLetter = paperSize === 'Letter';
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: isA5 ? 'a5' : 'a4',
+        format: isLetter ? 'letter' : 'a4',
       });
 
-      const pdfWidth = isA5 ? 148 : 210;
-      const pdfHeight = isA5 ? 210 : 297;
+      const pdfWidth = isLetter ? 215.9 : 210;
+      const pdfHeight = isLetter ? 279.4 : 297;
 
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`${prescription.patientSnapshot.name}_${prescription.prescriptionId}.pdf`);
@@ -100,7 +100,15 @@ export const PrescriptionView: React.FC = () => {
     return <div className="p-12 text-center text-slate-500">Prescription not found.</div>;
   }
 
-  const chamber = prescription.chamberId as IChamber | null;
+  const chamber = (
+    prescription.chamberId && typeof prescription.chamberId === 'object'
+      ? prescription.chamberId
+      : {
+          name: prescription.doctorSnapshot?.chamberName,
+          address: prescription.doctorSnapshot?.chamberAddress,
+          phone: prescription.doctorSnapshot?.phone,
+        }
+  ) as IChamber | null;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
@@ -151,12 +159,12 @@ export const PrescriptionView: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => setPaperSize('A5')}
+              onClick={() => setPaperSize('Letter')}
               className={`px-2.5 py-1 rounded-md transition-all ${
-                paperSize === 'A5' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
+                paperSize === 'Letter' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
               }`}
             >
-              A5
+              Letter
             </button>
           </div>
 

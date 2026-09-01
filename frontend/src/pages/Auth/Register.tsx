@@ -20,8 +20,13 @@ export const Register: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.bmdcNumber || !formData.qualification) {
-      showToast.error('Please fill all mandatory doctor registration fields.');
+    if (!formData.name.trim() || !formData.email.trim() || !formData.bmdcNumber.trim() || !formData.qualification.trim() || !formData.password) {
+      showToast.error('Please fill in all required registration fields.');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      showToast.error('Password must be at least 6 characters long.');
       return;
     }
 
@@ -29,7 +34,16 @@ export const Register: React.FC = () => {
     try {
       const res = await api<{ success: boolean; message: string }>('/auth/register', {
         method: 'POST',
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase(),
+          phone: formData.phone.trim(),
+          password: formData.password,
+          qualification: formData.qualification.trim(),
+          specialization: formData.specialization.trim() || 'General Physician',
+          bmdcNumber: formData.bmdcNumber.trim(),
+          workplace: formData.workplace.trim() || undefined,
+        }),
       });
 
       if (res.success) {
@@ -37,7 +51,7 @@ export const Register: React.FC = () => {
         navigate('/login');
       }
     } catch (err: any) {
-      showToast.error(err.message || 'Registration failed.');
+      showToast.error(err.message || 'Registration failed. Please check your details.');
     } finally {
       setIsLoading(false);
     }
@@ -61,14 +75,14 @@ export const Register: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                  Doctor Full Name *
+                  Full Name *
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Dr. Full Name"
+                  placeholder="e.g. Jhon Doe"
                   className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-medical-500"
                 />
               </div>

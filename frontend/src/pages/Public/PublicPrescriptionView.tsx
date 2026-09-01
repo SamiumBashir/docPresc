@@ -10,7 +10,7 @@ import { IPrescription, IChamber } from '../../types';
 export const PublicPrescriptionView: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const [prescription, setPrescription] = useState<IPrescription | null>(null);
-  const [paperSize, setPaperSize] = useState<'A4' | 'A5'>('A4');
+  const [paperSize, setPaperSize] = useState<'A4' | 'Letter'>('A4');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -43,14 +43,14 @@ export const PublicPrescriptionView: React.FC = () => {
     try {
       const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
       const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      const isA5 = paperSize === 'A5';
+      const isLetter = paperSize === 'Letter';
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: isA5 ? 'a5' : 'a4',
+        format: isLetter ? 'letter' : 'a4',
       });
-      const pdfWidth = isA5 ? 148 : 210;
-      const pdfHeight = isA5 ? 210 : 297;
+      const pdfWidth = isLetter ? 215.9 : 210;
+      const pdfHeight = isLetter ? 279.4 : 297;
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`${prescription.patientSnapshot.name}_${prescription.prescriptionId}.pdf`);
     } catch {

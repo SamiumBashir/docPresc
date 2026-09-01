@@ -60,7 +60,7 @@ export const NewPrescription: React.FC = () => {
   const [showNewPatientModal, setShowNewPatientModal] = useState(false);
   const [newPatientForm, setNewPatientForm] = useState({
     name: '',
-    phone: '',
+    address: '',
     age: '',
     gender: 'Male' as 'Male' | 'Female' | 'Other',
     bloodGroup: 'Unknown',
@@ -87,7 +87,7 @@ export const NewPrescription: React.FC = () => {
   const [medInstruction, setMedInstruction] = useState('After meal (খাবার পর)');
 
   // UI / Action State
-  const [paperSize, setPaperSize] = useState<'A4' | 'A5'>('A4');
+  const [paperSize, setPaperSize] = useState<'A4' | 'Letter'>('A4');
   const [isSaving, setIsSaving] = useState(false);
   const [prescriptionId, setPrescriptionId] = useState('RX-NEW-DRAFT');
   const [shareToken, setShareToken] = useState('draft_token');
@@ -290,8 +290,8 @@ export const NewPrescription: React.FC = () => {
   // Quick Add Patient
   const handleCreateQuickPatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPatientForm.name || !newPatientForm.phone || !newPatientForm.age) {
-      showToast.error('Name, Phone, and Age are required.');
+    if (!newPatientForm.name || !newPatientForm.age) {
+      showToast.error('Name and Age are required.');
       return;
     }
 
@@ -299,8 +299,8 @@ export const NewPrescription: React.FC = () => {
       const res = await api<{ success: boolean; data: IPatient }>('/patients', {
         method: 'POST',
         body: JSON.stringify({
-          name: newPatientForm.name,
-          phone: newPatientForm.phone,
+          name: newPatientForm.name.trim(),
+          address: newPatientForm.address.trim() || undefined,
           age: Number(newPatientForm.age),
           gender: newPatientForm.gender,
           bloodGroup: newPatientForm.bloodGroup,
@@ -310,7 +310,7 @@ export const NewPrescription: React.FC = () => {
       if (res.success && res.data) {
         setSelectedPatient(res.data);
         setShowNewPatientModal(false);
-        setNewPatientForm({ name: '', phone: '', age: '', gender: 'Male', bloodGroup: 'Unknown' });
+        setNewPatientForm({ name: '', address: '', age: '', gender: 'Male', bloodGroup: 'Unknown' });
         showToast.success(`Patient ${res.data.name} created!`);
       }
     } catch (err: any) {
@@ -428,15 +428,15 @@ export const NewPrescription: React.FC = () => {
       });
 
       const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      const isA5 = paperSize === 'A5';
+      const isLetter = paperSize === 'Letter';
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: isA5 ? 'a5' : 'a4',
+        format: isLetter ? 'letter' : 'a4',
       });
 
-      const pdfWidth = isA5 ? 148 : 210;
-      const pdfHeight = isA5 ? 210 : 297;
+      const pdfWidth = isLetter ? 215.9 : 210;
+      const pdfHeight = isLetter ? 279.4 : 297;
 
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`${selectedPatient?.name || 'Patient'}_${prescriptionId}.pdf`);
@@ -447,10 +447,10 @@ export const NewPrescription: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-12">
+    <div className="space-y-3 max-w-7xl mx-auto pb-12 -mt-2 sm:-mt-4">
       {/* Autosave Recovery Banner */}
       {hasAutosaveDraft && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-center justify-between shadow-xs animate-in fade-in">
+        <div className="no-print bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-center justify-between shadow-xs animate-in fade-in">
           <div className="flex items-center gap-2.5">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
             <div>
@@ -478,7 +478,7 @@ export const NewPrescription: React.FC = () => {
       )}
 
       {/* Top Action Header Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 sticky top-16 z-20 backdrop-blur-md bg-white/95">
+      <div className="no-print bg-white px-4 py-3 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20 backdrop-blur-md bg-white/95">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-medical-50 border border-medical-200 flex items-center justify-center text-medical-700 font-bold">
             <FileText className="w-5 h-5" />
@@ -517,12 +517,12 @@ export const NewPrescription: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => setPaperSize('A5')}
+              onClick={() => setPaperSize('Letter')}
               className={`px-2.5 py-1 rounded-md transition-all ${
-                paperSize === 'A5' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
+                paperSize === 'Letter' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
               }`}
             >
-              A5
+              Letter
             </button>
           </div>
 
@@ -604,9 +604,9 @@ export const NewPrescription: React.FC = () => {
       {/* Main Two-Column Prescription Workspace */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* ========================================================= */}
-        {/* LEFT COLUMN: Input Form Controls (Width: 6/12 or 7/12)   */}
+        {/* LEFT COLUMN: Input Form Controls (Hidden on Print)        */}
         {/* ========================================================= */}
-        <div className="xl:col-span-6 space-y-4">
+        <div className="no-print xl:col-span-6 space-y-4">
           {/* 1. Patient Selector Card */}
           <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
@@ -808,15 +808,15 @@ export const NewPrescription: React.FC = () => {
         {/* ========================================================= */}
         {/* RIGHT COLUMN: Real-Time Interactive Live Preview Pad     */}
         {/* ========================================================= */}
-        <div className="xl:col-span-6 sticky top-24">
-          <div className="flex items-center justify-between mb-2">
+        <div className="xl:col-span-6 sticky top-24 print:static print:w-full print:p-0 print:m-0">
+          <div className="no-print flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Live Prescription Pad Preview ({paperSize})
             </span>
             <span className="text-[11px] text-slate-400">Updates instantly on every change</span>
           </div>
 
-          <div className="overflow-x-auto p-2 bg-slate-200/50 rounded-2xl border border-slate-200 shadow-inner max-h-[85vh] overflow-y-auto">
+          <div className="rx-pad-scroll-wrapper overflow-x-auto p-2 bg-slate-200/50 rounded-2xl border border-slate-200 shadow-inner max-h-[85vh] overflow-y-auto print:bg-transparent print:border-none print:shadow-none print:p-0 print:m-0 print:max-h-none print:overflow-visible">
             <LivePrescriptionPad
               doctor={doctor}
               chamber={activeChamber}
@@ -861,14 +861,13 @@ export const NewPrescription: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Phone Number *</label>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Address</label>
               <input
                 type="text"
-                required
-                value={newPatientForm.phone}
-                onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
-                placeholder="0171..."
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-1 focus:ring-medical-500 focus:outline-none font-mono"
+                value={newPatientForm.address}
+                onChange={(e) => setNewPatientForm({ ...newPatientForm, address: e.target.value })}
+                placeholder="e.g. Mirpur, Dhaka"
+                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-1 focus:ring-medical-500 focus:outline-none"
               />
             </div>
             <div>

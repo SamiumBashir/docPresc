@@ -112,8 +112,28 @@ export const ChamberList: React.FC = () => {
       </div>
 
       {/* Chambers Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {chambers.map((ch) => {
+      {chambers.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-medical-50 border border-medical-200 text-medical-600 flex items-center justify-center mx-auto">
+            <Building2 className="w-7 h-7" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-800">No Chambers Added Yet</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+              You haven't added any consultation chambers yet. Add your hospital or clinic chamber to appear on your prescription letterhead.
+            </p>
+          </div>
+          <button
+            onClick={handleOpenCreate}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-xl font-semibold text-xs transition-all shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Your First Chamber</span>
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {chambers.map((ch) => {
           const isActive = activeChamber?._id === ch._id;
           return (
             <div
@@ -196,6 +216,7 @@ export const ChamberList: React.FC = () => {
           );
         })}
       </div>
+      )}
 
       {/* Add / Edit Chamber Modal */}
       <Modal
