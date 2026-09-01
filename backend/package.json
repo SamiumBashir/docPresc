@@ -8,10 +8,16 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "seed": "tsx src/seeds/seed.ts",
-    "test": "tsx src/tests/run-tests.ts"
+    "test": "tsx src/tests/run-tests.ts",
+    "scrape:medex": "tsx scripts/medex/scrape-medex.ts",
+    "clean:medex": "tsx scripts/medex/clean-medex.ts",
+    "import:medex": "tsx scripts/medex/import-medex.ts",
+    "test:medex": "tsx scripts/medex/scrape-medex.ts --sample",
+    "pipeline:medex": "tsx scripts/medex/scrape-medex.ts && tsx scripts/medex/clean-medex.ts && tsx scripts/medex/import-medex.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "cheerio": "^1.2.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "csv-parser": "^3.0.0",

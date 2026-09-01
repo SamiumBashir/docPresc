@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Pill, Search, Star, Filter, Plus, ChevronLeft, ChevronRight, Leaf } from 'lucide-react';
+import { Pill, Search, Star, Filter, Plus, ChevronLeft, ChevronRight, Leaf, X, AlertCircle } from 'lucide-react';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
 import { IMedicine } from '../../types';
+import { MANUFACTURER_NAMES } from '../../data/manufacturers';
+import { DOSAGE_FORM_NAMES } from '../../data/dosageForms';
 
 export const MedicineCatalog: React.FC = () => {
   const [medicines, setMedicines] = useState<IMedicine[]>([]);
@@ -21,6 +23,66 @@ export const MedicineCatalog: React.FC = () => {
 
   // Favorite medicines state
   const [favorites, setFavorites] = useState<string[]>([]);
+
+  // New Medicine Entry Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [brandName, setBrandName] = useState('');
+  const [strength, setStrength] = useState('');
+  const [genericName, setGenericName] = useState('');
+  const [medicineType, setMedicineType] = useState<'Allopathic' | 'Unani' | 'Ayurvedic' | 'Herbal'>('Allopathic');
+  const [dosageForm, setDosageForm] = useState('Tablet');
+  const [manufacturer, setManufacturer] = useState('');
+
+  const handleOpenAddModal = () => {
+    setBrandName('');
+    setStrength('');
+    setGenericName('');
+    setMedicineType('Allopathic');
+    setDosageForm('Tablet');
+    setManufacturer('');
+    setFormError('');
+    setIsModalOpen(true);
+  };
+
+  const handleCreateMedicine = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!brandName.trim() || !genericName.trim() || !strength.trim() || !manufacturer.trim()) {
+      setFormError('Please fill out Brand Name, Generic Name, Strength, and Manufacturer');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFormError('');
+    try {
+      const res = await api<{ success: boolean; message: string; data: IMedicine }>('/medicines', {
+        method: 'POST',
+        body: JSON.stringify({
+          brandName: brandName.trim(),
+          genericName: genericName.trim(),
+          strength: strength.trim(),
+          medicineType,
+          type: medicineType,
+          dosageForm: dosageForm.trim() || 'Tablet',
+          form: dosageForm.trim() || 'Tablet',
+          manufacturer: manufacturer.trim(),
+          manufacture: manufacturer.trim(),
+          category: 'General',
+        }),
+      });
+
+      if (res.success) {
+        showToast.success('New medicine added successfully! 💊');
+        setIsModalOpen(false);
+        fetchMedicines(1);
+      }
+    } catch (err: any) {
+      setFormError(err.message || 'Failed to add medicine entry.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const fetchMedicines = async (pageNum = 1) => {
     setIsLoading(true);
@@ -111,6 +173,15 @@ export const MedicineCatalog: React.FC = () => {
             Comprehensive directory of {totalCount} verified Bangladeshi medicines across Allopathic, Unani, and Ayurvedic medical systems
           </p>
         </div>
+
+        <button
+          type="button"
+          onClick={handleOpenAddModal}
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-medical-600 hover:bg-medical-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow transition-all shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add New Medicine Entry</span>
+        </button>
       </div>
 
       {/* System Tabs */}
@@ -354,6 +425,166 @@ export const MedicineCatalog: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* New Medicine Entry Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-medical-50 text-medical-600 flex items-center justify-center">
+                  <Pill className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Add New Medicine Entry</h3>
+                  <p className="text-[11px] text-slate-500">Register new brand or formula into prescription master database</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateMedicine} className="p-5 space-y-4">
+              {formError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                  <span>{formError}</span>
+                </div>
+              )}
+
+              {/* Brands & Strength */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                    Brand Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={brandName}
+                    onChange={(e) => setBrandName(e.target.value)}
+                    placeholder="e.g. Napa Extra / Monas"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                    Strength *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={strength}
+                    onChange={(e) => setStrength(e.target.value)}
+                    placeholder="e.g. 500mg, 10mg, 120ml"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Generic Name */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  Generic Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={genericName}
+                  onChange={(e) => setGenericName(e.target.value)}
+                  placeholder="e.g. Paracetamol + Caffeine / Montelukast Sodium"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
+                />
+              </div>
+
+              {/* Type & Form */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                    Type *
+                  </label>
+                  <select
+                    value={medicineType}
+                    onChange={(e: any) => setMedicineType(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-medium focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
+                  >
+                    <option value="Allopathic">Allopathic (অ্যালোপ্যাথিক)</option>
+                    <option value="Unani">Unani (ইউনানি)</option>
+                    <option value="Ayurvedic">Ayurvedic (আয়ুর্বেদিক)</option>
+                    <option value="Herbal">Herbal (হারবাল)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                    Form *
+                  </label>
+                  <input
+                    type="text"
+                    list="doctorDosageFormList"
+                    value={dosageForm}
+                    onChange={(e) => setDosageForm(e.target.value)}
+                    placeholder="Tablet, Capsule, Syrup..."
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
+                  />
+                  <datalist id="doctorDosageFormList">
+                    {DOSAGE_FORM_NAMES.map((form) => (
+                      <option key={form} value={form} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+
+              {/* Manufacture / Company */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  Manufacture (Company) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  list="doctorManufacturerList"
+                  value={manufacturer}
+                  onChange={(e) => setManufacturer(e.target.value)}
+                  placeholder="e.g. Beximco Pharma, Square, Incepta, Hamdard..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
+                />
+                <datalist id="doctorManufacturerList">
+                  {MANUFACTURER_NAMES.map((name) => (
+                    <option key={name} value={name} />
+                  ))}
+                </datalist>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-xs font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 rounded-xl bg-medical-600 hover:bg-medical-700 text-white text-xs font-bold shadow-xs hover:shadow transition-all disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {isSubmitting ? (
+                    'Saving...'
+                  ) : (
+                    <>
+                      <Plus className="w-3.5 h-3.5" /> Save Medicine Entry
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

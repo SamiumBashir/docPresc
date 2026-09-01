@@ -31,3 +31,8 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Medex Scraper Raw Cache
+backend/data/medex/raw/
+backend/data/medex/raw/*.json
+backend/data/medex/raw/*.html

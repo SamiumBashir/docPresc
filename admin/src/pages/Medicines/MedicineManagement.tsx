@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { api } from '../../api/client';
 import { Medicine } from '../../types';
+import { MANUFACTURER_NAMES } from '../../data/manufacturers';
+import { DOSAGE_FORM_NAMES } from '../../data/dosageForms';
 
 export const MedicineManagement: React.FC = () => {
   const queryClient = useQueryClient();
@@ -97,14 +99,14 @@ export const MedicineManagement: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleOpenEdit = (med: Medicine) => {
+  const handleOpenEdit = (med: any) => {
     setEditingMedicine(med);
-    setBrandName(med.brandName);
-    setGenericName(med.genericName);
-    setMedicineType(med.medicineType);
-    setFormType(med.form);
-    setStrength(med.strength);
-    setManufacturer(med.manufacturer);
+    setBrandName(med.brandName || '');
+    setGenericName(med.genericName || '');
+    setMedicineType(med.medicineType || med.type || 'Allopathic');
+    setFormType(med.dosageForm || med.form || 'Tablet');
+    setStrength(med.strength || '');
+    setManufacturer(med.manufacturer || med.manufacture || '');
     setSystemNameBangla(med.systemNameBangla || '');
     setDefaultDose(med.defaultDose || '1+0+1');
     setDefaultDuration(med.defaultDuration || '7 days');
@@ -121,18 +123,22 @@ export const MedicineManagement: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!brandName || !genericName || !strength || !manufacturer) {
-      setFormError('Please fill out all required fields');
+    if (!brandName.trim() || !genericName.trim() || !strength.trim() || !manufacturer.trim()) {
+      setFormError('Please fill out Brand Name, Generic Name, Strength, and Manufacturer');
       return;
     }
 
     createMutation.mutate({
-      brandName,
-      genericName,
+      brandName: brandName.trim(),
+      genericName: genericName.trim(),
+      strength: strength.trim(),
       medicineType,
-      form: formType,
-      strength,
-      manufacturer,
+      type: medicineType,
+      dosageForm: formType.trim() || 'Tablet',
+      form: formType.trim() || 'Tablet',
+      manufacturer: manufacturer.trim(),
+      manufacture: manufacturer.trim(),
+      category: 'General',
       systemNameBangla,
       defaultDose,
       defaultDuration,
@@ -279,9 +285,13 @@ export const MedicineManagement: React.FC = () => {
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4 text-slate-400 font-mono text-xs">{med.form}</td>
+                    <td className="py-3.5 px-4 text-slate-400 font-mono text-xs">
+                      {(med as any).dosageForm || med.form || 'Tablet'}
+                    </td>
 
-                    <td className="py-3.5 px-4 text-slate-300 text-xs">{med.manufacturer}</td>
+                    <td className="py-3.5 px-4 text-slate-300 text-xs">
+                      {med.manufacturer || (med as any).manufacture || 'General'}
+                    </td>
 
                     <td className="py-3.5 px-4 text-slate-400 font-mono text-xs">
                       {med.defaultDose || '1+0+1'} • {med.defaultInstruction || 'After meal'}
@@ -338,7 +348,8 @@ export const MedicineManagement: React.FC = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Brands & Strength */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
                     Brand Name *
@@ -348,50 +359,8 @@ export const MedicineManagement: React.FC = () => {
                     required
                     value={brandName}
                     onChange={(e) => setBrandName(e.target.value)}
-                    placeholder="e.g. Napa Extra"
-                    className="w-full bg-slate-950 border border-slate-750 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
-                    Generic Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={genericName}
-                    onChange={(e) => setGenericName(e.target.value)}
-                    placeholder="e.g. Paracetamol + Caffeine"
-                    className="w-full bg-slate-950 border border-slate-750 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
-                    Type
-                  </label>
-                  <select
-                    value={medicineType}
-                    onChange={(e: any) => setMedicineType(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-750 rounded-xl py-2 px-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
-                  >
-                    <option value="Allopathic">Allopathic</option>
-                    <option value="Unani">Unani</option>
-                    <option value="Ayurvedic">Ayurvedic</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
-                    Form
-                  </label>
-                  <input
-                    type="text"
-                    value={formType}
-                    onChange={(e) => setFormType(e.target.value)}
-                    placeholder="Tablet / Syrup"
-                    className="w-full bg-slate-950 border border-slate-750 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    placeholder="e.g. Napa Extra / Monas"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
                 <div>
@@ -403,29 +372,89 @@ export const MedicineManagement: React.FC = () => {
                     required
                     value={strength}
                     onChange={(e) => setStrength(e.target.value)}
-                    placeholder="500mg"
-                    className="w-full bg-slate-950 border border-slate-750 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    placeholder="e.g. 500mg, 10mg, 120ml"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
                   />
                 </div>
               </div>
 
+              {/* Generic Name */}
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
-                  Manufacturer Company *
+                  Generic Name *
                 </label>
                 <input
                   type="text"
                   required
-                  value={manufacturer}
-                  onChange={(e) => setManufacturer(e.target.value)}
-                  placeholder="e.g. Beximco Pharma / Square / Hamdard"
-                  className="w-full bg-slate-950 border border-slate-750 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  value={genericName}
+                  onChange={(e) => setGenericName(e.target.value)}
+                  placeholder="e.g. Paracetamol + Caffeine / Montelukast Sodium"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              {/* Type & Form */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+                    Type *
+                  </label>
+                  <select
+                    value={medicineType}
+                    onChange={(e: any) => setMedicineType(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="Allopathic">Allopathic (অ্যালোপ্যাথিক)</option>
+                    <option value="Unani">Unani (ইউনানি)</option>
+                    <option value="Ayurvedic">Ayurvedic (আয়ুর্বেদিক)</option>
+                    <option value="Herbal">Herbal (হারবাল)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+                    Form *
+                  </label>
+                  <input
+                    type="text"
+                    list="dosageFormList"
+                    value={formType}
+                    onChange={(e) => setFormType(e.target.value)}
+                    placeholder="Tablet, Syrup, Capsule..."
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  />
+                  <datalist id="dosageFormList">
+                    {DOSAGE_FORM_NAMES.map((form) => (
+                      <option key={form} value={form} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+
+              {/* Manufacture / Company */}
+              <div>
+                <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+                  Manufacture (Company) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  list="manufacturerList"
+                  value={manufacturer}
+                  onChange={(e) => setManufacturer(e.target.value)}
+                  placeholder="e.g. Beximco Pharma, Square, Incepta, Hamdard..."
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+                <datalist id="manufacturerList">
+                  {MANUFACTURER_NAMES.map((name) => (
+                    <option key={name} value={name} />
+                  ))}
+                </datalist>
+              </div>
+
+              {/* Default Rx Advice (Optional) */}
+              <div className="grid grid-cols-3 gap-3 pt-2 border-t border-slate-800">
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-400 mb-1">
                     Default Dose
                   </label>
                   <input
@@ -433,11 +462,11 @@ export const MedicineManagement: React.FC = () => {
                     value={defaultDose}
                     onChange={(e) => setDefaultDose(e.target.value)}
                     placeholder="1+0+1"
-                    className="w-full bg-slate-950 border border-slate-750 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-950 border border-slate-750 rounded-xl py-1.5 px-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+                  <label className="block text-[11px] font-medium text-slate-400 mb-1">
                     Duration
                   </label>
                   <input
@@ -445,11 +474,11 @@ export const MedicineManagement: React.FC = () => {
                     value={defaultDuration}
                     onChange={(e) => setDefaultDuration(e.target.value)}
                     placeholder="7 days"
-                    className="w-full bg-slate-950 border border-slate-750 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-950 border border-slate-750 rounded-xl py-1.5 px-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+                  <label className="block text-[11px] font-medium text-slate-400 mb-1">
                     Instruction
                   </label>
                   <input
@@ -457,7 +486,7 @@ export const MedicineManagement: React.FC = () => {
                     value={defaultInstruction}
                     onChange={(e) => setDefaultInstruction(e.target.value)}
                     placeholder="After meal"
-                    className="w-full bg-slate-950 border border-slate-750 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-950 border border-slate-750 rounded-xl py-1.5 px-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>

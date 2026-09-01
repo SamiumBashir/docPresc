@@ -191,9 +191,33 @@ export const toggleFavoriteMedicine = async (req: AuthRequest, res: Response): P
 };
 
 export const createMedicine = async (req: AuthRequest, res: Response): Promise<void> => {
-  const validated = MedicineSchema.parse(req.body);
+  const normalized = {
+    brandName: req.body.brandName?.trim(),
+    genericName: req.body.genericName?.trim(),
+    strength: req.body.strength?.trim(),
+    dosageForm: (req.body.dosageForm || req.body.form || 'Tablet').trim(),
+    manufacturer: (req.body.manufacturer || req.body.manufacture || 'General').trim(),
+    category: (req.body.category || 'General').trim(),
+    medicineType: req.body.medicineType || req.body.type || 'Allopathic',
+    unit: req.body.unit?.trim() || 'mg',
+    price: req.body.price ? Number(req.body.price) : undefined,
+    status: req.body.status || 'active',
+  };
 
-  const medicine = await Medicine.create(validated);
+  const validated = MedicineSchema.parse(normalized);
+
+  const medicine = await Medicine.create({
+    brandName: validated.brandName,
+    genericName: validated.genericName,
+    strength: validated.strength,
+    dosageForm: validated.dosageForm || (validated as any).form || 'Tablet',
+    manufacturer: validated.manufacturer || (validated as any).manufacture || 'General',
+    category: validated.category || 'General',
+    medicineType: validated.medicineType || (validated as any).type || 'Allopathic',
+    unit: validated.unit || 'mg',
+    price: validated.price,
+    status: validated.status || 'active',
+  });
 
   await logAuditEvent(req, {
     action: 'MEDICINE_CREATE',
@@ -211,9 +235,41 @@ export const createMedicine = async (req: AuthRequest, res: Response): Promise<v
 
 export const updateMedicine = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const validated = MedicineSchema.parse(req.body);
 
-  const medicine = await Medicine.findByIdAndUpdate(id, { $set: validated }, { new: true });
+  const normalized = {
+    brandName: req.body.brandName?.trim(),
+    genericName: req.body.genericName?.trim(),
+    strength: req.body.strength?.trim(),
+    dosageForm: (req.body.dosageForm || req.body.form || 'Tablet').trim(),
+    manufacturer: (req.body.manufacturer || req.body.manufacture || 'General').trim(),
+    category: (req.body.category || 'General').trim(),
+    medicineType: req.body.medicineType || req.body.type || 'Allopathic',
+    unit: req.body.unit?.trim() || 'mg',
+    price: req.body.price ? Number(req.body.price) : undefined,
+    status: req.body.status || 'active',
+  };
+
+  const validated = MedicineSchema.parse(normalized);
+
+  const medicine = await Medicine.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        brandName: validated.brandName,
+        genericName: validated.genericName,
+        strength: validated.strength,
+        dosageForm: validated.dosageForm || (validated as any).form || 'Tablet',
+        manufacturer: validated.manufacturer || (validated as any).manufacture || 'General',
+        category: validated.category || 'General',
+        medicineType: validated.medicineType || (validated as any).type || 'Allopathic',
+        unit: validated.unit || 'mg',
+        price: validated.price,
+        status: validated.status || 'active',
+      },
+    },
+    { new: true }
+  );
+
   if (!medicine) {
     res.status(404).json({ success: false, message: 'Medicine not found.' });
     return;

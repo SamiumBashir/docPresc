@@ -13,7 +13,10 @@
     "dev:admin": "npm --prefix admin run dev",
     "install:all": "npm --prefix backend install && npm --prefix frontend install && npm --prefix admin install",
     "seed": "npm --prefix backend run seed",
-    "test": "npm --prefix backend test"
+    "test": "npm --prefix backend test",
+    "scrape:medex": "npm --prefix backend run scrape:medex",
+    "clean:medex": "npm --prefix backend run clean:medex",
+    "import:medex": "npm --prefix backend run import:medex"
   },
   "dependencies": {
     "vite": "^5.4.0",
