@@ -49,14 +49,14 @@ export const DiagnosisSelector: React.FC<DiagnosisSelectorProps> = ({ diagnoses,
       </div>
 
       {/* Input controls */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
         <input
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd(inputText, icdCode)}
           placeholder="Diagnosis name (e.g. Hypertension, Dengue)..."
-          className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-medical-500 focus:outline-none"
+          className="flex-1 min-w-[130px] px-3 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-medical-500 focus:outline-none"
         />
         <input
           type="text"
@@ -64,12 +64,12 @@ export const DiagnosisSelector: React.FC<DiagnosisSelectorProps> = ({ diagnoses,
           onChange={(e) => setIcdCode(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd(inputText, icdCode)}
           placeholder="ICD-10 (e.g. I10)..."
-          className="w-28 px-3 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-medical-500 focus:outline-none font-mono"
+          className="w-24 sm:w-28 px-3 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-medical-500 focus:outline-none font-mono"
         />
         <button
           type="button"
           onClick={() => handleAdd(inputText, icdCode)}
-          className="px-3 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0"
+          className="px-3.5 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1 shrink-0 shadow-2xs transition-colors"
         >
           <Plus className="w-3.5 h-3.5" /> Add
         </button>

@@ -50,12 +50,12 @@ export const AdviceSelector: React.FC<AdviceSelectorProps> = ({ advice, onChange
           onChange={(e) => setCustomText(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd(customText)}
           placeholder="Type custom advice in English or বাংলা..."
-          className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-medical-500 focus:outline-none"
+          className="flex-1 min-w-0 px-3 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-medical-500 focus:outline-none"
         />
         <button
           type="button"
           onClick={() => handleAdd(customText)}
-          className="px-3 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0"
+          className="px-3.5 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1 shrink-0 shadow-2xs transition-colors"
         >
           <Plus className="w-3.5 h-3.5" /> Add
         </button>
