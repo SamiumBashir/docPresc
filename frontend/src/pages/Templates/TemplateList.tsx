@@ -97,7 +97,7 @@ export const TemplateList: React.FC = () => {
                     {tpl.medicines.length} Medicines Prescribed
                   </span>
                   <div className="space-y-1">
-                    {tpl.medicines.map((m, i) => (
+                    {tpl.medicines.map((m: any, i: number) => (
                       <p key={i} className="text-slate-800 font-medium truncate">
                         • <span className="font-bold">{m.brandName}</span> ({m.frequency})
                       </p>
