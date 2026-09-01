@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -170,10 +172,7 @@ export const POPULAR_BANGLADESH_MEDICINES = [
 export const seedDatabase = async (force: boolean = false) => {
   try {
     const existingMedicinesCount = await Medicine.countDocuments();
-    if (existingMedicinesCount > 0 && !force) {
-      console.log(`[Seed] Database already seeded with ${existingMedicinesCount} medicines. Skipping full re-seed.`);
-      return;
-    }
+    const MEDEX_JSON_PATH = path.resolve(__dirname, '../../data/medex/processed/medex_brands.json');
 
     if (force) {
       console.log('[Seed] Force flag active. Clearing existing collection data...');
@@ -189,15 +188,59 @@ export const seedDatabase = async (force: boolean = false) => {
       ]);
     }
 
-    console.log('[Seed] Seeding default medicines database...');
-    await Medicine.insertMany(
-      POPULAR_BANGLADESH_MEDICINES.map((m: any) => ({
-        medicineType: m.medicineType || 'Allopathic',
-        ...m,
-        status: 'active',
-      }))
-    );
-    console.log(`[Seed] Seeded ${POPULAR_BANGLADESH_MEDICINES.length} popular Bangladeshi medicines (Allopathic, Unani & Ayurvedic).`);
+    // Seed Medicines if empty or under 1000 records
+    if (existingMedicinesCount < 1000 || force) {
+      console.log('[Seed] Seeding medicines database...');
+      
+      // 1. If MedEx cleaned dataset exists, batch insert all 25k+ records
+      if (fs.existsSync(MEDEX_JSON_PATH)) {
+        try {
+          const medexRaw = JSON.parse(fs.readFileSync(MEDEX_JSON_PATH, 'utf8'));
+          if (Array.isArray(medexRaw) && medexRaw.length > 0) {
+            console.log(`[Seed] Found MedEx dataset with ${medexRaw.length} medicines. Loading into database...`);
+            
+            const docsToInsert = medexRaw.map((m: any) => ({
+              brandName: m.brandName?.trim() || 'Unknown',
+              genericName: m.genericName?.trim() || 'General',
+              strength: m.strength?.trim() || 'N/A',
+              dosageForm: m.dosageForm?.trim() || 'Tablet',
+              manufacturer: m.manufacturer?.trim() || 'General',
+              category: 'General',
+              medicineType: 'Allopathic',
+              status: 'active',
+            }));
+
+            // Chunk in batches of 2500 for fast insertion
+            const CHUNK_SIZE = 2500;
+            for (let i = 0; i < docsToInsert.length; i += CHUNK_SIZE) {
+              const chunk = docsToInsert.slice(i, i + CHUNK_SIZE);
+              await Medicine.insertMany(chunk, { ordered: false });
+            }
+            console.log(`[Seed] ✅ Successfully loaded ${docsToInsert.length} MedEx medicines into database!`);
+          }
+        } catch (medexErr: any) {
+          console.warn('[Seed] Warning loading MedEx dataset, falling back to popular list:', medexErr.message);
+        }
+      }
+
+      // 2. Also seed Popular Bangladeshi herbal, unani and ayurvedic medicines
+      await Medicine.insertMany(
+        POPULAR_BANGLADESH_MEDICINES.map((m: any) => ({
+          medicineType: m.medicineType || 'Allopathic',
+          ...m,
+          status: 'active',
+        }))
+      );
+      console.log(`[Seed] Seeded ${POPULAR_BANGLADESH_MEDICINES.length} popular Bangladeshi medicines (Allopathic, Unani & Ayurvedic).`);
+    } else {
+      console.log(`[Seed] Database already seeded with ${existingMedicinesCount} medicines.`);
+    }
+
+    // Check if demo users already exist
+    const existingUsersCount = await User.countDocuments();
+    if (existingUsersCount > 0 && !force) {
+      return;
+    }
 
     // 1. Create Admin User
     const adminSalt = await bcrypt.genSalt(10);
