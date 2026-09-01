@@ -68,12 +68,12 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
   return (
     <div
       id="prescription-pad"
-      className={`prescription-print-container relative bg-white text-slate-900 shadow-xl border border-slate-200/80 rounded-xl overflow-hidden mx-auto transition-all duration-300 flex flex-col justify-between ${
+      className={`prescription-print-container relative bg-white text-slate-900 shadow-xl border border-slate-200/80 rounded-xl overflow-hidden mx-auto transition-all duration-300 flex flex-col justify-between p-4 sm:p-6 md:p-8 print:p-8 ${
         paperSize === 'Letter'
-          ? 'w-full max-w-[816px] min-h-[1056px] p-8 text-xs'
+          ? 'w-full max-w-[816px] min-h-[1056px] text-xs'
           : paperSize === 'A5'
-          ? 'w-full max-w-[560px] min-h-[792px] p-6 text-[11px]'
-          : 'w-full max-w-[794px] min-h-[1123px] p-8 text-xs'
+          ? 'w-full max-w-[560px] min-h-[792px] text-[11px]'
+          : 'w-full max-w-[794px] min-h-[1123px] text-xs'
       }`}
       style={{ fontFamily: "'Inter', 'Hind Siliguri', sans-serif" }}
     >
@@ -88,7 +88,7 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
       <div>
         {/* HEADER: Doctor & Chamber Branding */}
         <div className="relative z-10 border-b-2 border-slate-800 pb-4 mb-4">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
             {/* Doctor Info */}
             <div className="space-y-1">
               <h2 className="text-xl font-black text-medical-800 tracking-tight leading-tight">
@@ -110,7 +110,7 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
             </div>
 
             {/* Chamber Info */}
-            <div className="text-right space-y-1 max-w-[280px]">
+            <div className="sm:text-right space-y-1 max-w-[280px]">
               <h3 className="font-bold text-slate-900 text-sm">
                 {chamberName || 'Consultation Chamber'}
               </h3>
@@ -137,18 +137,18 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
         </div>
 
         {/* PATIENT BAR (Clean 3 Columns: Name, Age/Gender, Date) */}
-        <div className="relative z-10 bg-slate-50/90 border border-slate-200/80 rounded-lg p-2.5 mb-4 grid grid-cols-3 gap-3 text-slate-800">
+        <div className="relative z-10 bg-slate-50/90 border border-slate-200/80 rounded-lg p-2.5 mb-4 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-slate-800">
           <div>
             <span className="text-slate-400 font-semibold block text-[10px] uppercase">Patient Name</span>
             <span className="font-bold truncate block">{patient?.name || '____________________'}</span>
           </div>
-          <div className="text-center">
+          <div className="sm:text-center">
             <span className="text-slate-400 font-semibold block text-[10px] uppercase">Age / Gender</span>
             <span className="font-medium">
               {patient ? `${patient.age} yrs • ${patient.gender}` : '__ yrs • ___'}
             </span>
           </div>
-          <div className="text-right">
+          <div className="sm:text-right">
             <span className="text-slate-400 font-semibold block text-[10px] uppercase">Date</span>
             <span className="font-mono font-bold text-medical-800">
               {formattedDate}
@@ -158,9 +158,9 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
       </div>
 
       {/* MAIN TWO-COLUMN BODY */}
-      <div className="relative z-10 grid grid-cols-12 gap-6 flex-1 min-h-[480px]">
+      <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 flex-1 min-h-[480px]">
         {/* LEFT COLUMN: Clinical Notes, Vitals, Investigations (Width: 4/12) */}
-        <div className="col-span-4 border-r border-slate-200 pr-4 space-y-4">
+        <div className="col-span-1 md:col-span-4 border-b md:border-b-0 md:border-r border-slate-200 pb-4 md:pb-0 md:pr-4 space-y-4">
           {/* Vitals */}
           {vitals && (vitals.bpSystolic || vitals.pulse || vitals.temperature || vitals.weight) && (
             <div className="space-y-1.5 rx-avoid-break">
@@ -285,7 +285,7 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
         </div>
 
         {/* RIGHT COLUMN: Rx Medicines, Advice, Follow-up (Width: 8/12) */}
-        <div className="col-span-8 flex flex-col justify-between">
+        <div className="col-span-1 md:col-span-8 flex flex-col justify-between pt-2 md:pt-0">
           <div className="space-y-6">
             {/* Rx Emblem */}
             <div className="flex items-center gap-2 border-b border-slate-200 pb-1">
@@ -386,7 +386,7 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
 
       {/* FOOTER: Signature, Chamber Schedule, QR Code Verification */}
       <div className="relative z-10 border-t-2 border-slate-800 pt-3 mt-6">
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
           {/* Left: QR Code Verification Token */}
           <div className="flex items-center gap-2.5">
             {doctor?.settings?.showQrCode !== false && (
@@ -401,8 +401,8 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
           </div>
 
           {/* Right: Signature Area */}
-          <div className="text-right space-y-1">
-            <div className="h-10 flex items-end justify-end">
+          <div className="text-left sm:text-right space-y-1 w-full sm:w-auto">
+            <div className="h-10 flex items-end justify-start sm:justify-end">
               {doctor?.signature ? (
                 <img src={doctor.signature} alt="Doctor Signature" className="max-h-10 object-contain" />
               ) : (

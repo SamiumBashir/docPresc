@@ -18,6 +18,8 @@ import {
   FileText,
   AlertTriangle,
   RotateCcw,
+  FileEdit,
+  Eye,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -85,6 +87,9 @@ export const NewPrescription: React.FC = () => {
   const [medFrequency, setMedFrequency] = useState('1+0+1');
   const [medDuration, setMedDuration] = useState('5 days');
   const [medInstruction, setMedInstruction] = useState('After meal (খাবার পর)');
+
+  // Mobile / Tablet Tab Switcher ('form' vs 'preview')
+  const [mobileTab, setMobileTab] = useState<'form' | 'preview'>('form');
 
   // UI / Action State
   const [paperSize, setPaperSize] = useState<'A4' | 'Letter'>('A4');
@@ -601,12 +606,45 @@ export const NewPrescription: React.FC = () => {
         </div>
       </div>
 
+      {/* Mobile/Tablet Workspace View Switcher Tab Bar (< xl) */}
+      <div className="no-print xl:hidden bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setMobileTab('form')}
+          className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            mobileTab === 'form'
+              ? 'bg-white text-medical-800 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <FileEdit className="w-4 h-4 text-medical-600" />
+          <span>Prescription Form</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('preview')}
+          className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+            mobileTab === 'preview'
+              ? 'bg-white text-medical-800 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Eye className="w-4 h-4 text-medical-600" />
+          <span>Live Pad Preview</span>
+          {medicines.length > 0 && (
+            <span className="px-1.5 py-0.2 bg-medical-100 text-medical-800 rounded-full text-[10px] font-mono">
+              {medicines.length}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Main Two-Column Prescription Workspace */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* ========================================================= */}
         {/* LEFT COLUMN: Input Form Controls (Hidden on Print)        */}
         {/* ========================================================= */}
-        <div className="no-print xl:col-span-6 space-y-4">
+        <div className={`no-print xl:col-span-6 space-y-4 ${mobileTab === 'form' ? 'block' : 'hidden xl:block'}`}>
           {/* 1. Patient Selector Card */}
           <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
@@ -808,7 +846,7 @@ export const NewPrescription: React.FC = () => {
         {/* ========================================================= */}
         {/* RIGHT COLUMN: Real-Time Interactive Live Preview Pad     */}
         {/* ========================================================= */}
-        <div className="xl:col-span-6 sticky top-24 print:static print:w-full print:p-0 print:m-0">
+        <div className={`xl:col-span-6 sticky top-24 print:static print:w-full print:p-0 print:m-0 ${mobileTab === 'preview' ? 'block' : 'hidden xl:block'}`}>
           <div className="no-print flex items-center justify-between mb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Live Prescription Pad Preview ({paperSize})
