@@ -1,5 +1,3 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
-
 export class ApiError extends Error {
   errors?: any[];
   constructor(message: string, errors?: any[]) {
@@ -8,6 +6,12 @@ export class ApiError extends Error {
     this.errors = errors;
   }
 }
+
+const getApiUrl = (endpoint: string): string => {
+  const base = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
+  const path = endpoint.replace(/^\/+/, '');
+  return `${base}/${path}`;
+};
 
 export const api = async <T = any>(
   endpoint: string,
@@ -26,7 +30,7 @@ export const api = async <T = any>(
     delete (headers as any)['Content-Type'];
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await fetch(getApiUrl(endpoint), {
     ...options,
     headers,
     credentials: 'include', // for HTTP-only cookies

@@ -121,9 +121,9 @@ export const createPrescription = async (req: AuthRequest, res: Response): Promi
 
   const validated = PrescriptionSchema.parse(req.body);
 
-  const patient = await Patient.findOne({ _id: validated.patientId, doctorId: doctor._id });
+  const patient = await Patient.findById(validated.patientId);
   if (!patient) {
-    res.status(404).json({ success: false, message: 'Patient not found or unauthorized.' });
+    res.status(404).json({ success: false, message: 'Patient record not found.' });
     return;
   }
 
@@ -239,15 +239,15 @@ export const updatePrescription = async (req: AuthRequest, res: Response): Promi
   }
 
   existing.vitals = validated.vitals as any;
-  existing.chiefComplaints = validated.chiefComplaints;
-  existing.history = validated.history;
-  existing.examination = validated.examination;
-  existing.diagnosis = validated.diagnosis;
+  existing.chiefComplaints = validated.chiefComplaints as any;
+  existing.history = validated.history as any;
+  existing.examination = validated.examination as any;
+  existing.diagnosis = validated.diagnosis as any;
   existing.medicines = validated.medicines.map((m, idx) => ({ ...m, order: idx })) as any;
-  existing.investigations = validated.investigations;
-  existing.advice = validated.advice;
+  existing.investigations = validated.investigations as any;
+  existing.advice = validated.advice as any;
   existing.followUp = validated.followUp as any;
-  existing.notes = validated.notes;
+  existing.notes = validated.notes as any;
   if (chamber) {
     existing.chamberId = chamber._id as any;
     if (existing.doctorSnapshot) {

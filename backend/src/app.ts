@@ -20,24 +20,15 @@ export const createApp = () => {
   );
 
   // CORS configuration
-  const allowedOrigins = ENV.CORS_ORIGIN.split(',').map((o) => o.trim());
   app.use(
     cors({
       origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        if (
-          allowedOrigins.includes(origin) ||
-          origin.includes('localhost') ||
-          origin.includes('127.0.0.1') ||
-          origin.endsWith('.vercel.app')
-        ) {
-          return callback(null, true);
-        }
-        return callback(null, true);
+        // Reflect incoming origin for full cross-origin compatibility
+        callback(null, true);
       },
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     })
   );
 
