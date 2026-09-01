@@ -7,6 +7,8 @@ import {
   updateDoctorProfile,
   updateDoctorSettings,
   forgotPassword,
+  verifyOtp,
+  resendOtp,
   resetPassword,
   deleteAccount,
 } from '../controllers/auth.controller';
@@ -17,6 +19,9 @@ const router = Router();
 router.post('/register', registerDoctor);
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);
+router.post('/verify-otp', verifyOtp);
+router.post('/resend-otp', resendOtp);
+router.post('/reset-password', resetPassword);
 router.post('/reset-password/:token', resetPassword);
 router.get('/me', authenticate, getMe);
 router.post('/logout', authenticate, logout);

@@ -18,11 +18,21 @@ export const LoginSchema = z.object({
 });
 
 export const ForgotPasswordSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('Please enter a valid email address'),
+});
+
+export const VerifyOtpSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  otp: z.string().regex(/^\d{6}$/, 'OTP must be exactly 6 digits'),
+});
+
+export const ResendOtpSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
 });
 
 export const ResetPasswordSchema = z.object({
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  resetToken: z.string().min(1, 'Reset authorization token is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters long'),
 });
 
 export const PatientSchema = z.object({

@@ -9,4 +9,8 @@ export const ENV = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   COOKIE_SECRET: process.env.COOKIE_SECRET || 'cookie_secret_prescription_2026',
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+  EMAIL_FROM: process.env.EMAIL_FROM || 'DocPresc <onboarding@resend.dev>',
+  OTP_EXPIRES_IN: Number(process.env.OTP_EXPIRES_IN) || 300, // 5 minutes in seconds
+  OTP_RESEND_COOLDOWN: Number(process.env.OTP_RESEND_COOLDOWN) || 60, // 60 seconds
 };

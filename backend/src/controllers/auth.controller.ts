@@ -8,6 +8,8 @@ import { Chamber } from '../models/Chamber';
 import { Patient } from '../models/Patient';
 import { Prescription } from '../models/Prescription';
 import { Template } from '../models/Template';
+import { PasswordResetOtp } from '../models/PasswordResetOtp';
+import { sendPasswordResetOtpEmail } from '../services/email.service';
 import { ENV } from '../config/env';
 import { AuthRequest } from '../middleware/auth';
 import { logAuditEvent } from '../middleware/audit';
@@ -15,6 +17,8 @@ import {
   RegisterDoctorSchema,
   LoginSchema,
   ForgotPasswordSchema,
+  VerifyOtpSchema,
+  ResendOtpSchema,
   ResetPasswordSchema,
 } from '../validators/schemas';
 
@@ -268,85 +272,255 @@ export const updateDoctorSettings = async (req: AuthRequest, res: Response): Pro
 
 export const forgotPassword = async (req: AuthRequest, res: Response): Promise<void> => {
   const validated = ForgotPasswordSchema.parse(req.body);
+  const email = validated.email.toLowerCase();
 
-  const user = await User.findOne({ email: validated.email.toLowerCase() });
-  if (!user) {
-    // For security reasons, still respond with success message
-    res.json({
-      success: true,
-      message: 'If an account exists with this email, a password reset link has been sent.',
+  const user = await User.findOne({ email });
+  if (user) {
+    // Check if there is an active cooldown
+    const existingOtp = await PasswordResetOtp.findOne({ email });
+    const now = Date.now();
+    const cooldownMs = ENV.OTP_RESEND_COOLDOWN * 1000;
+
+    if (existingOtp && now - existingOtp.lastSentAt.getTime() < cooldownMs) {
+      const waitSeconds = Math.ceil((cooldownMs - (now - existingOtp.lastSentAt.getTime())) / 1000);
+      res.status(429).json({
+        success: false,
+        message: `Please wait ${waitSeconds} seconds before requesting a new OTP.`,
+      });
+      return;
+    }
+
+    // Cryptographically secure 6-digit OTP: between 100000 and 999999 inclusive
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+    const expiresAt = new Date(Date.now() + ENV.OTP_EXPIRES_IN * 1000); // 5 minutes
+
+    await PasswordResetOtp.findOneAndUpdate(
+      { email },
+      {
+        email,
+        otpHash,
+        expiresAt,
+        attempts: 0,
+        lastSentAt: new Date(),
+        resetTokenHash: undefined,
+        resetTokenExpiresAt: undefined,
+        verifiedAt: undefined,
+      },
+      { upsert: true, new: true }
+    );
+
+    // Dispatch transactional email via Resend
+    await sendPasswordResetOtpEmail({
+      to: user.email,
+      name: user.name,
+      otp,
+      expiresInMinutes: Math.round(ENV.OTP_EXPIRES_IN / 60),
+    });
+
+    await logAuditEvent(req, {
+      action: 'PASSWORD_RESET_OTP_REQUESTED',
+      resource: 'User',
+      resourceId: user._id.toString(),
+      details: { email: user.email },
+    });
+  }
+
+  // Generic anti-enumeration response
+  res.json({
+    success: true,
+    message: 'If an account exists for this email, a 6-digit password reset OTP has been sent.',
+  });
+};
+
+export const verifyOtp = async (req: AuthRequest, res: Response): Promise<void> => {
+  const validated = VerifyOtpSchema.parse(req.body);
+  const email = validated.email.toLowerCase();
+  const inputOtp = validated.otp.trim();
+
+  const record = await PasswordResetOtp.findOne({ email });
+
+  if (!record || !record.otpHash || record.expiresAt < new Date()) {
+    res.status(400).json({
+      success: false,
+      message: 'OTP has expired or no active reset request was found. Please request a new OTP.',
     });
     return;
   }
 
-  // Generate crypto reset token
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  // Max 5 attempts check
+  if (record.attempts >= 5) {
+    res.status(429).json({
+      success: false,
+      message: 'Too many failed verification attempts. For your security, please request a new OTP.',
+    });
+    return;
+  }
 
-  user.resetPasswordToken = hashedToken;
-  user.resetPasswordExpire = new Date(Date.now() + 30 * 60 * 1000); // 30 mins
-  await user.save();
+  const inputHash = crypto.createHash('sha256').update(inputOtp).digest('hex');
 
-  const origin = req.headers.origin || 'http://localhost:5173';
-  const resetUrl = `${origin}/reset-password/${resetToken}`;
+  if (inputHash !== record.otpHash) {
+    record.attempts += 1;
+    await record.save();
+    const remaining = Math.max(0, 5 - record.attempts);
+    res.status(400).json({
+      success: false,
+      message:
+        remaining > 0
+          ? `Invalid OTP. You have ${remaining} ${remaining === 1 ? 'attempt' : 'attempts'} remaining.`
+          : 'Too many failed verification attempts. Please request a new OTP.',
+    });
+    return;
+  }
 
-  console.log(`\n========================================`);
-  console.log(`[PASSWORD RESET REQUEST] for ${user.email}`);
-  console.log(`Reset URL: ${resetUrl}`);
-  console.log(`========================================\n`);
+  // OTP is valid -> Issue short-lived cryptographically secure reset authorization token (15 mins)
+  const rawResetToken = crypto.randomBytes(32).toString('hex');
+  const resetTokenHash = crypto.createHash('sha256').update(rawResetToken).digest('hex');
 
-  await logAuditEvent(req, {
-    action: 'PASSWORD_RESET_REQUEST',
-    resource: 'User',
-    resourceId: user._id.toString(),
-    details: { email: user.email },
-  });
+  record.otpHash = ''; // Invalidate OTP immediately to prevent re-use
+  record.resetTokenHash = resetTokenHash;
+  record.resetTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+  record.verifiedAt = new Date();
+  await record.save();
 
   res.json({
     success: true,
-    message: 'A password reset link has been sent to your email address.',
+    message: 'OTP verified successfully.',
     data: {
-      email: user.email,
-      resetUrl, // Provided in development for instant 1-click test
+      resetToken: rawResetToken,
     },
   });
 };
 
-export const resetPassword = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { token } = req.params;
-  const validated = ResetPasswordSchema.parse(req.body);
+export const resendOtp = async (req: AuthRequest, res: Response): Promise<void> => {
+  const validated = ResendOtpSchema.parse(req.body);
+  const email = validated.email.toLowerCase();
 
-  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+  const record = await PasswordResetOtp.findOne({ email });
+  const now = Date.now();
+  const cooldownMs = ENV.OTP_RESEND_COOLDOWN * 1000;
 
-  const user = await User.findOne({
-    resetPasswordToken: hashedToken,
-    resetPasswordExpire: { $gt: new Date() },
+  if (record && now - record.lastSentAt.getTime() < cooldownMs) {
+    const waitSeconds = Math.ceil((cooldownMs - (now - record.lastSentAt.getTime())) / 1000);
+    res.status(429).json({
+      success: false,
+      message: `Please wait ${waitSeconds} seconds before requesting a new OTP.`,
+    });
+    return;
+  }
+
+  const user = await User.findOne({ email });
+  if (user) {
+    const otp = crypto.randomInt(100000, 1000000).toString();
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+    const expiresAt = new Date(Date.now() + ENV.OTP_EXPIRES_IN * 1000);
+
+    await PasswordResetOtp.findOneAndUpdate(
+      { email },
+      {
+        email,
+        otpHash,
+        expiresAt,
+        attempts: 0,
+        lastSentAt: new Date(),
+        resetTokenHash: undefined,
+        resetTokenExpiresAt: undefined,
+        verifiedAt: undefined,
+      },
+      { upsert: true, new: true }
+    );
+
+    await sendPasswordResetOtpEmail({
+      to: user.email,
+      name: user.name,
+      otp,
+      expiresInMinutes: Math.round(ENV.OTP_EXPIRES_IN / 60),
+    });
+
+    await logAuditEvent(req, {
+      action: 'PASSWORD_RESET_OTP_RESENT',
+      resource: 'User',
+      resourceId: user._id.toString(),
+      details: { email: user.email },
+    });
+  }
+
+  res.json({
+    success: true,
+    message: 'If an account exists for this email, a new password reset OTP has been sent.',
   });
+};
 
-  if (!user) {
+export const resetPassword = async (req: AuthRequest, res: Response): Promise<void> => {
+  const tokenParam = req.params.token;
+  const { resetToken, password } = req.body;
+
+  const targetToken = resetToken || tokenParam;
+  if (!targetToken) {
     res.status(400).json({
       success: false,
-      message: 'Invalid or expired password reset link. Please request a new one.',
+      message: 'Reset authorization token is required.',
+    });
+    return;
+  }
+
+  if (!password || password.length < 6) {
+    res.status(400).json({
+      success: false,
+      message: 'Password must be at least 6 characters long.',
+    });
+    return;
+  }
+
+  const hashedToken = crypto.createHash('sha256').update(targetToken).digest('hex');
+
+  // 1. Check in PasswordResetOtp collection (OTP Flow)
+  const otpRecord = await PasswordResetOtp.findOne({
+    resetTokenHash: hashedToken,
+    resetTokenExpiresAt: { $gt: new Date() },
+  });
+
+  let targetUser = null;
+
+  if (otpRecord) {
+    targetUser = await User.findOne({ email: otpRecord.email });
+  } else {
+    // 2. Legacy fallback to User model reset token if exists
+    targetUser = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: new Date() },
+    });
+  }
+
+  if (!targetUser) {
+    res.status(400).json({
+      success: false,
+      message: 'Invalid or expired password reset session. Please request a new OTP.',
     });
     return;
   }
 
   const salt = await bcrypt.genSalt(10);
-  user.passwordHash = await bcrypt.hash(validated.password, salt);
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpire = undefined;
-  await user.save();
+  targetUser.passwordHash = await bcrypt.hash(password, salt);
+  targetUser.resetPasswordToken = undefined;
+  targetUser.resetPasswordExpire = undefined;
+  await targetUser.save();
+
+  // Invalidate OTP record immediately to prevent any reuse
+  if (otpRecord) {
+    await PasswordResetOtp.findByIdAndDelete(otpRecord._id);
+  }
 
   await logAuditEvent(req, {
     action: 'PASSWORD_RESET_SUCCESS',
     resource: 'User',
-    resourceId: user._id.toString(),
-    details: { email: user.email },
+    resourceId: targetUser._id.toString(),
+    details: { email: targetUser.email },
   });
 
   res.json({
     success: true,
-    message: 'Your password has been reset successfully. You can now log in.',
+    message: 'Your password has been reset successfully. You can now log in with your new password.',
   });
 };
 
