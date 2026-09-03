@@ -13,7 +13,11 @@
     "clean:medex": "tsx scripts/medex/clean-medex.ts",
     "import:medex": "tsx scripts/medex/import-medex.ts",
     "test:medex": "tsx scripts/medex/scrape-medex.ts --sample",
-    "pipeline:medex": "tsx scripts/medex/scrape-medex.ts && tsx scripts/medex/clean-medex.ts && tsx scripts/medex/import-medex.ts"
+    "pipeline:medex": "tsx scripts/medex/scrape-medex.ts && tsx scripts/medex/clean-medex.ts && tsx scripts/medex/import-medex.ts",
+    "scrape:herbal": "tsx scripts/medex/scrape-medex-herbal.ts",
+    "clean:herbal": "tsx scripts/medex/clean-medex-herbal.ts",
+    "import:herbal": "tsx scripts/medex/import-medex-herbal.ts",
+    "pipeline:herbal": "tsx scripts/medex/scrape-medex-herbal.ts && tsx scripts/medex/clean-medex-herbal.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

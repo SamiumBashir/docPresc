@@ -36,3 +36,4 @@ Thumbs.db
 backend/data/medex/raw/
 backend/data/medex/raw/*.json
 backend/data/medex/raw/*.html
+backend/data/medex/raw_herbal/
