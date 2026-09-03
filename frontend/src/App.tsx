@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { AppLayout } from './components/layout/AppLayout';
+import { PageLoader } from './components/ui/PageLoader';
+import { TopProgressBar } from './components/ui/TopProgressBar';
 
 // Immediate load for entry login page to eliminate initial latency
 import { Login } from './pages/Auth/Login';
@@ -71,18 +73,6 @@ const AdminAuditLogs = lazy(() =>
   import('./pages/Admin/AdminAuditLogs').then((m) => ({ default: m.AdminAuditLogs }))
 );
 
-// Lightweight Accessible Page Loader
-const PageLoader: React.FC = () => (
-  <div
-    className="flex items-center justify-center min-h-[300px] w-full py-12"
-    role="status"
-    aria-label="Loading page content"
-  >
-    <div className="w-8 h-8 border-3 border-medical-600 border-t-transparent rounded-full animate-spin" />
-    <span className="sr-only">Loading...</span>
-  </div>
-);
-
 // Protected Route Guard
 const ProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole?: string }> = ({
   children,
@@ -92,14 +82,11 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole?: strin
 
   if (isLoading) {
     return (
-      <div
-        className="min-h-screen bg-slate-900 flex items-center justify-center"
-        role="status"
-        aria-label="Authenticating session"
-      >
-        <div className="w-8 h-8 border-3 border-medical-500 border-t-transparent rounded-full animate-spin" />
-        <span className="sr-only">Loading authentication...</span>
-      </div>
+      <PageLoader
+        variant="fullscreen"
+        message="Authenticating clinical session..."
+        subMessage="DocRx Bangladesh Medical Cloud"
+      />
     );
   }
 
@@ -119,7 +106,18 @@ export const App: React.FC = () => {
     <LanguageProvider>
       <AuthProvider>
         <BrowserRouter>
-          <Suspense fallback={<PageLoader />}>
+          {/* Luminous Top Route Transition Indicator */}
+          <TopProgressBar />
+
+          <Suspense
+            fallback={
+              <PageLoader
+                variant="inline"
+                message="Preparing clinical workspace..."
+                subMessage="Loading patient & prescription records"
+              />
+            }
+          >
             <Routes>
               {/* Public Routes */}
               <Route path="/login" element={<Login />} />

@@ -27,6 +27,61 @@
   background: #94a3b8;
 }
 
+/* ==========================================================
+   COMFORTABLE CLINICAL LOADING ANIMATIONS
+   ========================================================== */
+
+/* Animated ECG Pulse Waveform */
+@keyframes ecg-sweep {
+  0% {
+    stroke-dashoffset: 350;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.ecg-pulse-line {
+  stroke-dasharray: 120 230;
+  animation: ecg-sweep 1.8s linear infinite;
+}
+
+/* Soothing Luminous Progress Bar Sweep */
+@keyframes progress-sweep {
+  0% {
+    left: -40%;
+    width: 40%;
+  }
+  50% {
+    left: 20%;
+    width: 60%;
+  }
+  100% {
+    left: 100%;
+    width: 40%;
+  }
+}
+
+.loading-progress-sweep {
+  animation: progress-sweep 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Smooth Page Content Entrance Transition */
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter-transition {
+  animation: page-fade-in 220ms ease-out forwards;
+}
+
 /* Medical Prescription Pad Watermark styling */
 .rx-pad-watermark {
   position: absolute;
