@@ -186,6 +186,7 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
           { id: 'Allopathic', label: 'Allopathic (অ্যালোপ্যাথিক)' },
           { id: 'Unani', label: '🌿 Unani (ইউনানি)' },
           { id: 'Ayurvedic', label: '🌱 Ayurvedic (আয়ুর্বেদিক)' },
+          { id: 'Herbal', label: '🍀 Herbal (হারবাল)' },
         ].map((sys) => {
           const isActive = selectedType === sys.id;
           return (
@@ -252,6 +253,7 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
             const isSelected = index === selectedIndex;
             const isUnani = med.medicineType === 'Unani';
             const isAyurvedic = med.medicineType === 'Ayurvedic';
+            const isHerbal = med.medicineType === 'Herbal';
 
             return (
               <div
@@ -269,7 +271,7 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
                       {med.dosageForm}
                     </span>
 
-                    {/* Unani / Ayurvedic / Allopathic System Badge */}
+                    {/* Unani / Ayurvedic / Herbal / Allopathic System Badge */}
                     {isUnani ? (
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-0.5">
                         <Leaf className="w-2.5 h-2.5" /> Unani (ইউনানি)
@@ -277,6 +279,10 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
                     ) : isAyurvedic ? (
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-0.5">
                         🌱 Ayurvedic (আয়ুর্বেদিক)
+                      </span>
+                    ) : isHerbal ? (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-teal-100 text-teal-800 border border-teal-200 flex items-center gap-0.5">
+                        🍀 Herbal
                       </span>
                     ) : (
                       <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-50 text-slate-500 border border-slate-200">

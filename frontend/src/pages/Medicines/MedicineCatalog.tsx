@@ -191,6 +191,7 @@ export const MedicineCatalog: React.FC = () => {
           { id: 'Allopathic', label: 'Allopathic (অ্যালোপ্যাথিক)', icon: Pill },
           { id: 'Unani', label: '🌿 Unani (ইউনানি চিকিৎসা)', icon: Leaf },
           { id: 'Ayurvedic', label: '🌱 Ayurvedic (আয়ুর্বেদিক)', icon: Leaf },
+          { id: 'Herbal', label: '🍀 Herbal & Nutra (হারবাল)', icon: Leaf },
         ].map((tab) => {
           const isActive = selectedType === tab.id;
           return (
@@ -361,6 +362,10 @@ export const MedicineCatalog: React.FC = () => {
                         ) : isAyurvedic ? (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 whitespace-nowrap">
                             🌱 Ayurvedic
+                          </span>
+                        ) : m.medicineType === 'Herbal' ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200 whitespace-nowrap">
+                            🍀 Herbal
                           </span>
                         ) : (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">

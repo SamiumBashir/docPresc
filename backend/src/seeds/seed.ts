@@ -197,7 +197,7 @@ export const seedDatabase = async (force: boolean = false) => {
         try {
           const medexRaw = JSON.parse(fs.readFileSync(MEDEX_JSON_PATH, 'utf8'));
           if (Array.isArray(medexRaw) && medexRaw.length > 0) {
-            console.log(`[Seed] Found MedEx dataset with ${medexRaw.length} medicines. Loading into database...`);
+            console.log(`[Seed] Found MedEx Allopathic dataset with ${medexRaw.length} medicines. Loading into database...`);
             
             const docsToInsert = medexRaw.map((m: any) => ({
               brandName: m.brandName?.trim() || 'Unknown',
@@ -234,6 +234,67 @@ export const seedDatabase = async (force: boolean = false) => {
       console.log(`[Seed] Seeded ${POPULAR_BANGLADESH_MEDICINES.length} popular Bangladeshi medicines (Allopathic, Unani & Ayurvedic).`);
     } else {
       console.log(`[Seed] Database already seeded with ${existingMedicinesCount} medicines.`);
+    }
+
+    // 3. Ensure MedEx Herbal, Unani & Ayurvedic medicines are seeded
+    const MEDEX_HERBAL_PATH = path.resolve(__dirname, '../../data/medex/processed/medex_all_herbal_brands.json');
+    const existingHerbalCount = await Medicine.countDocuments({
+      medicineType: { $in: ['Unani', 'Ayurvedic', 'Herbal'] },
+    });
+
+    if (existingHerbalCount < 100 || force) {
+      if (fs.existsSync(MEDEX_HERBAL_PATH)) {
+        try {
+          const herbalRaw = JSON.parse(fs.readFileSync(MEDEX_HERBAL_PATH, 'utf8'));
+          if (Array.isArray(herbalRaw) && herbalRaw.length > 0) {
+            console.log(`[Seed] Found MedEx Herbal/Traditional dataset with ${herbalRaw.length} medicines. Loading into database...`);
+
+            const docsToInsert = herbalRaw.map((m: any) => ({
+              brandName: m.brandName?.trim() || 'Unknown',
+              genericName: m.genericName?.trim() || 'General',
+              strength: m.strength?.trim() || 'N/A',
+              dosageForm: m.dosageForm?.trim() || 'Herbal Preparation',
+              manufacturer: m.manufacturer?.trim() || 'General',
+              category: m.medicineType || 'Herbal',
+              medicineType: m.medicineType || 'Herbal',
+              status: 'active',
+            }));
+
+            // Bulk upsert or insert to prevent duplicates with existing
+            const bulkOps = docsToInsert.map((d: any) => ({
+              updateOne: {
+                filter: {
+                  brandName: d.brandName,
+                  strength: d.strength,
+                  genericName: d.genericName,
+                  manufacturer: d.manufacturer,
+                },
+                update: {
+                  $set: d,
+                  $setOnInsert: { createdAt: new Date() },
+                },
+                upsert: true,
+              },
+            }));
+
+            const result = await Medicine.bulkWrite(bulkOps, { ordered: false });
+            const unaniCount = docsToInsert.filter((d: any) => d.medicineType === 'Unani').length;
+            const ayurvedicCount = docsToInsert.filter((d: any) => d.medicineType === 'Ayurvedic').length;
+            const herbalCount = docsToInsert.filter((d: any) => d.medicineType === 'Herbal').length;
+
+            console.log(
+              `[Seed] ✅ Loaded MedEx Traditional Medicines! (Upserted: ${result.upsertedCount}, Matched: ${result.matchedCount})`
+            );
+            console.log(
+              `[Seed] 📊 Totals: ${unaniCount} Unani, ${ayurvedicCount} Ayurvedic, ${herbalCount} Herbal.`
+            );
+          }
+        } catch (herbalErr: any) {
+          console.warn('[Seed] Warning loading MedEx herbal dataset:', herbalErr.message);
+        }
+      }
+    } else {
+      console.log(`[Seed] Herbal/Traditional medicines already loaded (${existingHerbalCount} records).`);
     }
 
     // Check if demo users already exist
