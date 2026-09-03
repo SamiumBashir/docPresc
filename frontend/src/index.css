@@ -115,6 +115,8 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
+    animation: none !important;
+    transition: none !important;
   }
 
   .rx-pad-watermark {
@@ -178,6 +180,7 @@
   div:has(> .prescription-print-container),
   div:has(> .rx-pad-scroll-wrapper) {
     display: block !important;
+    visibility: visible !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;

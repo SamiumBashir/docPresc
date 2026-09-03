@@ -13,6 +13,9 @@ export const PublicPrescriptionView: React.FC = () => {
   const [paperSize, setPaperSize] = useState<'A4' | 'Letter'>('A4');
   const [isLoading, setIsLoading] = useState(true);
 
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
   useEffect(() => {
     const fetchPublicRx = async () => {
       try {
@@ -32,30 +35,47 @@ export const PublicPrescriptionView: React.FC = () => {
     fetchPublicRx();
   }, [token]);
 
+  // Non-blocking Native Browser Print
   const handlePrint = () => {
-    window.print();
+    setIsPrinting(true);
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        try {
+          window.print();
+        } finally {
+          setIsPrinting(false);
+        }
+      }, 40);
+    });
   };
 
+  // High-Fidelity Non-blocking PDF Generation
   const handleDownloadPdf = async () => {
     const element = document.getElementById('prescription-pad');
-    if (!element || !prescription) return;
+    if (!element || !prescription || isGeneratingPdf) return;
 
-    try {
-      const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
-      const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      const isLetter = paperSize === 'Letter';
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: isLetter ? 'letter' : 'a4',
-      });
-      const pdfWidth = isLetter ? 215.9 : 210;
-      const pdfHeight = isLetter ? 279.4 : 297;
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${prescription.patientSnapshot.name}_${prescription.prescriptionId}.pdf`);
-    } catch {
-      window.print();
-    }
+    setIsGeneratingPdf(true);
+
+    setTimeout(async () => {
+      try {
+        const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
+        const isLetter = paperSize === 'Letter';
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: isLetter ? 'letter' : 'a4',
+        });
+        const pdfWidth = isLetter ? 215.9 : 210;
+        const pdfHeight = isLetter ? 279.4 : 297;
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`${prescription.patientSnapshot.name}_${prescription.prescriptionId}.pdf`);
+      } catch {
+        handlePrint();
+      } finally {
+        setIsGeneratingPdf(false);
+      }
+    }, 40);
   };
 
   if (isLoading) {
@@ -114,16 +134,22 @@ export const PublicPrescriptionView: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <button
+              disabled={isGeneratingPdf}
               onClick={handleDownloadPdf}
-              className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5"
+              aria-label="Download prescription as PDF"
+              className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <Download className="w-3.5 h-3.5" /> Download PDF
+              <Download className={`w-3.5 h-3.5 ${isGeneratingPdf ? 'animate-bounce text-teal-300' : ''}`} />
+              <span>{isGeneratingPdf ? 'Generating...' : 'Download PDF'}</span>
             </button>
             <button
+              disabled={isPrinting}
               onClick={handlePrint}
-              className="px-4 py-1.5 bg-medical-600 hover:bg-medical-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5"
+              aria-label="Print prescription"
+              className="px-4 py-1.5 bg-medical-600 hover:bg-medical-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <Printer className="w-3.5 h-3.5" /> Print
+              <Printer className={`w-3.5 h-3.5 ${isPrinting ? 'animate-pulse text-teal-300' : ''}`} />
+              <span>{isPrinting ? 'Printing...' : 'Print'}</span>
             </button>
           </div>
         </div>

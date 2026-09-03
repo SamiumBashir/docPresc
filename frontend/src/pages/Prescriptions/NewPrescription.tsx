@@ -94,6 +94,8 @@ export const NewPrescription: React.FC = () => {
   // UI / Action State
   const [paperSize, setPaperSize] = useState<'A4' | 'Letter'>('A4');
   const [isSaving, setIsSaving] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [prescriptionId, setPrescriptionId] = useState('RX-NEW-DRAFT');
   const [shareToken, setShareToken] = useState('draft_token');
   const [existingPrescriptionId, setExistingPrescriptionId] = useState<string | null>(null);
@@ -413,42 +415,58 @@ export const NewPrescription: React.FC = () => {
     }
   };
 
-  // Native Browser Print
+  // Native Browser Print (non-blocking async to eliminate INP latency)
   const handlePrint = () => {
-    window.print();
+    setIsPrinting(true);
+    // Yield to the browser immediately so the click event returns in <1ms
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        try {
+          window.print();
+        } finally {
+          setIsPrinting(false);
+        }
+      }, 40);
+    });
   };
 
-  // High-Fidelity PDF Generation
+  // High-Fidelity Non-blocking PDF Generation
   const handleDownloadPdf = async () => {
     const element = document.getElementById('prescription-pad');
-    if (!element) return;
+    if (!element || isGeneratingPdf) return;
 
-    showToast.info('Generating PDF document...');
-    try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-      });
+    setIsGeneratingPdf(true);
+    showToast.info('Preparing PDF document...');
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      const isLetter = paperSize === 'Letter';
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: isLetter ? 'letter' : 'a4',
-      });
+    setTimeout(async () => {
+      try {
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        });
 
-      const pdfWidth = isLetter ? 215.9 : 210;
-      const pdfHeight = isLetter ? 279.4 : 297;
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
+        const isLetter = paperSize === 'Letter';
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: isLetter ? 'letter' : 'a4',
+        });
 
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${selectedPatient?.name || 'Patient'}_${prescriptionId}.pdf`);
-      showToast.success('PDF downloaded successfully!');
-    } catch (err: any) {
-      showToast.error('PDF generation failed. Please try browser print (Ctrl+P).');
-    }
+        const pdfWidth = isLetter ? 215.9 : 210;
+        const pdfHeight = isLetter ? 279.4 : 297;
+
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`${selectedPatient?.name || 'Patient'}_${prescriptionId}.pdf`);
+        showToast.success('PDF downloaded successfully!');
+      } catch (err: any) {
+        showToast.error('PDF generation failed. Please try browser print (Ctrl+P).');
+      } finally {
+        setIsGeneratingPdf(false);
+      }
+    }, 40);
   };
 
   return (
@@ -561,21 +579,25 @@ export const NewPrescription: React.FC = () => {
           {/* Print */}
           <button
             type="button"
+            disabled={isPrinting}
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+            aria-label="Print prescription"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print</span>
+            <Printer className={`w-3.5 h-3.5 ${isPrinting ? 'animate-pulse text-teal-300' : ''}`} />
+            <span>{isPrinting ? 'Printing...' : 'Print'}</span>
           </button>
 
           {/* Download PDF */}
           <button
             type="button"
+            disabled={isGeneratingPdf}
             onClick={handleDownloadPdf}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+            aria-label="Download prescription as PDF"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">PDF</span>
+            <Download className={`w-3.5 h-3.5 ${isGeneratingPdf ? 'animate-bounce text-teal-300' : ''}`} />
+            <span className="hidden sm:inline">{isGeneratingPdf ? 'Generating...' : 'PDF'}</span>
           </button>
 
           {/* Save Draft */}
