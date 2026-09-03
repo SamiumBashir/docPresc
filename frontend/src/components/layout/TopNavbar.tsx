@@ -39,17 +39,19 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
       <div className="flex items-center gap-2 sm:gap-3 w-full max-w-md">
         <button
           onClick={onToggleSidebar}
+          aria-label="Open Navigation Menu"
           className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 transition-colors shrink-0"
           title="Open Navigation Menu"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-5 h-5" aria-hidden="true" />
         </button>
 
         <button
           onClick={onOpenSearch}
+          aria-label="Quick patient search (Ctrl + K)"
           className="flex items-center gap-2 w-full bg-slate-100/80 hover:bg-slate-100 text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl text-xs sm:text-sm transition-all border border-slate-200/60 group truncate"
         >
-          <Search className="w-4 h-4 text-slate-400 group-hover:text-medical-600 transition-colors shrink-0" />
+          <Search className="w-4 h-4 text-slate-400 group-hover:text-medical-600 transition-colors shrink-0" aria-hidden="true" />
           <span className="flex-1 text-left truncate">{t('rx_select_patient')}</span>
           <kbd className="hidden md:inline-block bg-white text-slate-400 px-2 py-0.5 rounded text-xs border border-slate-200 font-mono shadow-2xs">
             Ctrl + K
@@ -64,13 +66,15 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
           <div className="relative">
             <button
               onClick={() => setChamberDropdownOpen(!chamberDropdownOpen)}
+              aria-label="Select Consulting Chamber"
+              aria-expanded={chamberDropdownOpen}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-medical-50 hover:bg-medical-100/80 text-medical-800 text-xs sm:text-sm font-medium border border-medical-200/60 transition-colors"
             >
-              <Building2 className="w-4 h-4 text-medical-600" />
+              <Building2 className="w-4 h-4 text-medical-600" aria-hidden="true" />
               <span className="max-w-[140px] truncate hidden md:inline">
                 {activeChamber?.name || 'Select Chamber'}
               </span>
-              <ChevronDown className="w-3.5 h-3.5 text-medical-600" />
+              <ChevronDown className="w-3.5 h-3.5 text-medical-600" aria-hidden="true" />
             </button>
 
             {chamberDropdownOpen && (
@@ -126,10 +130,11 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
         {/* Language Switcher */}
         <button
           onClick={() => setLanguage(language === 'en' ? 'bn' : 'en')}
+          aria-label="Toggle Language between English and Bengali"
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-xs font-semibold border border-slate-200 transition-colors"
           title="Toggle Language (English / বাংলা)"
         >
-          <Globe className="w-3.5 h-3.5 text-medical-600" />
+          <Globe className="w-3.5 h-3.5 text-medical-600" aria-hidden="true" />
           <span>{language === 'en' ? 'বাংলা' : 'English'}</span>
         </button>
 
@@ -137,6 +142,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
         <div className="relative">
           <button
             onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+            aria-label="User profile and account settings menu"
+            aria-expanded={profileDropdownOpen}
             className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100 transition-colors"
           >
             <div className="w-8 h-8 rounded-lg bg-medical-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
@@ -148,7 +155,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
                 {doctor?.bmdcNumber ? `BMDC: ${doctor.bmdcNumber}` : user?.role}
               </p>
             </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
           </button>
 
           {profileDropdownOpen && (

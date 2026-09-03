@@ -58,42 +58,57 @@ export const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <main
+      role="main"
+      className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+    >
       <div className="sm:mx-auto sm:w-full sm:max-w-lg relative z-10 text-center space-y-2">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-medical-600 to-medical-400 flex items-center justify-center text-white mx-auto shadow-lg shadow-medical-600/30">
-          <Stethoscope className="w-8 h-8" />
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-medical-600 to-medical-500 flex items-center justify-center text-white mx-auto shadow-lg shadow-medical-600/30">
+          <Stethoscope className="w-8 h-8" aria-hidden="true" />
         </div>
-        <h2 className="text-3xl font-black text-white tracking-tight">Doctor Registration</h2>
-        <p className="text-xs text-slate-400">
+        <h1 className="text-3xl font-black text-white tracking-tight">Doctor Registration</h1>
+        <p className="text-xs text-slate-300">
           Create your verified doctor profile with BMDC credentials
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg relative z-10">
         <div className="bg-slate-800/90 backdrop-blur-xl py-8 px-6 shadow-2xl rounded-3xl border border-slate-700/60 sm:px-10 space-y-5">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} role="form" aria-label="Doctor Registration Form" className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                <label
+                  htmlFor="reg-name"
+                  className="block text-xs font-bold text-slate-200 uppercase mb-1"
+                >
                   Full Name *
                 </label>
                 <input
+                  id="reg-name"
+                  name="name"
                   type="text"
                   required
+                  autoComplete="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Jhon Doe"
+                  placeholder="e.g. Dr. Abdul Karim"
                   className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-medical-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                  BMDC Registration Number *
+                <label
+                  htmlFor="reg-bmdc"
+                  className="block text-xs font-bold text-slate-200 uppercase mb-1"
+                >
+                  BMDC Number *
                 </label>
                 <input
+                  id="reg-bmdc"
+                  name="bmdcNumber"
                   type="text"
                   required
+                  autoComplete="off"
                   value={formData.bmdcNumber}
                   onChange={(e) => setFormData({ ...formData, bmdcNumber: e.target.value })}
                   placeholder="e.g. A-12345"
@@ -104,12 +119,18 @@ export const Register: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                <label
+                  htmlFor="reg-email"
+                  className="block text-xs font-bold text-slate-200 uppercase mb-1"
+                >
                   Email Address *
                 </label>
                 <input
+                  id="reg-email"
+                  name="email"
                   type="email"
                   required
+                  autoComplete="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="doctor@example.com"
@@ -118,12 +139,18 @@ export const Register: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                <label
+                  htmlFor="reg-phone"
+                  className="block text-xs font-bold text-slate-200 uppercase mb-1"
+                >
                   Phone Number *
                 </label>
                 <input
-                  type="text"
+                  id="reg-phone"
+                  name="phone"
+                  type="tel"
                   required
+                  autoComplete="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="0171..."
@@ -134,12 +161,18 @@ export const Register: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                <label
+                  htmlFor="reg-qual"
+                  className="block text-xs font-bold text-slate-200 uppercase mb-1"
+                >
                   Qualifications *
                 </label>
                 <input
+                  id="reg-qual"
+                  name="qualification"
                   type="text"
                   required
+                  autoComplete="off"
                   value={formData.qualification}
                   onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
                   placeholder="e.g. MBBS, FCPS"
@@ -148,12 +181,18 @@ export const Register: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                <label
+                  htmlFor="reg-spec"
+                  className="block text-xs font-bold text-slate-200 uppercase mb-1"
+                >
                   Specialization *
                 </label>
                 <input
+                  id="reg-spec"
+                  name="specialization"
                   type="text"
                   required
+                  autoComplete="off"
                   value={formData.specialization}
                   onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
                   placeholder="e.g. Medicine Specialist"
@@ -163,12 +202,18 @@ export const Register: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+              <label
+                htmlFor="reg-pwd"
+                className="block text-xs font-bold text-slate-200 uppercase mb-1"
+              >
                 Password *
               </label>
               <input
+                id="reg-pwd"
+                name="password"
                 type="password"
                 required
+                autoComplete="new-password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="At least 6 characters"
@@ -179,22 +224,26 @@ export const Register: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 bg-medical-500 hover:bg-medical-600 text-white font-bold rounded-xl text-sm shadow-md shadow-medical-500/25 transition-all flex items-center justify-center gap-2"
+              aria-label="Submit doctor registration"
+              className="w-full py-2.5 bg-medical-600 hover:bg-medical-700 text-white font-bold rounded-xl text-sm shadow-md shadow-medical-600/25 transition-all flex items-center justify-center gap-2"
             >
               {isLoading ? <span>Registering...</span> : <span>Complete Doctor Registration</span>}
             </button>
           </form>
 
           <div className="text-center pt-2">
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-300">
               Already registered?{' '}
-              <Link to="/login" className="text-medical-400 hover:text-medical-300 font-bold">
+              <Link
+                to="/login"
+                className="text-medical-300 hover:text-medical-200 font-bold underline-offset-2 hover:underline"
+              >
                 Sign In
               </Link>
             </p>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 };

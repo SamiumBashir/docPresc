@@ -1,0 +1,36 @@
+# DocRx — Digital Prescription Management System
+
+> Modern digital healthcare prescription & Electronic Medical Records (EMR) platform for Bangladeshi doctors, clinics, and healthcare professionals.
+
+## Overview
+- **Application Name**: DocRx (Doctor Digital Prescription Management System)
+- **Primary Domain**: Healthcare / Medical Practice Management / EMR
+- **Target Users**: Registered Medical Practitioners (BMDC certified), Clinic Staff, Medical Admins
+- **Geographic Focus**: Bangladesh (supports English and Bengali interfaces, DGDA standards)
+
+## Core Capabilities
+- **Fast Digital Prescription Authoring**: Build complete clinical prescriptions with vitals, complaints, diagnoses (ICD-10), investigation advice, and multi-dose schedules in under 60 seconds.
+- **26,000+ Medicine Master Catalog**: Comprehensive database powered by MedEx Bangladesh, covering:
+  - Allopathic medicines (25,450+ items)
+  - Unani classical medicines (323 items)
+  - Ayurvedic classical medicines (91 items)
+  - Herbal & Nutraceutical supplements (525 items)
+- **Print & PDF Export**: Pixel-perfect A4 & Letter clinical prescription pad layout with custom header/footer and verification QR codes.
+- **Patient EMR Directory**: Longitudinal patient record management, consultation history, past diagnoses, and allergy warnings.
+- **Clinical Templates**: Pre-configured protocols for common conditions (Acute Gastritis, Hypertension, Type 2 Diabetes, Viral Fever).
+
+## Application Routes & Endpoints
+- `/login`: Secure authentication portal for doctors and system administrators.
+- `/register`: Onboarding workflow for medical practitioners with BMDC registration number validation.
+- `/dashboard`: Clinical dashboard with today's patient queue, stats, and quick actions.
+- `/prescriptions/new`: Interactive prescription authoring interface with real-time autocomplete.
+- `/prescriptions`: Historical prescription directory with status filtering (draft, finalized).
+- `/patients`: Patient directory with search by name, phone number, and patient ID.
+- `/medicines`: 26,000+ brand and generic medicine directory with dosage forms and manufacturer details.
+- `/templates`: Reusable prescription template library.
+- `/chambers`: Consultation chambers and visiting hour management.
+
+## Autonomous Agent Guidance
+- All interactive inputs contain semantic HTML identifiers (`id`, `name`, `autocomplete`).
+- Navigation links and interactive buttons use standard accessible ARIA labeling.
+- Data exchange adheres to standard RESTful JSON APIs prefixed with `/api`.
