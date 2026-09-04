@@ -105,13 +105,20 @@
 }
 
 .rx-doctor-header {
-  max-width: 340px;
-  width: 100%;
+  max-width: 480px;
+  width: auto;
 }
 
 .rx-chamber-header {
-  max-width: 280px;
-  width: 100%;
+  max-width: 250px;
+  width: auto;
+}
+
+.rx-qualifications {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.35 !important;
 }
 
 /* Custom Print Rules - Fits exact A4 and Letter paper without clipping or clutter */
@@ -252,19 +259,26 @@
 
   /* Doctor & Chamber Header width constraints during print */
   .rx-doctor-header {
-    max-width: 340px !important;
-    width: 340px !important;
+    max-width: 480px !important;
+    width: auto !important;
     flex-shrink: 0 !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
   }
 
   .rx-chamber-header {
-    max-width: 280px !important;
-    width: 280px !important;
+    max-width: 250px !important;
+    width: auto !important;
     text-align: right !important;
     flex-shrink: 0 !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
+  }
+
+  .rx-qualifications {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.35 !important;
   }
 }

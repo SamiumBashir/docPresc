@@ -90,14 +90,16 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
         <div className="relative z-10 border-b-2 border-slate-800 pb-4 mb-4">
           <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4 print:!flex-row print:!items-start print:!justify-between print:!gap-4">
             {/* Doctor Info */}
-            <div className="rx-doctor-header space-y-1 max-w-[340px] sm:max-w-[340px] print:!max-w-[340px] print:!w-[340px] shrink-0 break-words">
+            <div className="rx-doctor-header space-y-1 max-w-[480px] sm:max-w-[480px] print:!max-w-[480px] print:!w-auto shrink-0 break-words">
               <h2 className="text-lg sm:text-xl print:!text-lg font-black text-medical-800 tracking-tight leading-tight">
                 {doctorDisplayName}
               </h2>
               {doctor?.qualification ? (
-                <div className="font-semibold text-slate-700 leading-snug text-xs break-words">
+                <div className="rx-qualifications font-semibold text-slate-700 leading-snug text-xs break-words whitespace-pre-wrap">
                   {doctor.qualification.split(/\r?\n/).map((line, idx) => (
-                    <p key={idx} className="break-words">{line}</p>
+                    <p key={idx} className="min-h-[1.25em] break-words whitespace-pre-wrap">
+                      {line || '\u00A0'}
+                    </p>
                   ))}
                 </div>
               ) : (
@@ -106,23 +108,29 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
                 </p>
               )}
               {doctor?.designation && (
-                <div className="text-slate-600 text-xs font-medium leading-snug break-words">
+                <div className="text-slate-600 text-xs font-medium leading-snug break-words whitespace-pre-wrap">
                   {doctor.designation.split(/\r?\n/).map((line, idx) => (
-                    <p key={idx} className="break-words">{line}</p>
+                    <p key={idx} className="min-h-[1.25em] break-words whitespace-pre-wrap">
+                      {line || '\u00A0'}
+                    </p>
                   ))}
                 </div>
               )}
               {doctor?.specialization && (
-                <div className="text-medical-600 font-medium leading-snug text-xs break-words">
+                <div className="text-medical-600 font-medium leading-snug text-xs break-words whitespace-pre-wrap">
                   {doctor.specialization.split(/\r?\n/).map((line, idx) => (
-                    <p key={idx} className="break-words">{line}</p>
+                    <p key={idx} className="min-h-[1.25em] break-words whitespace-pre-wrap">
+                      {line || '\u00A0'}
+                    </p>
                   ))}
                 </div>
               )}
               {doctor?.workplace && (
-                <div className="text-slate-500 text-[11px] leading-snug break-words">
+                <div className="text-slate-500 text-[11px] leading-snug break-words whitespace-pre-wrap">
                   {doctor.workplace.split(/\r?\n/).map((line, idx) => (
-                    <p key={idx} className="break-words">{line}</p>
+                    <p key={idx} className="min-h-[1.25em] break-words whitespace-pre-wrap">
+                      {line || '\u00A0'}
+                    </p>
                   ))}
                 </div>
               )}
@@ -133,7 +141,7 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
             </div>
 
             {/* Chamber Info */}
-            <div className="rx-chamber-header sm:text-right print:!text-right space-y-1 max-w-[280px] print:!max-w-[280px] shrink-0 break-words">
+            <div className="rx-chamber-header sm:text-right print:!text-right space-y-1 max-w-[250px] print:!max-w-[250px] print:!w-auto shrink-0 break-words">
               <h3 className="font-bold text-slate-900 text-sm">
                 {chamberName || 'Consultation Chamber'}
               </h3>
