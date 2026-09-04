@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, ShieldCheck, Phone, Mail, Award, Building, Save, Trash2, AlertTriangle, CornerDownLeft } from 'lucide-react';
+import { User, ShieldCheck, Phone, Mail, Award, Building, Save, Trash2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
@@ -23,26 +23,6 @@ export const DoctorProfile: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [confirmDeleteText, setConfirmDeleteText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const insertLineBreak = (field: 'qualification' | 'designation', elementId: string) => {
-    const textarea = document.getElementById(elementId) as HTMLTextAreaElement | null;
-    if (textarea) {
-      const start = textarea.selectionStart ?? textarea.value.length;
-      const end = textarea.selectionEnd ?? textarea.value.length;
-      const val = formData[field] || '';
-      const updated = val.substring(0, start) + '\n' + val.substring(end);
-      setFormData((prev) => ({ ...prev, [field]: updated }));
-      setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(start + 1, start + 1);
-      }, 0);
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: prev[field] ? `${prev[field]}\n` : '\n',
-      }));
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,20 +126,9 @@ export const DoctorProfile: React.FC = () => {
         {/* Degrees & Specialization */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label htmlFor="doctor-qualification" className="block text-xs font-bold text-slate-700 uppercase">
-                Medical Qualifications / Degrees *
-              </label>
-              <button
-                type="button"
-                onClick={() => insertLineBreak('qualification', 'doctor-qualification')}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-medical-700 hover:text-medical-800 bg-medical-50 hover:bg-medical-100 border border-medical-200 px-2 py-0.5 rounded-lg transition-colors cursor-pointer shadow-2xs"
-                title="নতুন লাইন যোগ করতে ক্লিক করুন (বা কিবোর্ডে Enter চাপুন)"
-              >
-                <CornerDownLeft className="w-3 h-3" />
-                <span>↵ লাইন ব্রেক (New Line)</span>
-              </button>
-            </div>
+            <label htmlFor="doctor-qualification" className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Medical Qualifications / Degrees *
+            </label>
             <textarea
               id="doctor-qualification"
               required
@@ -169,16 +138,14 @@ export const DoctorProfile: React.FC = () => {
               placeholder={'e.g. MBBS (DMC)\nFCPS (Medicine)\nCCD (BIRDEM)'}
               className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-1 focus:ring-medical-500 focus:outline-none font-medium leading-relaxed resize-y"
             />
-            <p className="text-[10px] text-slate-400 mt-1">
-              💡 প্রেসক্রিপশনে প্রতিটি ডিগ্রি আলাদা লাইনে দেখাতে <span className="font-semibold text-slate-600">Enter</span> চাপুন অথবা <span className="font-semibold text-medical-600">"↵ লাইন ব্রেক"</span> বাটনে ক্লিক করুন।
-            </p>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+            <label htmlFor="doctor-specialization" className="block text-xs font-bold text-slate-700 uppercase mb-1">
               Specialization *
             </label>
             <input
+              id="doctor-specialization"
               type="text"
               required
               value={formData.specialization}
@@ -192,20 +159,9 @@ export const DoctorProfile: React.FC = () => {
         {/* Designation & Hospital */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label htmlFor="doctor-designation" className="block text-xs font-bold text-slate-700 uppercase">
-                Official Designation
-              </label>
-              <button
-                type="button"
-                onClick={() => insertLineBreak('designation', 'doctor-designation')}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-medical-700 hover:text-medical-800 bg-medical-50 hover:bg-medical-100 border border-medical-200 px-2 py-0.5 rounded-lg transition-colors cursor-pointer shadow-2xs"
-                title="নতুন লাইন যোগ করতে ক্লিক করুন (বা কিবোর্ডে Enter চাপুন)"
-              >
-                <CornerDownLeft className="w-3 h-3" />
-                <span>↵ লাইন ব্রেক (New Line)</span>
-              </button>
-            </div>
+            <label htmlFor="doctor-designation" className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Official Designation
+            </label>
             <textarea
               id="doctor-designation"
               rows={2}
@@ -214,9 +170,6 @@ export const DoctorProfile: React.FC = () => {
               placeholder={'e.g. Associate Professor\nDept of Medicine'}
               className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-1 focus:ring-medical-500 focus:outline-none leading-relaxed resize-y"
             />
-            <p className="text-[10px] text-slate-400 mt-1">
-              💡 পদবি একাধিক লাইনে সাজাতে <span className="font-semibold text-slate-600">Enter</span> চাপুন বা <span className="font-semibold text-medical-600">"↵ লাইন ব্রেক"</span> চাপুন।
-            </p>
           </div>
 
           <div>

@@ -146,6 +146,8 @@ export interface IPrescription {
     qualification: string;
     specialization: string;
     bmdcNumber: string;
+    designation?: string;
+    workplace?: string;
     phone?: string;
     email?: string;
     chamberName?: string;

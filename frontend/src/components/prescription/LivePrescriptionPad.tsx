@@ -95,26 +95,36 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
                 {doctorDisplayName}
               </h2>
               {doctor?.qualification ? (
-                <p className="font-semibold text-slate-700 leading-snug whitespace-pre-line">
-                  {doctor.qualification}
-                </p>
+                <div className="font-semibold text-slate-700 leading-snug">
+                  {doctor.qualification.split(/\r?\n/).map((line, idx) => (
+                    <p key={idx}>{line}</p>
+                  ))}
+                </div>
               ) : (
                 <p className="font-semibold text-slate-700 leading-snug">
                   MBBS (DMC), FCPS (Medicine), CCD (BIRDEM)
                 </p>
               )}
               {doctor?.designation && (
-                <p className="text-slate-600 text-xs font-medium leading-snug whitespace-pre-line">
-                  {doctor.designation}
-                </p>
+                <div className="text-slate-600 text-xs font-medium leading-snug">
+                  {doctor.designation.split(/\r?\n/).map((line, idx) => (
+                    <p key={idx}>{line}</p>
+                  ))}
+                </div>
               )}
               {doctor?.specialization && (
-                <p className="text-medical-600 font-medium leading-snug whitespace-pre-line">
-                  {doctor.specialization}
-                </p>
+                <div className="text-medical-600 font-medium leading-snug">
+                  {doctor.specialization.split(/\r?\n/).map((line, idx) => (
+                    <p key={idx}>{line}</p>
+                  ))}
+                </div>
               )}
               {doctor?.workplace && (
-                <p className="text-slate-500 text-[11px] leading-snug whitespace-pre-line">{doctor.workplace}</p>
+                <div className="text-slate-500 text-[11px] leading-snug">
+                  {doctor.workplace.split(/\r?\n/).map((line, idx) => (
+                    <p key={idx}>{line}</p>
+                  ))}
+                </div>
               )}
               <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[10px] tracking-wide mt-1">
                 <span>BMDC REG. NO:</span>
@@ -424,10 +434,18 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
             </div>
             <p className="font-bold text-slate-900 text-xs">{doctorDisplayName}</p>
             {doctor?.qualification && (
-              <p className="text-[10px] text-slate-500 whitespace-pre-line leading-tight">{doctor.qualification}</p>
+              <div className="text-[10px] text-slate-500 leading-tight">
+                {doctor.qualification.split(/\r?\n/).map((line, idx) => (
+                  <p key={idx}>{line}</p>
+                ))}
+              </div>
             )}
             {doctor?.designation && (
-              <p className="text-[10px] text-slate-500 whitespace-pre-line leading-tight">{doctor.designation}</p>
+              <div className="text-[10px] text-slate-500 leading-tight">
+                {doctor.designation.split(/\r?\n/).map((line, idx) => (
+                  <p key={idx}>{line}</p>
+                ))}
+              </div>
             )}
             <p className="text-[10px] text-medical-700 font-semibold">BMDC: {doctor?.bmdcNumber}</p>
           </div>

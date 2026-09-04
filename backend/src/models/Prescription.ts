@@ -56,6 +56,8 @@ export interface IPrescription extends Document {
     qualification: string;
     specialization: string;
     bmdcNumber: string;
+    designation?: string;
+    workplace?: string;
     phone?: string;
     email?: string;
     chamberName?: string;
@@ -123,6 +125,8 @@ const PrescriptionSchema: Schema = new Schema(
       qualification: { type: String },
       specialization: { type: String },
       bmdcNumber: { type: String },
+      designation: { type: String },
+      workplace: { type: String },
       phone: { type: String },
       email: { type: String },
       chamberName: { type: String },
