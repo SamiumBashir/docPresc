@@ -424,7 +424,7 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
           </div>
 
           {/* Right: Signature Area */}
-          <div className="text-left sm:text-right print:!text-right space-y-1 w-full sm:w-auto max-w-[260px] ml-auto shrink-0 break-words">
+          <div className="text-left sm:text-right print:!text-right space-y-1 w-full sm:w-auto ml-auto shrink-0">
             <div className="h-10 flex items-end justify-start sm:justify-end">
               {doctor?.signature ? (
                 <img src={doctor.signature} alt="Doctor Signature" className="max-h-10 object-contain" />
@@ -433,21 +433,6 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
               )}
             </div>
             <p className="font-bold text-slate-900 text-xs">{doctorDisplayName}</p>
-            {doctor?.qualification && (
-              <div className="text-[10px] text-slate-500 leading-tight break-words">
-                {doctor.qualification.split(/\r?\n/).map((line, idx) => (
-                  <p key={idx} className="break-words">{line}</p>
-                ))}
-              </div>
-            )}
-            {doctor?.designation && (
-              <div className="text-[10px] text-slate-500 leading-tight break-words">
-                {doctor.designation.split(/\r?\n/).map((line, idx) => (
-                  <p key={idx} className="break-words">{line}</p>
-                ))}
-              </div>
-            )}
-            <p className="text-[10px] text-medical-700 font-semibold">BMDC: {doctor?.bmdcNumber}</p>
           </div>
         </div>
       </div>
