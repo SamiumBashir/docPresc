@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Stethoscope, User, Lock, Mail, Phone, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Stethoscope, User, Lock, Mail, Phone, ShieldCheck, ArrowRight, Eye, EyeOff, CornerDownLeft } from 'lucide-react';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
 
@@ -15,6 +15,7 @@ export const Register: React.FC = () => {
     bmdcNumber: '',
     workplace: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -161,22 +162,48 @@ export const Register: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label
-                  htmlFor="reg-qual"
-                  className="block text-xs font-bold text-slate-200 uppercase mb-1"
-                >
-                  Qualifications *
-                </label>
-                <input
+                <div className="flex items-center justify-between mb-1">
+                  <label
+                    htmlFor="reg-qual"
+                    className="block text-xs font-bold text-slate-200 uppercase"
+                  >
+                    Qualifications *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById('reg-qual') as HTMLTextAreaElement | null;
+                      if (el) {
+                        const start = el.selectionStart ?? el.value.length;
+                        const end = el.selectionEnd ?? el.value.length;
+                        const val = formData.qualification;
+                        const updated = val.substring(0, start) + '\n' + val.substring(end);
+                        setFormData({ ...formData, qualification: updated });
+                        setTimeout(() => {
+                          el.focus();
+                          el.setSelectionRange(start + 1, start + 1);
+                        }, 0);
+                      } else {
+                        setFormData({ ...formData, qualification: formData.qualification + '\n' });
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 text-[10px] text-teal-400 hover:text-teal-300 transition-colors cursor-pointer"
+                    title="নতুন লাইন যোগ করতে ক্লিক করুন"
+                  >
+                    <CornerDownLeft className="w-3 h-3" />
+                    <span>↵ লাইন ব্রেক</span>
+                  </button>
+                </div>
+                <textarea
                   id="reg-qual"
                   name="qualification"
-                  type="text"
+                  rows={2}
                   required
                   autoComplete="off"
                   value={formData.qualification}
                   onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-                  placeholder="e.g. MBBS, FCPS"
-                  className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-medical-500"
+                  placeholder={'e.g. MBBS (DMC)\nFCPS (Medicine)'}
+                  className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-medical-500 resize-y leading-relaxed"
                 />
               </div>
 
@@ -202,23 +229,46 @@ export const Register: React.FC = () => {
             </div>
 
             <div>
-              <label
-                htmlFor="reg-pwd"
-                className="block text-xs font-bold text-slate-200 uppercase mb-1"
-              >
-                Password *
-              </label>
-              <input
-                id="reg-pwd"
-                name="password"
-                type="password"
-                required
-                autoComplete="new-password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="At least 6 characters"
-                className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-medical-500 font-mono"
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label
+                  htmlFor="reg-pwd"
+                  className="block text-xs font-bold text-slate-200 uppercase"
+                >
+                  Password *
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-xs text-slate-400 hover:text-medical-400 flex items-center gap-1.5 transition-colors cursor-pointer select-none"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  <span>{showPassword ? 'Hide password (পাসওয়ার্ড লুকান)' : 'Show password (পাসওয়ার্ড দেখুন)'}</span>
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  id="reg-pwd"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  autoComplete="new-password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder={showPassword ? 'At least 6 characters' : '••••••••'}
+                  className="w-full pl-3 pr-10 py-2 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-medical-500 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-2 text-slate-400 hover:text-white p-0.5 rounded transition-colors focus:outline-none"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <button
