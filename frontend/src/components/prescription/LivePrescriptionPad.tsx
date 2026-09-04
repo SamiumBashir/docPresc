@@ -90,7 +90,7 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
         <div className="relative z-10 border-b-2 border-slate-800 pb-4 mb-4">
           <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4 print:!flex-row print:!items-start print:!justify-between print:!gap-4">
             {/* Doctor Info */}
-            <div className="rx-doctor-header space-y-1 max-w-[480px] sm:max-w-[480px] print:!max-w-[480px] print:!w-auto shrink-0 break-words">
+            <div className="rx-doctor-header space-y-1 flex-1 min-w-0 max-w-[440px] print:!max-w-[440px] break-words">
               <h2 className="text-lg sm:text-xl print:!text-lg font-black text-medical-800 tracking-tight leading-tight">
                 {doctorDisplayName}
               </h2>
@@ -141,11 +141,11 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
             </div>
 
             {/* Chamber Info */}
-            <div className="rx-chamber-header sm:text-right print:!text-right space-y-1 max-w-[250px] print:!max-w-[250px] print:!w-auto shrink-0 break-words">
-              <h3 className="font-bold text-slate-900 text-sm">
+            <div className="rx-chamber-header text-right sm:text-right print:!text-right space-y-1 w-auto max-w-[260px] sm:max-w-[270px] print:!max-w-[260px] shrink-0 break-words">
+              <h3 className="font-bold text-slate-900 text-sm leading-tight break-words">
                 {chamberName || 'Consultation Chamber'}
               </h3>
-              <p className="text-slate-600 text-[11px] leading-tight">
+              <p className="text-slate-600 text-[11px] leading-snug break-words">
                 {chamber?.address ||
                   (typeof doctor?.defaultChamberId === 'object'
                     ? (doctor.defaultChamberId as any).address
@@ -154,19 +154,19 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
                   'Medical Plaza, Dhanmondi, Dhaka'}
               </p>
               {(chamber?.phone || doctor?.phone) && (
-                <p className="text-slate-500 text-[11px] font-mono">
+                <p className="text-slate-500 text-[11px] font-mono leading-tight whitespace-nowrap">
                   Phone: {chamber?.phone || doctor?.phone}
                 </p>
               )}
               {(chamber?.visitingHours || (typeof doctor?.defaultChamberId === 'object' && (doctor.defaultChamberId as any).visitingHours)) && (
-                <p className="text-medical-700 text-[11px] font-medium">
+                <p className="text-medical-700 text-[11px] font-medium leading-tight whitespace-nowrap">
                   Time: {chamber?.visitingHours || (doctor?.defaultChamberId as any)?.visitingHours}
                 </p>
               )}
               {((chamber as any)?.website ||
                 (typeof doctor?.defaultChamberId === 'object' && (doctor.defaultChamberId as any).website) ||
                 (doctor as any)?.chamberWebsite) && (
-                <p className="text-slate-600 text-[11px] leading-tight break-words">
+                <p className="text-slate-600 text-[11px] leading-snug break-words">
                   <span className="font-semibold text-slate-700">Appointment:</span>{' '}
                   <span className="text-medical-700 font-medium">
                     {(chamber as any)?.website ||
