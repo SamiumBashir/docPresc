@@ -169,30 +169,6 @@ export const Register: React.FC = () => {
                   >
                     Qualifications *
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const el = document.getElementById('reg-qual') as HTMLTextAreaElement | null;
-                      if (el) {
-                        const start = el.selectionStart ?? el.value.length;
-                        const end = el.selectionEnd ?? el.value.length;
-                        const val = formData.qualification;
-                        const updated = val.substring(0, start) + '\n' + val.substring(end);
-                        setFormData({ ...formData, qualification: updated });
-                        setTimeout(() => {
-                          el.focus();
-                          el.setSelectionRange(start + 1, start + 1);
-                        }, 0);
-                      } else {
-                        setFormData({ ...formData, qualification: formData.qualification + '\n' });
-                      }
-                    }}
-                    className="inline-flex items-center gap-1 text-[10px] text-teal-400 hover:text-teal-300 transition-colors cursor-pointer"
-                    title="নতুন লাইন যোগ করতে ক্লিক করুন"
-                  >
-                    <CornerDownLeft className="w-3 h-3" />
-                    <span>↵ লাইন ব্রেক</span>
-                  </button>
                 </div>
                 <textarea
                   id="reg-qual"
