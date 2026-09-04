@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Stethoscope, Lock, Mail, ArrowRight, ShieldCheck, UserCheck, Eye, EyeOff } from 'lucide-react';
+import { Stethoscope, Lock, Mail, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../components/ui/Toast';
 
@@ -40,16 +40,6 @@ export const Login: React.FC = () => {
     }
   };
 
-  const fillDemoDoctor = () => {
-    setEmail('doctor@prescription.com');
-    setPassword('Doctor123!');
-  };
-
-  const fillDemoAdmin = () => {
-    setEmail('admin@prescription.com');
-    setPassword('Admin123!');
-  };
-
   return (
     <main
       role="main"
@@ -71,33 +61,6 @@ export const Login: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="bg-slate-800/90 backdrop-blur-xl py-8 px-6 shadow-2xl rounded-3xl border border-slate-700/60 sm:px-10 space-y-6">
-          {/* 1-Click Fast Demo Fill Buttons */}
-          <div className="p-3 bg-slate-900/70 border border-slate-700/80 rounded-2xl space-y-2">
-            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block text-center">
-              Quick Demo Access
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={fillDemoDoctor}
-                aria-label="Fill demo doctor credentials"
-                className="py-1.5 px-3 bg-medical-600 hover:bg-medical-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
-              >
-                <UserCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Doctor Demo</span>
-              </button>
-              <button
-                type="button"
-                onClick={fillDemoAdmin}
-                aria-label="Fill demo administrator credentials"
-                className="py-1.5 px-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
-              >
-                <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Admin Demo</span>
-              </button>
-            </div>
-          </div>
-
           <form onSubmit={handleSubmit} role="form" aria-label="Doctor Sign In Form" className="space-y-4">
             <div>
               <label
