@@ -201,13 +201,28 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
       </div>
 
       {/* MAIN TWO-COLUMN BODY */}
-      <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 flex-1 min-h-[480px]">
+      <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 flex-1 min-h-[480px] border-t-2 border-slate-800">
         {/* LEFT COLUMN: Clinical Notes, Vitals, Investigations (Width: 4/12) */}
-        <div className="col-span-1 md:col-span-4 border-b md:border-b-0 md:border-r border-slate-200 pb-4 md:pb-0 md:pr-4 space-y-4">
+        <div className="rx-pad-left-col col-span-1 md:col-span-4 border-b-2 md:border-b-0 md:border-r-2 border-slate-800 p-3 sm:p-3.5 space-y-4">
+          {/* Empty State / Diagnosis Placeholder matching user specification */}
+          {chiefComplaints.length === 0 &&
+            !vitals?.bpSystolic &&
+            !vitals?.pulse &&
+            !vitals?.temperature &&
+            !vitals?.weight &&
+            !history &&
+            !examination &&
+            diagnosis.length === 0 &&
+            investigations.length === 0 && (
+              <div className="text-slate-500/80 text-xs font-medium tracking-wide">
+                Diagnosis...
+              </div>
+            )}
+
           {/* Vitals */}
           {vitals && (vitals.bpSystolic || vitals.pulse || vitals.temperature || vitals.weight) && (
             <div className="space-y-1.5 rx-avoid-break">
-              <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] border-b border-slate-200 pb-1">
+              <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] border-b border-emerald-300/80 pb-1">
                 Clinical Vitals (O/E)
               </h4>
               <div className="space-y-0.5 text-[11px] text-slate-700">
@@ -254,7 +269,7 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
           {/* Chief Complaints (C/C) */}
           {chiefComplaints.length > 0 && (
             <div className="space-y-1 rx-avoid-break">
-              <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] border-b border-slate-200 pb-1">
+              <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] border-b border-emerald-300/80 pb-1">
                 Chief Complaints (C/C)
               </h4>
               <ul className="list-disc list-inside space-y-0.5 text-slate-800">
@@ -289,7 +304,7 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
           {/* Diagnosis */}
           {diagnosis.length > 0 && (
             <div className="space-y-1 rx-avoid-break">
-              <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] border-b border-slate-200 pb-1">
+              <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] border-b border-emerald-300/80 pb-1">
                 Diagnosis (Dx)
               </h4>
               <ul className="space-y-1 text-slate-900 font-semibold">
@@ -313,7 +328,7 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
           {/* Investigations Advised */}
           {investigations.length > 0 && (
             <div className="space-y-1 rx-avoid-break">
-              <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] border-b border-slate-200 pb-1">
+              <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] border-b border-emerald-300/80 pb-1">
                 Investigations (Tests)
               </h4>
               <ol className="list-decimal list-inside space-y-0.5 text-slate-800">
@@ -328,7 +343,7 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
         </div>
 
         {/* RIGHT COLUMN: Rx Medicines, Advice, Follow-up (Width: 8/12) */}
-        <div className="col-span-1 md:col-span-8 flex flex-col justify-between pt-2 md:pt-0">
+        <div className="col-span-1 md:col-span-8 p-3 sm:p-4 sm:pl-6 flex flex-col justify-between pt-3">
           <div className="space-y-6">
             {/* Rx Emblem */}
             <div className="flex items-center gap-2 border-b border-slate-200 pb-1">

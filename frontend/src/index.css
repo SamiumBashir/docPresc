@@ -82,26 +82,32 @@
   animation: page-fade-in 220ms ease-out forwards;
 }
 
-/* Medical Prescription Pad Watermark styling */
+/* Medical Prescription Pad Watermark styling with interesting typography & clinical hue */
 .rx-pad-watermark {
   position: absolute;
-  top: 52%;
+  top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) rotate(-25deg);
-  width: 85%;
-  max-width: 600px;
+  transform: translate(-50%, -50%) rotate(-20deg);
+  width: 90%;
+  max-width: 660px;
   text-align: center;
-  font-size: 38px;
+  font-size: 40px;
   font-weight: 800;
   line-height: 1.25;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(15, 23, 42, 0.04);
+  color: rgba(13, 148, 136, 0.08); /* Sophisticated medical teal tone */
   pointer-events: none;
   user-select: none;
-  font-family: 'Inter', 'Hind Siliguri', sans-serif;
+  font-family: 'Cinzel', 'Playfair Display', Georgia, serif;
   z-index: 0;
   word-break: break-word;
+}
+
+/* Left-side clinical column (Light Green tint with crisp divider) */
+.rx-pad-left-col {
+  background-color: rgba(240, 253, 244, 0.85) !important;
+  border-right: 2px solid #1e293b !important;
 }
 
 .rx-doctor-header {
@@ -144,7 +150,15 @@
   }
 
   .rx-pad-watermark {
-    color: rgba(0, 0, 0, 0.045) !important;
+    color: rgba(13, 148, 136, 0.075) !important;
+    font-family: 'Cinzel', 'Playfair Display', Georgia, serif !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .rx-pad-left-col {
+    background-color: rgba(240, 253, 244, 0.85) !important;
+    border-right: 2px solid #1e293b !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
