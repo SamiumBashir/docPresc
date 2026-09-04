@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Search,
@@ -26,7 +26,22 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
   const { language, setLanguage, t } = useLanguage();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [chamberDropdownOpen, setChamberDropdownOpen] = useState(false);
+  const chamberDropdownRef = useRef<HTMLDivElement>(null);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (chamberDropdownRef.current && !chamberDropdownRef.current.contains(event.target as Node)) {
+        setChamberDropdownOpen(false);
+      }
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -63,50 +78,81 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
       <div className="flex items-center gap-2 sm:gap-4">
         {/* Active Chamber Switcher */}
         {user?.role === 'doctor' && chambers.length > 0 && (
-          <div className="relative">
+          <div className="relative" ref={chamberDropdownRef}>
             <button
               onClick={() => setChamberDropdownOpen(!chamberDropdownOpen)}
               aria-label="Select Consulting Chamber"
               aria-expanded={chamberDropdownOpen}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-medical-50 hover:bg-medical-100/80 text-medical-800 text-xs sm:text-sm font-medium border border-medical-200/60 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-medical-50 hover:bg-medical-100/80 text-medical-800 text-xs sm:text-sm font-medium border border-medical-200/60 transition-colors shrink-0"
             >
-              <Building2 className="w-4 h-4 text-medical-600" aria-hidden="true" />
-              <span className="max-w-[140px] truncate hidden md:inline">
+              <Building2 className="w-4 h-4 text-medical-600 shrink-0" aria-hidden="true" />
+              <span className="max-w-[160px] sm:max-w-[240px] md:max-w-[320px] lg:max-w-[400px] truncate inline-block">
                 {activeChamber?.name || 'Select Chamber'}
               </span>
-              <ChevronDown className="w-3.5 h-3.5 text-medical-600" aria-hidden="true" />
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-medical-600 shrink-0 transition-transform duration-200 ${
+                  chamberDropdownOpen ? 'rotate-180' : ''
+                }`}
+                aria-hidden="true"
+              />
             </button>
 
             {chamberDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-40 animate-in fade-in zoom-in-95">
-                <div className="px-3 py-2 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Select Consulting Chamber
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-40 animate-in fade-in zoom-in-95">
+                <div className="px-3.5 py-2 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                  <span>Select Consulting Chamber</span>
+                  <span className="text-[11px] font-normal text-slate-400">({chambers.length})</span>
                 </div>
-                {chambers.map((ch) => (
-                  <button
-                    key={ch._id}
-                    onClick={() => {
-                      setActiveChamber(ch);
-                      setChamberDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 text-sm flex items-start gap-2 hover:bg-slate-50 transition-colors ${
-                      activeChamber?._id === ch._id
-                        ? 'text-medical-700 font-semibold bg-medical-50/50'
-                        : 'text-slate-700'
-                    }`}
-                  >
-                    <Building2 className="w-4 h-4 text-medical-500 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="leading-tight">{ch.name}</p>
-                      <p className="text-xs text-slate-400 leading-tight mt-0.5 truncate">{ch.address}</p>
-                    </div>
-                  </button>
-                ))}
+                <div className="max-h-72 overflow-y-auto divide-y divide-slate-50">
+                  {chambers.map((ch) => {
+                    const isSelected = activeChamber?._id === ch._id;
+                    return (
+                      <button
+                        key={ch._id}
+                        onClick={() => {
+                          setActiveChamber(ch);
+                          setChamberDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-3.5 py-2.5 text-sm flex items-start gap-3 hover:bg-slate-50 transition-colors ${
+                          isSelected
+                            ? 'text-medical-800 font-semibold bg-medical-50/60'
+                            : 'text-slate-700'
+                        }`}
+                      >
+                        <Building2
+                          className={`w-4 h-4 mt-0.5 shrink-0 ${
+                            isSelected ? 'text-medical-600' : 'text-slate-400'
+                          }`}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="leading-snug font-medium text-slate-900 break-words">{ch.name}</p>
+                            {isSelected && (
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-medical-700 bg-medical-100/80 px-1.5 py-0.5 rounded shrink-0">
+                                Active
+                              </span>
+                            )}
+                          </div>
+                          {ch.address && (
+                            <p className="text-xs text-slate-500 leading-snug mt-1 break-words">
+                              {ch.address}
+                            </p>
+                          )}
+                          {ch.visitingHours && (
+                            <p className="text-[11px] text-medical-600 font-medium leading-snug mt-0.5">
+                              {ch.visitingHours}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
                 <div className="border-t border-slate-100 p-2">
                   <Link
                     to="/chambers"
                     onClick={() => setChamberDropdownOpen(false)}
-                    className="text-xs text-medical-600 hover:text-medical-700 font-medium block text-center py-1"
+                    className="text-xs text-medical-600 hover:text-medical-700 font-medium block text-center py-1.5 hover:bg-medical-50/50 rounded-lg transition-colors"
                   >
                     + Manage Chambers
                   </Link>
@@ -139,7 +185,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
         </button>
 
         {/* Profile Avatar & Menu */}
-        <div className="relative">
+        <div className="relative" ref={profileDropdownRef}>
           <button
             onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
             aria-label="User profile and account settings menu"
@@ -155,7 +201,12 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
                 {doctor?.bmdcNumber ? `BMDC: ${doctor.bmdcNumber}` : user?.role}
               </p>
             </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+            <ChevronDown
+              className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                profileDropdownOpen ? 'rotate-180' : ''
+              }`}
+              aria-hidden="true"
+            />
           </button>
 
           {profileDropdownOpen && (
