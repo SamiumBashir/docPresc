@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Plus, Phone, Calendar, Clock, Check, Edit2, Trash2 } from 'lucide-react';
+import { Building2, Plus, Phone, Calendar, Clock, Check, Edit2, Trash2, Globe } from 'lucide-react';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
 import { Modal } from '../../components/ui/Modal';
@@ -15,6 +15,7 @@ export const ChamberList: React.FC = () => {
     address: '',
     phone: '',
     appointmentPhone: '',
+    website: '',
     visitingDays: ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'],
     visitingHours: '5:00 PM - 9:00 PM',
     roomNo: '',
@@ -28,6 +29,7 @@ export const ChamberList: React.FC = () => {
       address: '',
       phone: '',
       appointmentPhone: '',
+      website: '',
       visitingDays: ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'],
       visitingHours: '5:00 PM - 9:00 PM',
       roomNo: '',
@@ -43,6 +45,7 @@ export const ChamberList: React.FC = () => {
       address: ch.address,
       phone: ch.phone || '',
       appointmentPhone: ch.appointmentPhone || '',
+      website: ch.website || '',
       visitingDays: ch.visitingDays || ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'],
       visitingHours: ch.visitingHours || '5:00 PM - 9:00 PM',
       roomNo: ch.roomNo || '',
@@ -181,14 +184,29 @@ export const ChamberList: React.FC = () => {
                 <div className="space-y-1.5 text-xs text-slate-500 pt-2 border-t border-slate-100 font-mono">
                   {ch.phone && (
                     <p className="flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 text-slate-400" /> {ch.phone}
+                      <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {ch.phone}
+                    </p>
+                  )}
+                  {ch.website && (
+                    <p className="flex items-center gap-1.5 text-medical-700 font-medium font-sans">
+                      <Globe className="w-3.5 h-3.5 text-medical-500 shrink-0" />
+                      <a
+                        href={ch.website.startsWith('http') ? ch.website : `https://${ch.website}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="truncate hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                        title={`Appointment Website: ${ch.website}`}
+                      >
+                        {ch.website}
+                      </a>
                     </p>
                   )}
                   <p className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" /> {ch.visitingHours}
+                    <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {ch.visitingHours}
                   </p>
                   <p className="flex items-center gap-1.5 text-[11px] font-sans">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                    <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     {ch.visitingDays?.join(', ')}
                   </p>
                 </div>
@@ -281,6 +299,25 @@ export const ChamberList: React.FC = () => {
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-1 focus:ring-medical-500 focus:outline-none"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Website (For Appointment)
+            </label>
+            <div className="relative">
+              <Globe className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+              <input
+                type="text"
+                value={formData.website}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                placeholder="e.g. www.medigohealth.com or https://appointment.hospital.com"
+                className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-1 focus:ring-medical-500 focus:outline-none"
+              />
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1">
+              Appointment website link displayed on your prescription letterhead.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

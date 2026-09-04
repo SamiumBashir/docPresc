@@ -155,6 +155,18 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
                   Time: {chamber?.visitingHours || (doctor?.defaultChamberId as any)?.visitingHours}
                 </p>
               )}
+              {((chamber as any)?.website ||
+                (typeof doctor?.defaultChamberId === 'object' && (doctor.defaultChamberId as any).website) ||
+                (doctor as any)?.chamberWebsite) && (
+                <p className="text-slate-600 text-[11px] leading-tight break-words">
+                  <span className="font-semibold text-slate-700">Appointment:</span>{' '}
+                  <span className="text-medical-700 font-medium">
+                    {(chamber as any)?.website ||
+                      (doctor?.defaultChamberId as any)?.website ||
+                      (doctor as any)?.chamberWebsite}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
         </div>

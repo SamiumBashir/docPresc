@@ -143,6 +143,11 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
                               {ch.visitingHours}
                             </p>
                           )}
+                          {ch.website && (
+                            <p className="text-[11px] text-slate-500 font-medium leading-snug mt-0.5 truncate">
+                              Appointment: {ch.website}
+                            </p>
+                          )}
                         </div>
                       </button>
                     );

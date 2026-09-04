@@ -62,6 +62,7 @@ export interface IPrescription extends Document {
     email?: string;
     chamberName?: string;
     chamberAddress?: string;
+    chamberWebsite?: string;
     signature?: string;
     logo?: string;
   };
@@ -131,6 +132,7 @@ const PrescriptionSchema: Schema = new Schema(
       email: { type: String },
       chamberName: { type: String },
       chamberAddress: { type: String },
+      chamberWebsite: { type: String },
       signature: { type: String },
       logo: { type: String },
     },

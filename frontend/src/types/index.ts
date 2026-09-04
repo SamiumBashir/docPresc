@@ -44,6 +44,7 @@ export interface IChamber {
   address: string;
   phone?: string;
   appointmentPhone?: string;
+  website?: string;
   visitingDays: string[];
   visitingHours: string;
   roomNo?: string;
@@ -152,6 +153,7 @@ export interface IPrescription {
     email?: string;
     chamberName?: string;
     chamberAddress?: string;
+    chamberWebsite?: string;
     signature?: string;
     logo?: string;
   };

@@ -140,6 +140,7 @@ export const ChamberSchema = z.object({
   visitingDays: z.array(z.string()).default(['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu']),
   visitingHours: z.string().default('5:00 PM - 9:00 PM'),
   roomNo: z.string().optional(),
+  website: z.string().optional(),
   isDefault: z.boolean().default(false),
 });
 
