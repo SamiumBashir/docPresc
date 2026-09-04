@@ -10,6 +10,7 @@ export interface IChamber extends Document {
   visitingHours: string;
   roomNo?: string;
   website?: string;
+  signature?: string;
   isDefault: boolean;
   status: 'active' | 'inactive';
   createdAt: Date;
@@ -24,6 +25,7 @@ const ChamberSchema: Schema = new Schema(
     phone: { type: String, trim: true },
     appointmentPhone: { type: String, trim: true },
     website: { type: String, trim: true },
+    signature: { type: String, trim: true },
     visitingDays: [{ type: String }],
     visitingHours: { type: String, default: '5:00 PM - 9:00 PM' },
     roomNo: { type: String, trim: true },

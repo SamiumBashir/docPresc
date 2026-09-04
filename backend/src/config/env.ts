@@ -13,4 +13,7 @@ export const ENV = {
   EMAIL_FROM: process.env.EMAIL_FROM || 'DocPresc <onboarding@resend.dev>',
   OTP_EXPIRES_IN: Number(process.env.OTP_EXPIRES_IN) || 300, // 5 minutes in seconds
   OTP_RESEND_COOLDOWN: Number(process.env.OTP_RESEND_COOLDOWN) || 60, // 60 seconds
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '',
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
 };

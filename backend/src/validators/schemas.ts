@@ -141,6 +141,7 @@ export const ChamberSchema = z.object({
   visitingHours: z.string().default('5:00 PM - 9:00 PM'),
   roomNo: z.string().optional(),
   website: z.string().optional(),
+  signature: z.string().optional(),
   isDefault: z.boolean().default(false),
 });
 

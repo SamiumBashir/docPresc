@@ -7,6 +7,7 @@ import chamberRoutes from './chamber.routes';
 import templateRoutes from './template.routes';
 import adminRoutes from './admin.routes';
 import publicRoutes from './public.routes';
+import uploadRoutes from './upload.routes';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/chambers', chamberRoutes);
 router.use('/templates', templateRoutes);
 router.use('/admin', adminRoutes);
 router.use('/public', publicRoutes);
+router.use('/upload', uploadRoutes);
 
 export default router;

@@ -163,7 +163,7 @@ export const createPrescription = async (req: AuthRequest, res: Response): Promi
       chamberName: chamber?.name || 'Main Chamber',
       chamberAddress: chamber?.address || 'Chamber Address',
       chamberWebsite: chamber?.website,
-      signature: doctor.signature,
+      signature: chamber?.signature || doctor.signature,
       logo: doctor.logo,
     },
     vitals: validated.vitals,

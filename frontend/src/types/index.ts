@@ -45,6 +45,7 @@ export interface IChamber {
   phone?: string;
   appointmentPhone?: string;
   website?: string;
+  signature?: string;
   visitingDays: string[];
   visitingHours: string;
   roomNo?: string;
