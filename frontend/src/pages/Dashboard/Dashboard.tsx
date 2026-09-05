@@ -64,17 +64,24 @@ export const Dashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
+  const getGreetingName = () => {
+    const rawName = doctor?.name || user?.name || '';
+    const cleanName = rawName.replace(/^(dr\.?\s*|ডাঃ\s*)/i, '').trim();
+    return cleanName || rawName;
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Welcome Banner */}
       <div className="relative overflow-hidden bg-gradient-to-r from-medical-800 via-medical-700 to-slate-900 text-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl shadow-medical-900/10">
         <div className="relative z-10 space-y-2 max-w-2xl">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md border border-white/20 text-medical-100">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>Digital Prescription Management Platform</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+            <span className="hidden sm:inline">Digital Prescription Management Platform</span>
+            <span className="sm:hidden">DocRx Pro Platform</span>
           </div>
           <h2 className="text-xl sm:text-3xl font-black tracking-tight">
-            {t('dash_subtitle')} {doctor?.name || user?.name}
+            {t('dash_subtitle')}{getGreetingName()}
           </h2>
           <p className="text-xs sm:text-sm text-medical-100/90 leading-relaxed">
             {doctor?.qualification || 'Consultant Physician'} • BMDC Reg: {doctor?.bmdcNumber || 'A-54321'}
@@ -141,17 +148,17 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Total Registered Patients */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1.5 sm:space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">
               {t('dash_total_patients')}
             </span>
-            <div className="w-8 h-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
-              <Activity className="w-4 h-4" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
+              <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black text-slate-900">
+            <span className="text-xl sm:text-3xl font-black text-slate-900">
               {stats.totalPatients}
             </span>
             <span className="text-xs text-slate-400">Database</span>
@@ -159,17 +166,17 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Active Chambers */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1.5 sm:space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">
               {t('dash_active_chambers')}
             </span>
-            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Building2 className="w-4 h-4" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black text-slate-900">
+            <span className="text-xl sm:text-3xl font-black text-slate-900">
               {chambers.length || 1}
             </span>
             <span className="text-xs text-slate-400">Chambers</span>
