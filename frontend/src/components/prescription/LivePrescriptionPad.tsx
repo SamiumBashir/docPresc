@@ -141,8 +141,8 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
             </div>
 
             {/* Chamber Info */}
-            <div className="rx-chamber-header text-right sm:text-right print:!text-right space-y-1 w-auto max-w-[260px] sm:max-w-[270px] print:!max-w-[260px] shrink-0 break-words">
-              <h2 className="text-lg sm:text-xl print:!text-lg font-black text-medical-800 tracking-tight leading-tight break-words">
+            <div className="rx-chamber-header text-right sm:text-right print:!text-right space-y-1 w-auto max-w-[280px] sm:max-w-[320px] print:!max-w-[320px] shrink-0">
+              <h2 className="text-lg sm:text-xl print:!text-base font-black text-medical-800 tracking-tight leading-tight whitespace-nowrap print:!whitespace-nowrap">
                 {chamberName || 'Consultation Chamber'}
               </h2>
               <p className="text-slate-600 text-[11px] leading-snug break-words">

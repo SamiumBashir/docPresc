@@ -118,12 +118,16 @@
 }
 
 .rx-chamber-header {
-  max-width: 260px;
+  max-width: 320px;
   width: auto;
   flex-shrink: 0;
   text-align: right;
-  word-break: break-word;
-  overflow-wrap: break-word;
+}
+
+.rx-chamber-header h2 {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
 }
 
 .rx-qualifications {
@@ -279,7 +283,7 @@
 
   /* Doctor & Chamber Header width constraints during print */
   .rx-doctor-header {
-    max-width: 440px !important;
+    max-width: 390px !important;
     width: auto !important;
     flex: 1 1 0% !important;
     min-width: 0 !important;
@@ -288,12 +292,18 @@
   }
 
   .rx-chamber-header {
-    max-width: 260px !important;
+    max-width: 320px !important;
     width: auto !important;
     text-align: right !important;
     flex-shrink: 0 !important;
-    word-break: break-word !important;
-    overflow-wrap: break-word !important;
+  }
+
+  .rx-chamber-header h2 {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    font-size: 16px !important;
+    line-height: 1.25 !important;
   }
 
   .rx-qualifications {
