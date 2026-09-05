@@ -4,7 +4,6 @@ import {
   Search,
   PlusCircle,
   Building2,
-  Globe,
   User,
   LogOut,
   Settings,
@@ -23,7 +22,7 @@ interface TopNavbarProps {
 
 export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSidebar }) => {
   const { user, doctor, chambers, activeChamber, setActiveChamber, logout } = useAuth();
-  const { language, setLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [chamberDropdownOpen, setChamberDropdownOpen] = useState(false);
   const chamberDropdownRef = useRef<HTMLDivElement>(null);
@@ -206,18 +205,6 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
             <span className="hidden md:inline">{t('nav_new_prescription')}</span>
           </Link>
         )}
-
-        {/* Language Switcher */}
-        <button
-          onClick={() => setLanguage(language === 'en' ? 'bn' : 'en')}
-          aria-label="Toggle Language between English and Bengali"
-          className="flex items-center gap-1.5 px-2 xs:px-2.5 py-1.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-xs font-semibold border border-slate-200 transition-colors shrink-0"
-          title="Toggle Language (English / বাংলা)"
-        >
-          <Globe className="w-3.5 h-3.5 text-medical-600 shrink-0" aria-hidden="true" />
-          <span className="hidden xs:inline">{language === 'en' ? 'বাংলা' : 'English'}</span>
-          <span className="xs:hidden font-bold">{language === 'en' ? 'বাং' : 'EN'}</span>
-        </button>
 
         {/* Profile Avatar & Menu */}
         <div className="relative" ref={profileDropdownRef}>
