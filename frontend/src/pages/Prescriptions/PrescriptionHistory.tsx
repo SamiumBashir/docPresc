@@ -105,9 +105,9 @@ export const PrescriptionHistory: React.FC = () => {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center gap-3">
+      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center gap-2.5 sm:gap-3">
         {/* Search */}
-        <form onSubmit={handleSearch} className="flex-1 min-w-[240px] relative">
+        <form onSubmit={handleSearch} className="w-full sm:w-auto sm:flex-1 min-w-0 relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           <input
             type="text"
@@ -118,40 +118,42 @@ export const PrescriptionHistory: React.FC = () => {
           />
         </form>
 
-        {/* Date Filter */}
-        <select
-          value={dateFilter}
-          onChange={(e) => {
-            setDateFilter(e.target.value);
-            setPage(1);
-          }}
-          className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold focus:outline-none"
-        >
-          <option value="all">All Dates</option>
-          <option value="today">Today</option>
-          <option value="week">Past 7 Days</option>
-          <option value="month">Past 30 Days</option>
-        </select>
+        <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+          {/* Date Filter */}
+          <select
+            value={dateFilter}
+            onChange={(e) => {
+              setDateFilter(e.target.value);
+              setPage(1);
+            }}
+            className="flex-1 sm:flex-initial px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold focus:outline-none"
+          >
+            <option value="all">All Dates</option>
+            <option value="today">Today</option>
+            <option value="week">Past 7 Days</option>
+            <option value="month">Past 30 Days</option>
+          </select>
 
-        {/* Status Filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPage(1);
-          }}
-          className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold focus:outline-none"
-        >
-          <option value="all">All Statuses</option>
-          <option value="FINALIZED">Finalized Only</option>
-          <option value="DRAFT">Drafts Only</option>
-        </select>
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            className="flex-1 sm:flex-initial px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold focus:outline-none"
+          >
+            <option value="all">All Statuses</option>
+            <option value="FINALIZED">Finalized Only</option>
+            <option value="DRAFT">Drafts Only</option>
+          </select>
+        </div>
       </div>
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse min-w-[700px]">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
                 <th className="py-3 px-4">Rx ID & Date</th>

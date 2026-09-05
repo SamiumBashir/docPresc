@@ -501,18 +501,18 @@ export const NewPrescription: React.FC = () => {
       )}
 
       {/* Top Action Header Bar */}
-      <div className="no-print bg-white px-4 py-3 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20 backdrop-blur-md bg-white/95">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-medical-50 border border-medical-200 flex items-center justify-center text-medical-700 font-bold">
-            <FileText className="w-5 h-5" />
+      <div className="no-print bg-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 sticky top-0 z-20 backdrop-blur-md bg-white/95">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-medical-50 border border-medical-200 flex items-center justify-center text-medical-700 font-bold shrink-0">
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-slate-900 leading-none">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 leading-none">
                 {t('rx_workspace_title')}
               </h2>
               <span
-                className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase ${
+                className={`text-[9px] sm:text-[10px] font-mono font-bold px-1.5 sm:px-2 py-0.5 rounded-full uppercase ${
                   status === 'FINALIZED'
                     ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                     : 'bg-slate-100 text-slate-700 border border-slate-200'
@@ -521,18 +521,18 @@ export const NewPrescription: React.FC = () => {
                 {status}
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">ID: {prescriptionId}</p>
+            <p className="text-[11px] sm:text-xs text-slate-400 font-mono mt-0.5">ID: {prescriptionId}</p>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           {/* Paper Size Switcher */}
           <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600">
             <button
               type="button"
               onClick={() => setPaperSize('A4')}
-              className={`px-2.5 py-1 rounded-md transition-all ${
+              className={`px-2 sm:px-2.5 py-1 rounded-md transition-all text-xs ${
                 paperSize === 'A4' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
               }`}
             >
@@ -541,7 +541,7 @@ export const NewPrescription: React.FC = () => {
             <button
               type="button"
               onClick={() => setPaperSize('Letter')}
-              className={`px-2.5 py-1 rounded-md transition-all ${
+              className={`px-2 sm:px-2.5 py-1 rounded-md transition-all text-xs ${
                 paperSize === 'Letter' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
               }`}
             >
@@ -556,7 +556,8 @@ export const NewPrescription: React.FC = () => {
               setTemplateModalMode('apply');
               setTemplateModalOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+            title="Apply Saved Template"
           >
             <Bookmark className="w-3.5 h-3.5 text-medical-600" />
             <span className="hidden sm:inline">{t('rx_apply_template')}</span>
@@ -569,7 +570,7 @@ export const NewPrescription: React.FC = () => {
               setTemplateModalMode('save');
               setTemplateModalOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
             title="Save current prescription as reusable template"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
@@ -582,10 +583,11 @@ export const NewPrescription: React.FC = () => {
             disabled={isPrinting}
             onClick={handlePrint}
             aria-label="Print prescription"
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            title="Print Prescription (Ctrl+P)"
           >
             <Printer className={`w-3.5 h-3.5 ${isPrinting ? 'animate-pulse text-teal-300' : ''}`} />
-            <span>{isPrinting ? 'Printing...' : 'Print'}</span>
+            <span className="hidden xs:inline">{isPrinting ? 'Printing...' : 'Print'}</span>
           </button>
 
           {/* Download PDF */}
@@ -594,7 +596,8 @@ export const NewPrescription: React.FC = () => {
             disabled={isGeneratingPdf}
             onClick={handleDownloadPdf}
             aria-label="Download prescription as PDF"
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            title="Download PDF"
           >
             <Download className={`w-3.5 h-3.5 ${isGeneratingPdf ? 'animate-bounce text-teal-300' : ''}`} />
             <span className="hidden sm:inline">{isGeneratingPdf ? 'Generating...' : 'PDF'}</span>
@@ -606,10 +609,11 @@ export const NewPrescription: React.FC = () => {
               type="button"
               disabled={isSaving}
               onClick={() => handleSavePrescription('DRAFT')}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold transition-colors"
+              className="flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold transition-colors"
+              title="Save Prescription Draft"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>{t('rx_save_draft')}</span>
+              <span className="hidden xs:inline">{t('rx_save_draft')}</span>
             </button>
           )}
 
@@ -619,9 +623,9 @@ export const NewPrescription: React.FC = () => {
               type="button"
               disabled={isSaving}
               onClick={() => setFinalizeConfirmOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm shadow-emerald-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm shadow-emerald-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              <FileCheck2 className="w-4 h-4" />
+              <FileCheck2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span>{t('rx_finalize')}</span>
             </button>
           )}
@@ -868,32 +872,37 @@ export const NewPrescription: React.FC = () => {
         {/* ========================================================= */}
         {/* RIGHT COLUMN: Real-Time Interactive Live Preview Pad     */}
         {/* ========================================================= */}
-        <div className={`prescription-print-parent xl:col-span-6 sticky top-24 print:!block print:!static print:!w-full print:!p-0 print:!m-0 ${mobileTab === 'preview' ? 'block' : 'hidden xl:block'}`}>
-          <div className="no-print flex items-center justify-between mb-2">
+        <div className={`prescription-print-parent xl:col-span-6 sticky top-20 print:!block print:!static print:!w-full print:!p-0 print:!m-0 ${mobileTab === 'preview' ? 'block' : 'hidden xl:block'}`}>
+          <div className="no-print flex items-center justify-between mb-2 px-1">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Live Prescription Pad Preview ({paperSize})
             </span>
-            <span className="text-[11px] text-slate-400">Updates instantly on every change</span>
+            <span className="text-[11px] text-slate-400 hidden sm:inline">Updates instantly on every change</span>
           </div>
 
-          <div className="rx-pad-scroll-wrapper overflow-x-auto p-2 bg-slate-200/50 rounded-2xl border border-slate-200 shadow-inner max-h-[85vh] overflow-y-auto print:bg-transparent print:border-none print:shadow-none print:p-0 print:m-0 print:max-h-none print:overflow-visible">
-            <LivePrescriptionPad
-              doctor={doctor}
-              chamber={activeChamber}
-              patient={selectedPatient}
-              vitals={vitals}
-              chiefComplaints={chiefComplaints}
-              history={history}
-              examination={examination}
-              diagnosis={diagnosis}
-              medicines={medicines}
-              investigations={investigations}
-              advice={advice}
-              followUp={followUp}
-              prescriptionId={prescriptionId}
-              shareToken={shareToken}
-              paperSize={paperSize}
-            />
+          <div className="rx-pad-scroll-wrapper overflow-x-auto p-1.5 sm:p-2 bg-slate-200/50 rounded-2xl border border-slate-200 shadow-inner max-h-[85vh] overflow-y-auto print:bg-transparent print:border-none print:shadow-none print:p-0 print:m-0 print:max-h-none print:overflow-visible">
+            <div className="xl:hidden no-print py-1 text-center text-[11px] text-slate-500 font-medium flex items-center justify-center gap-1">
+              <span>↔ Swipe horizontally to view full prescription pad</span>
+            </div>
+            <div className="min-w-[620px] sm:min-w-0">
+              <LivePrescriptionPad
+                doctor={doctor}
+                chamber={activeChamber}
+                patient={selectedPatient}
+                vitals={vitals}
+                chiefComplaints={chiefComplaints}
+                history={history}
+                examination={examination}
+                diagnosis={diagnosis}
+                medicines={medicines}
+                investigations={investigations}
+                advice={advice}
+                followUp={followUp}
+                prescriptionId={prescriptionId}
+                shareToken={shareToken}
+                paperSize={paperSize}
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -108,16 +108,16 @@ export const PublicPrescriptionView: React.FC = () => {
   const chamber = prescription.chamberId as IChamber | null;
 
   return (
-    <div className="min-h-screen bg-slate-100 py-6 px-4">
+    <div className="min-h-screen bg-slate-100 py-3 sm:py-6 px-2 sm:px-4">
       <div className="max-w-4xl mx-auto space-y-4">
         {/* Verification Banner */}
-        <div className="no-print bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div className="no-print bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-sm font-bold text-slate-900 font-mono">
                   {prescription.prescriptionId}
                 </p>
@@ -155,25 +155,30 @@ export const PublicPrescriptionView: React.FC = () => {
         </div>
 
         {/* Prescription Pad */}
-        <div className="prescription-print-parent flex justify-center print:!block print:!w-full print:p-0 print:m-0">
-          <LivePrescriptionPad
-            doctor={prescription.doctorSnapshot as any}
-            chamber={chamber}
-            patient={prescription.patientSnapshot as any}
-            vitals={prescription.vitals}
-            chiefComplaints={prescription.chiefComplaints}
-            history={prescription.history}
-            examination={prescription.examination}
-            diagnosis={prescription.diagnosis}
-            medicines={prescription.medicines}
-            investigations={prescription.investigations}
-            advice={prescription.advice}
-            followUp={prescription.followUp}
-            prescriptionId={prescription.prescriptionId}
-            shareToken={prescription.shareToken}
-            paperSize={paperSize}
-            createdAt={prescription.createdAt}
-          />
+        <div className="prescription-print-parent flex flex-col items-center overflow-x-auto print:!block print:!w-full print:p-0 print:m-0">
+          <div className="sm:hidden no-print pb-2 text-center text-[11px] text-slate-500 font-medium">
+            <span>↔ Swipe horizontally to view full prescription pad</span>
+          </div>
+          <div className="min-w-[620px] sm:min-w-0 w-full flex justify-center">
+            <LivePrescriptionPad
+              doctor={prescription.doctorSnapshot as any}
+              chamber={chamber}
+              patient={prescription.patientSnapshot as any}
+              vitals={prescription.vitals}
+              chiefComplaints={prescription.chiefComplaints}
+              history={prescription.history}
+              examination={prescription.examination}
+              diagnosis={prescription.diagnosis}
+              medicines={prescription.medicines}
+              investigations={prescription.investigations}
+              advice={prescription.advice}
+              followUp={prescription.followUp}
+              prescriptionId={prescription.prescriptionId}
+              shareToken={prescription.shareToken}
+              paperSize={paperSize}
+              createdAt={prescription.createdAt}
+            />
+          </div>
         </div>
       </div>
     </div>

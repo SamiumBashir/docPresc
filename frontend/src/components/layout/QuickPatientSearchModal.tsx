@@ -104,10 +104,10 @@ export const QuickPatientSearchModal: React.FC<QuickPatientSearchModalProps> = (
             patients.map((p) => (
               <div
                 key={p._id}
-                className="p-3.5 rounded-xl border border-slate-100 hover:border-medical-200 hover:bg-medical-50/30 transition-all flex items-center justify-between group"
+                className="p-3 sm:p-3.5 rounded-xl border border-slate-100 hover:border-medical-200 hover:bg-medical-50/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
               >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-slate-800 text-sm group-hover:text-medical-700 transition-colors">
                       {p.name}
                     </span>
@@ -119,7 +119,7 @@ export const QuickPatientSearchModal: React.FC<QuickPatientSearchModalProps> = (
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-4 text-xs text-slate-500">
+                  <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
                     <span className="flex items-center gap-1 font-mono">
                       <Phone className="w-3.5 h-3.5 text-slate-400" /> {p.phone}
                     </span>
@@ -131,7 +131,7 @@ export const QuickPatientSearchModal: React.FC<QuickPatientSearchModalProps> = (
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
                   <button
                     onClick={() => handleViewPatientDetails(p._id)}
                     className="px-2.5 py-1.5 text-xs text-slate-600 hover:text-medical-700 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-1"

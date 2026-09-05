@@ -185,7 +185,7 @@ export const MedicineCatalog: React.FC = () => {
       </div>
 
       {/* System Tabs */}
-      <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200/80 shadow-xs flex-wrap">
+      <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200/80 shadow-xs overflow-x-auto no-scrollbar flex-nowrap sm:flex-wrap">
         {[
           { id: 'all', label: 'All Systems (সকল ওষুধ)', icon: Pill },
           { id: 'Allopathic', label: 'Allopathic (অ্যালোপ্যাথিক)', icon: Pill },
@@ -204,7 +204,7 @@ export const MedicineCatalog: React.FC = () => {
                 setSelectedManufacturer('all');
                 setPage(1);
               }}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
                 isActive
                   ? 'bg-medical-600 text-white shadow-xs'
                   : 'text-slate-600 hover:bg-slate-100'
@@ -217,8 +217,8 @@ export const MedicineCatalog: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-        <form onSubmit={handleSearchSubmit} className="flex gap-2">
+      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+        <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
             <input
@@ -231,7 +231,7 @@ export const MedicineCatalog: React.FC = () => {
           </div>
           <button
             type="submit"
-            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors"
+            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors shrink-0"
           >
             Search
           </button>
@@ -294,7 +294,7 @@ export const MedicineCatalog: React.FC = () => {
       {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse min-w-[760px]">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
                 <th className="py-3 px-4 w-10 text-center">⭐</th>

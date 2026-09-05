@@ -132,7 +132,7 @@ export const PrescriptionView: React.FC = () => {
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
       {/* Top Header Controls (Hidden on Print) */}
-      <div className="no-print bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3">
+      <div className="no-print bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/prescriptions')}
@@ -164,7 +164,7 @@ export const PrescriptionView: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           {/* Paper Size Switcher */}
           <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600">
             <button
@@ -191,14 +191,14 @@ export const PrescriptionView: React.FC = () => {
             onClick={handleCopyShare}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
           >
-            <Share2 className="w-3.5 h-3.5" /> Share
+            <Share2 className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Share</span>
           </button>
 
           <Link
             to={`/prescriptions/new?cloneId=${prescription._id}&patientId=${prescription.patientId}`}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-medical-50 hover:bg-medical-100 text-medical-800 rounded-lg text-xs font-semibold border border-medical-200 transition-colors"
           >
-            <Copy className="w-3.5 h-3.5" /> Clone as New Rx
+            <Copy className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Clone as New Rx</span><span className="sm:hidden">Clone</span>
           </Link>
 
           <button
@@ -224,25 +224,30 @@ export const PrescriptionView: React.FC = () => {
       </div>
 
       {/* Render Prescription Pad */}
-      <div className="prescription-print-parent bg-slate-100/60 p-4 sm:p-8 rounded-3xl border border-slate-200 flex justify-center print:bg-transparent print:border-none print:p-0 print:m-0 print:!block print:!w-full">
-        <LivePrescriptionPad
-          doctor={doctor}
-          chamber={chamber}
-          patient={prescription.patientSnapshot as any}
-          vitals={prescription.vitals}
-          chiefComplaints={prescription.chiefComplaints}
-          history={prescription.history}
-          examination={prescription.examination}
-          diagnosis={prescription.diagnosis}
-          medicines={prescription.medicines}
-          investigations={prescription.investigations}
-          advice={prescription.advice}
-          followUp={prescription.followUp}
-          prescriptionId={prescription.prescriptionId}
-          shareToken={prescription.shareToken}
-          paperSize={paperSize}
-          createdAt={prescription.createdAt}
-        />
+      <div className="prescription-print-parent bg-slate-100/60 p-2 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border border-slate-200 flex flex-col items-center overflow-x-auto print:bg-transparent print:border-none print:p-0 print:m-0 print:!block print:!w-full">
+        <div className="sm:hidden no-print pb-2 text-center text-[11px] text-slate-500 font-medium">
+          <span>↔ Swipe horizontally to view full prescription pad</span>
+        </div>
+        <div className="min-w-[620px] sm:min-w-0 w-full flex justify-center">
+          <LivePrescriptionPad
+            doctor={doctor}
+            chamber={chamber}
+            patient={prescription.patientSnapshot as any}
+            vitals={prescription.vitals}
+            chiefComplaints={prescription.chiefComplaints}
+            history={prescription.history}
+            examination={prescription.examination}
+            diagnosis={prescription.diagnosis}
+            medicines={prescription.medicines}
+            investigations={prescription.investigations}
+            advice={prescription.advice}
+            followUp={prescription.followUp}
+            prescriptionId={prescription.prescriptionId}
+            shareToken={prescription.shareToken}
+            paperSize={paperSize}
+            createdAt={prescription.createdAt}
+          />
+        </div>
       </div>
     </div>
   );

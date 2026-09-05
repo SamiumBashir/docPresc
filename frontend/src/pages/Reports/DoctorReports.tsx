@@ -58,29 +58,29 @@ export const DoctorReports: React.FC = () => {
       </div>
 
       {/* Stats Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
-          <span className="text-xs text-slate-400 font-bold uppercase">Total Consultations</span>
-          <p className="text-2xl font-black text-slate-900">{stats.totalPrescriptions}</p>
-          <span className="text-[11px] text-medical-600 font-medium">All Time Prescriptions</span>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
+          <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">Total Consultations</span>
+          <p className="text-xl sm:text-2xl font-black text-slate-900">{stats.totalPrescriptions}</p>
+          <span className="text-[10px] sm:text-[11px] text-medical-600 font-medium">All Time Prescriptions</span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
-          <span className="text-xs text-slate-400 font-bold uppercase">This Month</span>
-          <p className="text-2xl font-black text-slate-900">{stats.monthPrescriptions}</p>
-          <span className="text-[11px] text-emerald-600 font-medium">Current Month Consultations</span>
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
+          <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">This Month</span>
+          <p className="text-xl sm:text-2xl font-black text-slate-900">{stats.monthPrescriptions}</p>
+          <span className="text-[10px] sm:text-[11px] text-emerald-600 font-medium">Current Month</span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
-          <span className="text-xs text-slate-400 font-bold uppercase">Registered Patients</span>
-          <p className="text-2xl font-black text-slate-900">{stats.totalPatients}</p>
-          <span className="text-[11px] text-slate-500 font-medium">In Patient Roster</span>
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
+          <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">Registered Patients</span>
+          <p className="text-xl sm:text-2xl font-black text-slate-900">{stats.totalPatients}</p>
+          <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium">In Patient Roster</span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
-          <span className="text-xs text-slate-400 font-bold uppercase">Today's Visits</span>
-          <p className="text-2xl font-black text-slate-900">{stats.todayPrescriptions}</p>
-          <span className="text-[11px] text-cyan-600 font-medium">Active Today</span>
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
+          <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">Today's Visits</span>
+          <p className="text-xl sm:text-2xl font-black text-slate-900">{stats.todayPrescriptions}</p>
+          <span className="text-[10px] sm:text-[11px] text-cyan-600 font-medium">Active Today</span>
         </div>
       </div>
 

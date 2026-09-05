@@ -76,11 +76,11 @@ export const DoctorProfile: React.FC = () => {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
+      <form onSubmit={handleSubmit} className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
         {/* Verification Banner */}
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
@@ -88,7 +88,7 @@ export const DoctorProfile: React.FC = () => {
               <p className="text-[11px] text-emerald-700">Registration Number: {doctor?.bmdcNumber}</p>
             </div>
           </div>
-          <span className="text-xs font-bold text-emerald-800 bg-white px-3 py-1 rounded-lg border border-emerald-200 shadow-2xs">
+          <span className="text-xs font-bold text-emerald-800 bg-white px-3 py-1 rounded-lg border border-emerald-200 shadow-2xs self-start sm:self-auto">
             Verified Status
           </span>
         </div>

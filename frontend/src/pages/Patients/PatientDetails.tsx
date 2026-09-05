@@ -73,32 +73,32 @@ export const PatientDetails: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Back Button & Top Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <button
           onClick={() => navigate('/patients')}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs transition-colors self-start"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Patient List
         </button>
 
         <Link
           to={`/prescriptions/new?patientId=${patient._id}`}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-medical-600 hover:bg-medical-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-medical-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-medical-600 hover:bg-medical-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-medical-600/20 transition-all hover:scale-[1.02] active:scale-[0.98] self-stretch sm:self-auto"
         >
           <FilePlus className="w-4 h-4" /> Write New Prescription
         </Link>
       </div>
 
       {/* Patient Profile Card */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/80 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-medical-50 border border-medical-200 flex items-center justify-center text-medical-700 font-black text-2xl shadow-xs">
+          <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-medical-50 border border-medical-200 flex items-center justify-center text-medical-700 font-black text-xl sm:text-2xl shadow-xs shrink-0">
               {patient.name.charAt(0)}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h2 className="text-xl font-black text-slate-900">{patient.name}</h2>
+                <h2 className="text-lg sm:text-xl font-black text-slate-900">{patient.name}</h2>
                 <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold">
                   {patient.patientId}
                 </span>
@@ -113,7 +113,7 @@ export const PatientDetails: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-4 text-xs text-slate-600 font-mono">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4 text-xs text-slate-600 font-mono w-full md:w-auto">
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
               <span className="text-[10px] text-slate-400 font-sans block uppercase font-bold">Phone Number</span>
               <span className="font-bold text-slate-800">{patient.phone}</span>
