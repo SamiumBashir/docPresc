@@ -70,17 +70,16 @@
 @keyframes page-fade-in {
   from {
     opacity: 0;
-    transform: translateY(4px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
 .page-enter-transition {
-  animation: page-fade-in 220ms ease-out forwards;
+  animation: page-fade-in 180ms ease-out;
 }
+
 
 /* Medical Prescription Pad Watermark styling with interesting typography & clinical hue */
 .rx-pad-watermark {

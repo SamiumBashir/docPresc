@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Pill, Sparkles, Star, Plus, Leaf, X, AlertCircle } from 'lucide-react';
 import { api } from '../../api/client';
 import { showToast } from '../ui/Toast';
@@ -365,11 +366,16 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
       )}
 
       {/* Quick New Medicine Entry Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
-              <div className="flex items-center gap-2">
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 overflow-hidden">
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsModalOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="relative bg-white border border-slate-100 rounded-2xl sm:rounded-3xl w-full max-w-lg max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden shadow-2xl z-10 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 bg-slate-50/80 shrink-0">
+              <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-medical-50 text-medical-600 flex items-center justify-center">
                   <Pill className="w-4 h-4" />
                 </div>
@@ -381,13 +387,13 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-200/60 transition-colors shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateMedicine} className="p-5 space-y-4">
+            <form onSubmit={handleCreateMedicine} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 overscroll-contain">
               {formError && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
@@ -463,13 +469,14 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
                   </label>
                   <input
                     type="text"
-                    list="quickDosageFormList"
+                    required
+                    list="autocompleteDosageFormList"
                     value={dosageForm}
                     onChange={(e) => setDosageForm(e.target.value)}
                     placeholder="Tablet, Capsule, Syrup..."
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
                   />
-                  <datalist id="quickDosageFormList">
+                  <datalist id="autocompleteDosageFormList">
                     {DOSAGE_FORM_NAMES.map((form) => (
                       <option key={form} value={form} />
                     ))}
@@ -485,13 +492,13 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
                 <input
                   type="text"
                   required
-                  list="quickManufacturerList"
+                  list="autocompleteManufacturerList"
                   value={manufacturer}
                   onChange={(e) => setManufacturer(e.target.value)}
                   placeholder="e.g. Beximco Pharma, Square, Incepta, Hamdard..."
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
                 />
-                <datalist id="quickManufacturerList">
+                <datalist id="autocompleteManufacturerList">
                   {MANUFACTURER_NAMES.map((name) => (
                     <option key={name} value={name} />
                   ))}
@@ -522,7 +529,8 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

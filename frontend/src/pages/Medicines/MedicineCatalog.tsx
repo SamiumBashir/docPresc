@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Pill, Search, Star, Filter, Plus, ChevronLeft, ChevronRight, Leaf, X, AlertCircle } from 'lucide-react';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
@@ -432,11 +433,16 @@ export const MedicineCatalog: React.FC = () => {
       </div>
 
       {/* New Medicine Entry Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
-              <div className="flex items-center gap-2">
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 overflow-hidden">
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsModalOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="relative bg-white border border-slate-100 rounded-2xl sm:rounded-3xl w-full max-w-lg max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden shadow-2xl z-10 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 bg-slate-50/80 shrink-0">
+              <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-medical-50 text-medical-600 flex items-center justify-center">
                   <Pill className="w-4 h-4" />
                 </div>
@@ -447,13 +453,13 @@ export const MedicineCatalog: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-200/60 transition-colors shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateMedicine} className="p-5 space-y-4">
+            <form onSubmit={handleCreateMedicine} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 overscroll-contain">
               {formError && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
@@ -472,21 +478,20 @@ export const MedicineCatalog: React.FC = () => {
                     required
                     value={brandName}
                     onChange={(e) => setBrandName(e.target.value)}
-                    placeholder="e.g. Napa Extra / Monas"
+                    placeholder="e.g. Napa Extra"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                    Strength *
+                    Strength / Dose
                   </label>
                   <input
                     type="text"
-                    required
                     value={strength}
                     onChange={(e) => setStrength(e.target.value)}
-                    placeholder="e.g. 500mg, 10mg, 120ml"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white font-mono"
+                    placeholder="e.g. 500mg + 65mg"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
                   />
                 </div>
               </div>
@@ -494,45 +499,47 @@ export const MedicineCatalog: React.FC = () => {
               {/* Generic Name */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                  Generic Name *
+                  Generic Formula *
                 </label>
                 <input
                   type="text"
                   required
                   value={genericName}
                   onChange={(e) => setGenericName(e.target.value)}
-                  placeholder="e.g. Paracetamol + Caffeine / Montelukast Sodium"
+                  placeholder="e.g. Paracetamol + Caffeine"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
                 />
               </div>
 
-              {/* Type & Form */}
+              {/* Dosage Form & System Type */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                    Type *
+                    Medicine System
                   </label>
                   <select
                     value={medicineType}
-                    onChange={(e: any) => setMedicineType(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-medium focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
+                    onChange={(e) => setMedicineType(e.target.value as any)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
                   >
-                    <option value="Allopathic">Allopathic (অ্যালোপ্যাথিক)</option>
-                    <option value="Unani">Unani (ইউনানি)</option>
-                    <option value="Ayurvedic">Ayurvedic (আয়ুর্বেদিক)</option>
-                    <option value="Herbal">Herbal (হারবাল)</option>
+                    <option value="Allopathic">Allopathic (Modern)</option>
+                    <option value="Unani">Unani</option>
+                    <option value="Ayurvedic">Ayurvedic</option>
+                    <option value="Herbal">Herbal</option>
                   </select>
                 </div>
+
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                    Form *
+                    Dosage Form *
                   </label>
                   <input
                     type="text"
+                    required
                     list="doctorDosageFormList"
                     value={dosageForm}
                     onChange={(e) => setDosageForm(e.target.value)}
-                    placeholder="Tablet, Capsule, Syrup..."
+                    placeholder="e.g. Tablet, Syrup, Capsule..."
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
                   />
                   <datalist id="doctorDosageFormList">
@@ -588,7 +595,8 @@ export const MedicineCatalog: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
