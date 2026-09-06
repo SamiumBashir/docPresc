@@ -136,8 +136,14 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
   }
 
   let doctor = null;
+  let chambers: any[] = [];
   if (user.role === 'doctor') {
-    doctor = await Doctor.findOne({ userId: user._id }).populate('defaultChamberId');
+    doctor = await Doctor.findOne({ userId: user._id }).populate('defaultChamberId').lean();
+    if (doctor) {
+      chambers = await Chamber.find({ doctorId: (doctor as any)._id, status: 'active' })
+        .sort({ isDefault: -1, createdAt: 1 })
+        .lean();
+    }
   }
 
   const token = generateToken(user._id.toString(), user.role, validated.rememberMe);
@@ -161,6 +167,7 @@ export const login = async (req: AuthRequest, res: Response): Promise<void> => {
         role: user.role,
       },
       doctor,
+      chambers,
       token,
     },
   });
@@ -173,8 +180,24 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
   }
 
   let doctor = null;
+  let chambers: any[] = [];
   if (req.user.role === 'doctor') {
-    doctor = await Doctor.findOne({ userId: req.user._id }).populate('defaultChamberId');
+    doctor = await Doctor.findOne({ userId: req.user._id }).populate('defaultChamberId').lean();
+    if (doctor) {
+      chambers = await Chamber.find({ doctorId: (doctor as any)._id, status: 'active' })
+        .sort({ isDefault: -1, createdAt: 1 })
+        .lean();
+    }
+  } else if (req.user.role === 'admin') {
+    doctor = await Doctor.findOne({ userId: req.user._id }).lean();
+    if (!doctor) {
+      doctor = await Doctor.findOne().lean();
+    }
+    if (doctor) {
+      chambers = await Chamber.find({ doctorId: (doctor as any)._id, status: 'active' })
+        .sort({ isDefault: -1, createdAt: 1 })
+        .lean();
+    }
   }
 
   res.json({
@@ -188,6 +211,7 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
         role: req.user.role,
       },
       doctor,
+      chambers,
     },
   });
 };

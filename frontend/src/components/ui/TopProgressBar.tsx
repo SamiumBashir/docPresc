@@ -43,11 +43,13 @@ export const TopProgressBar: React.FC = () => {
       aria-hidden="true"
     >
       <div
-        className="h-full bg-gradient-to-r from-medical-600 via-teal-400 to-emerald-400 transition-all duration-300 ease-out shadow-[0_0_8px_rgba(45,212,191,0.7)]"
+        className="h-full w-full bg-gradient-to-r from-medical-600 via-teal-400 to-emerald-400 shadow-[0_0_8px_rgba(45,212,191,0.7)]"
         style={{
-          width: `${progress}%`,
+          transform: `scaleX(${progress / 100})`,
+          transformOrigin: 'left',
           opacity: progress === 100 ? 0 : 1,
-          transition: progress === 0 ? 'none' : 'width 250ms ease-out, opacity 200ms ease-in',
+          transition: progress === 0 ? 'none' : 'transform 250ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-in',
+          willChange: 'transform, opacity',
         }}
       />
     </div>

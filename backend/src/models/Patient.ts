@@ -47,8 +47,10 @@ const PatientSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-// Compound index for super-fast doctor-scoped search
+// Compound index for super-fast doctor-scoped search and timeline sorting
 PatientSchema.index({ doctorId: 1, phone: 1 });
 PatientSchema.index({ doctorId: 1, name: 'text', patientId: 'text' });
+PatientSchema.index({ doctorId: 1, updatedAt: -1 });
+PatientSchema.index({ doctorId: 1, createdAt: -1 });
 
 export const Patient = mongoose.model<IPatient>('Patient', PatientSchema);

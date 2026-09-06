@@ -11,7 +11,9 @@ export const getChambers = async (req: AuthRequest, res: Response): Promise<void
     return;
   }
 
-  const chambers = await Chamber.find({ doctorId, status: 'active' }).sort({ isDefault: -1, createdAt: 1 });
+  const chambers = await Chamber.find({ doctorId, status: 'active' })
+    .sort({ isDefault: -1, createdAt: 1 })
+    .lean();
   res.json({ success: true, data: chambers });
 };
 

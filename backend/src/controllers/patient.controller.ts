@@ -36,7 +36,7 @@ export const getPatients = async (req: AuthRequest, res: Response): Promise<void
   }
 
   const [patients, total] = await Promise.all([
-    Patient.find(query).sort({ updatedAt: -1 }).skip(skip).limit(limitNum),
+    Patient.find(query).sort({ updatedAt: -1 }).skip(skip).limit(limitNum).lean(),
     Patient.countDocuments(query),
   ]);
 

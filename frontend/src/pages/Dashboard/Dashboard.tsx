@@ -120,9 +120,13 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl sm:text-3xl font-black text-slate-900">
-              {stats.todayPrescriptions}
-            </span>
+            {isLoading ? (
+              <div className="h-7 sm:h-9 w-12 bg-slate-100 rounded-lg animate-pulse" />
+            ) : (
+              <span className="text-xl sm:text-3xl font-black text-slate-900">
+                {stats.todayPrescriptions}
+              </span>
+            )}
             <span className="text-[10px] sm:text-xs text-emerald-600 font-semibold flex items-center">
               <TrendingUp className="w-3 h-3 mr-0.5" /> Today
             </span>
@@ -140,9 +144,13 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl sm:text-3xl font-black text-slate-900">
-              {stats.todayPatients}
-            </span>
+            {isLoading ? (
+              <div className="h-7 sm:h-9 w-12 bg-slate-100 rounded-lg animate-pulse" />
+            ) : (
+              <span className="text-xl sm:text-3xl font-black text-slate-900">
+                {stats.todayPatients}
+              </span>
+            )}
             <span className="text-xs text-slate-400">Visited</span>
           </div>
         </div>
@@ -158,9 +166,13 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl sm:text-3xl font-black text-slate-900">
-              {stats.totalPatients}
-            </span>
+            {isLoading ? (
+              <div className="h-7 sm:h-9 w-12 bg-slate-100 rounded-lg animate-pulse" />
+            ) : (
+              <span className="text-xl sm:text-3xl font-black text-slate-900">
+                {stats.totalPatients}
+              </span>
+            )}
             <span className="text-xs text-slate-400">Database</span>
           </div>
         </div>
@@ -202,7 +214,17 @@ export const Dashboard: React.FC = () => {
           </div>
 
           <div className="divide-y divide-slate-100">
-            {recentPatients.length === 0 ? (
+            {isLoading ? (
+              [1, 2, 3].map((i) => (
+                <div key={i} className="p-3.5 sm:p-4 flex items-center justify-between gap-3 animate-pulse">
+                  <div className="space-y-2 flex-1">
+                    <div className="h-3.5 w-32 bg-slate-100 rounded" />
+                    <div className="h-2.5 w-48 bg-slate-100 rounded" />
+                  </div>
+                  <div className="h-6 w-16 bg-slate-100 rounded-lg" />
+                </div>
+              ))
+            ) : recentPatients.length === 0 ? (
               <div className="p-8 text-center text-slate-400 text-xs">No patient records found yet.</div>
             ) : (
               recentPatients.map((p) => (
@@ -265,7 +287,17 @@ export const Dashboard: React.FC = () => {
           </div>
 
           <div className="divide-y divide-slate-100">
-            {recentPrescriptions.length === 0 ? (
+            {isLoading ? (
+              [1, 2, 3].map((i) => (
+                <div key={i} className="p-3.5 sm:p-4 flex items-center justify-between gap-3 animate-pulse">
+                  <div className="space-y-2 flex-1">
+                    <div className="h-3.5 w-28 bg-slate-100 rounded" />
+                    <div className="h-2.5 w-40 bg-slate-100 rounded" />
+                  </div>
+                  <div className="h-6 w-16 bg-slate-100 rounded-lg" />
+                </div>
+              ))
+            ) : recentPrescriptions.length === 0 ? (
               <div className="p-8 text-center text-slate-400 text-xs">No prescriptions generated yet.</div>
             ) : (
               recentPrescriptions.map((rx) => (

@@ -35,4 +35,7 @@ const ChamberSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+// Compound index for high-speed chamber retrieval and default sort order
+ChamberSchema.index({ doctorId: 1, status: 1, isDefault: -1, createdAt: 1 });
+
 export const Chamber = mongoose.model<IChamber>('Chamber', ChamberSchema);

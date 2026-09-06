@@ -18,17 +18,59 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<IUser | null>(null);
-  const [doctor, setDoctor] = useState<IDoctor | null>(null);
-  const [chambers, setChambers] = useState<IChamber[]>([]);
-  const [activeChamber, setActiveChamberState] = useState<IChamber | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // Synchronous cache retrieval for zero-delay initial rendering (SWR)
+  const [user, setUser] = useState<IUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('docrx_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [doctor, setDoctor] = useState<IDoctor | null>(() => {
+    try {
+      const saved = localStorage.getItem('docrx_doctor');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [chambers, setChambers] = useState<IChamber[]>(() => {
+    try {
+      const saved = localStorage.getItem('docrx_chambers');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [activeChamber, setActiveChamberState] = useState<IChamber | null>(() => {
+    try {
+      const savedChambers = localStorage.getItem('docrx_chambers');
+      const list: IChamber[] = savedChambers ? JSON.parse(savedChambers) : [];
+      return list.find((c) => c.isDefault) || list[0] || null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Zero-delay loading: if no token or if session is cached, do not block the UI
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    const token = localStorage.getItem('docrx_token');
+    const hasCachedUser = !!localStorage.getItem('docrx_user');
+    if (!token) return false;
+    if (token && hasCachedUser) return false;
+    return true;
+  });
 
   const fetchChambers = async () => {
     try {
       const res = await api<{ success: boolean; data: IChamber[] }>('/chambers');
       if (res.success && res.data) {
         setChambers(res.data);
+        localStorage.setItem('docrx_chambers', JSON.stringify(res.data));
         const defaultChamber = res.data.find((c) => c.isDefault) || res.data[0] || null;
         setActiveChamberState(defaultChamber);
       }
@@ -38,18 +80,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshProfile = useCallback(async () => {
+    const token = localStorage.getItem('docrx_token');
+    // If visitor has no token, do not call /auth/me to avoid 401 console error
+    if (!token) {
+      setUser(null);
+      setDoctor(null);
+      setChambers([]);
+      setActiveChamberState(null);
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const res = await api<{ success: boolean; data: { user: IUser; doctor: IDoctor | null } }>('/auth/me');
+      const res = await api<{
+        success: boolean;
+        data: { user: IUser; doctor: IDoctor | null; chambers?: IChamber[] };
+      }>('/auth/me');
+
       if (res.success && res.data) {
         setUser(res.data.user);
         setDoctor(res.data.doctor);
-        if (res.data.user.role === 'doctor') {
+        localStorage.setItem('docrx_user', JSON.stringify(res.data.user));
+        if (res.data.doctor) {
+          localStorage.setItem('docrx_doctor', JSON.stringify(res.data.doctor));
+        }
+
+        // If backend returned chambers in /auth/me, use them directly (0 extra network calls)
+        if (res.data.chambers && res.data.chambers.length > 0) {
+          setChambers(res.data.chambers);
+          localStorage.setItem('docrx_chambers', JSON.stringify(res.data.chambers));
+          const defaultChamber =
+            res.data.chambers.find((c) => c.isDefault) || res.data.chambers[0] || null;
+          setActiveChamberState(defaultChamber);
+        } else if (res.data.user.role === 'doctor') {
           await fetchChambers();
         }
       }
-    } catch (err) {
+    } catch (err: any) {
+      localStorage.removeItem('docrx_token');
+      localStorage.removeItem('docrx_user');
+      localStorage.removeItem('docrx_doctor');
+      localStorage.removeItem('docrx_chambers');
       setUser(null);
       setDoctor(null);
+      setChambers([]);
+      setActiveChamberState(null);
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string, rememberMe?: boolean) => {
     const res = await api<{
       success: boolean;
-      data: { user: IUser; doctor: IDoctor | null; token: string };
+      data: { user: IUser; doctor: IDoctor | null; chambers?: IChamber[]; token: string };
     }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password, rememberMe }),
@@ -70,9 +145,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (res.success && res.data) {
       localStorage.setItem('docrx_token', res.data.token);
+      localStorage.setItem('docrx_user', JSON.stringify(res.data.user));
       setUser(res.data.user);
       setDoctor(res.data.doctor);
-      if (res.data.user.role === 'doctor') {
+      if (res.data.doctor) {
+        localStorage.setItem('docrx_doctor', JSON.stringify(res.data.doctor));
+      }
+
+      if (res.data.chambers && res.data.chambers.length > 0) {
+        setChambers(res.data.chambers);
+        localStorage.setItem('docrx_chambers', JSON.stringify(res.data.chambers));
+        const defaultChamber =
+          res.data.chambers.find((c) => c.isDefault) || res.data.chambers[0] || null;
+        setActiveChamberState(defaultChamber);
+      } else if (res.data.user.role === 'doctor') {
         await fetchChambers();
       }
     }
@@ -85,6 +171,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // continue
     }
     localStorage.removeItem('docrx_token');
+    localStorage.removeItem('docrx_user');
+    localStorage.removeItem('docrx_doctor');
+    localStorage.removeItem('docrx_chambers');
     setUser(null);
     setDoctor(null);
     setChambers([]);
