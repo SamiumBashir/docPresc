@@ -6,10 +6,8 @@ import { AppLayout } from './components/layout/AppLayout';
 import { PageLoader } from './components/ui/PageLoader';
 import { TopProgressBar } from './components/ui/TopProgressBar';
 
-// Immediate load for entry login page to eliminate initial latency
-import { Login } from './pages/Auth/Login';
-
 // Route-level code splitting for non-blocking initial performance
+const Login = lazy(() => import('./pages/Auth/Login').then((m) => ({ default: m.Login })));
 const Register = lazy(() => import('./pages/Auth/Register').then((m) => ({ default: m.Register })));
 const ForgotPassword = lazy(() =>
   import('./pages/Auth/ForgotPassword').then((m) => ({ default: m.ForgotPassword }))

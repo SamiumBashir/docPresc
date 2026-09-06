@@ -27,18 +27,20 @@
     <meta name="twitter:description" content="Fast digital prescriptions with 26,000+ verified medicines across Allopathic, Unani, and Ayurvedic systems." />
 
     <!-- Non-blocking Optimized Web Fonts Loading -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Inter:wght@400;500;600;700&display=swap"
       media="print"
       onload="this.media='all'"
     />
     <noscript>
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Inter:wght@400;500;600;700&display=swap"
       />
     </noscript>
 
@@ -53,7 +55,7 @@
       "operatingSystem": "Web Browser",
       "description": "Comprehensive digital prescription management system for Bangladeshi doctors supporting Allopathic, Unani, and Ayurvedic medicines.",
       "url": "http://localhost:5173/",
-      "inLanguage": ["en", "bn"],
+      "inLanguage": "en",
       "offers": {
         "@type": "Offer",
         "price": "0",
@@ -70,7 +72,30 @@
     </script>
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased selection:bg-medical-500 selection:text-white">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Instant Inlined App Shell (Eliminates FCP & LCP delay on cold load) -->
+      <div id="app-shell-loader" style="min-height:100vh;background:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;color:#ffffff;font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:25%;width:384px;height:384px;background:rgba(0,139,163,0.1);border-radius:9999px;filter:blur(64px);pointer-events:none;"></div>
+        <div style="position:absolute;bottom:0;right:25%;width:384px;height:384px;background:rgba(2,132,199,0.1);border-radius:9999px;filter:blur(64px);pointer-events:none;"></div>
+        <div style="position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;text-align:center;max-width:400px;width:100%;">
+          <div style="width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#008ba3,#0284c7);display:flex;align-items:center;justify-content:center;color:#ffffff;box-shadow:0 10px 25px -5px rgba(0,139,163,0.35);margin-bottom:16px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/>
+              <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/>
+              <circle cx="20" cy="10" r="2"/>
+            </svg>
+          </div>
+          <h1 style="font-size:26px;font-weight:900;color:#ffffff;letter-spacing:-0.03em;margin:0 0 6px 0;">DocRx System</h1>
+          <p style="font-size:12px;color:#94a3b8;margin:0 0 24px 0;line-height:1.4;">Doctor Digital Prescription Management Platform</p>
+          <div style="width:160px;height:3px;background:rgba(255,255,255,0.08);border-radius:9999px;overflow:hidden;position:relative;">
+            <div style="position:absolute;top:0;bottom:0;width:60px;background:linear-gradient(90deg,#008ba3,#38bdf8);border-radius:9999px;animation:rxSweep 1.2s ease-in-out infinite;"></div>
+          </div>
+        </div>
+        <style>
+          @keyframes rxSweep{0%{left:-60px}100%{left:160px}}
+        </style>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { exportElementToPdf } from '../../utils/pdfExport';
 import { Printer, Download, CheckCircle2, ShieldCheck, Stethoscope } from 'lucide-react';
 import { api } from '../../api/client';
 import { LivePrescriptionPad } from '../../components/prescription/LivePrescriptionPad';
@@ -56,26 +55,17 @@ export const PublicPrescriptionView: React.FC = () => {
 
     setIsGeneratingPdf(true);
 
-    setTimeout(async () => {
-      try {
-        const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
-        const imgData = canvas.toDataURL('image/jpeg', 0.98);
-        const isLetter = paperSize === 'Letter';
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: isLetter ? 'letter' : 'a4',
-        });
-        const pdfWidth = isLetter ? 215.9 : 210;
-        const pdfHeight = isLetter ? 279.4 : 297;
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`${prescription.patientSnapshot.name}_${prescription.prescriptionId}.pdf`);
-      } catch {
-        handlePrint();
-      } finally {
-        setIsGeneratingPdf(false);
-      }
-    }, 40);
+    try {
+      await exportElementToPdf({
+        elementId: 'prescription-pad',
+        filename: `${prescription.patientSnapshot.name}_${prescription.prescriptionId}`,
+        paperSize: paperSize as 'A4' | 'Letter',
+      });
+    } catch {
+      handlePrint();
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   if (isLoading) {

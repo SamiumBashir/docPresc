@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import confetti from 'canvas-confetti';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { exportElementToPdf } from '../../utils/pdfExport';
 import {
   Save,
   Printer,
@@ -402,7 +400,9 @@ export const NewPrescription: React.FC = () => {
 
         if (saveStatus === 'FINALIZED') {
           setFinalizeConfirmOpen(false);
-          confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+          import('canvas-confetti').then(({ default: confetti }) => {
+            confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+          });
           showToast.success(`Prescription ${res.data.prescriptionId} finalized successfully!`);
         } else {
           showToast.success('Prescription draft saved.');
@@ -430,7 +430,7 @@ export const NewPrescription: React.FC = () => {
     });
   };
 
-  // High-Fidelity Non-blocking PDF Generation
+  // High-Fidelity Non-blocking PDF Generation via dynamic loader
   const handleDownloadPdf = async () => {
     const element = document.getElementById('prescription-pad');
     if (!element || isGeneratingPdf) return;
@@ -438,35 +438,18 @@ export const NewPrescription: React.FC = () => {
     setIsGeneratingPdf(true);
     showToast.info('Preparing PDF document...');
 
-    setTimeout(async () => {
-      try {
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-        });
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.98);
-        const isLetter = paperSize === 'Letter';
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: isLetter ? 'letter' : 'a4',
-        });
-
-        const pdfWidth = isLetter ? 215.9 : 210;
-        const pdfHeight = isLetter ? 279.4 : 297;
-
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`${selectedPatient?.name || 'Patient'}_${prescriptionId}.pdf`);
-        showToast.success('PDF downloaded successfully!');
-      } catch (err: any) {
-        showToast.error('PDF generation failed. Please try browser print (Ctrl+P).');
-      } finally {
-        setIsGeneratingPdf(false);
-      }
-    }, 40);
+    try {
+      await exportElementToPdf({
+        elementId: 'prescription-pad',
+        filename: `${selectedPatient?.name || 'Patient'}_${prescriptionId}`,
+        paperSize: paperSize as 'A4' | 'Letter',
+      });
+      showToast.success('PDF downloaded successfully!');
+    } catch (err: any) {
+      showToast.error('PDF generation failed. Please try browser print (Ctrl+P).');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   return (

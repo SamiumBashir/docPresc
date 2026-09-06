@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { exportElementToPdf } from '../../utils/pdfExport';
 import {
   Printer,
   Download,
@@ -73,35 +72,18 @@ export const PrescriptionView: React.FC = () => {
     setIsGeneratingPdf(true);
     showToast.info('Preparing PDF document...');
 
-    setTimeout(async () => {
-      try {
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-        });
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.98);
-        const isLetter = paperSize === 'Letter';
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: isLetter ? 'letter' : 'a4',
-        });
-
-        const pdfWidth = isLetter ? 215.9 : 210;
-        const pdfHeight = isLetter ? 279.4 : 297;
-
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`${prescription.patientSnapshot.name}_${prescription.prescriptionId}.pdf`);
-        showToast.success('PDF downloaded successfully!');
-      } catch {
-        showToast.error('PDF generation failed. Please use browser print.');
-      } finally {
-        setIsGeneratingPdf(false);
-      }
-    }, 40);
+    try {
+      await exportElementToPdf({
+        elementId: 'prescription-pad',
+        filename: `${prescription.patientSnapshot.name}_${prescription.prescriptionId}`,
+        paperSize: paperSize as 'A4' | 'Letter',
+      });
+      showToast.success('PDF downloaded successfully!');
+    } catch {
+      showToast.error('PDF generation failed. Please use browser print.');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   const handleCopyShare = () => {
