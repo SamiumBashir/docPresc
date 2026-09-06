@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { User, ShieldCheck, Phone, Mail, Award, Building, Save, Trash2, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, ShieldCheck, Phone, Mail, Award, Building, Save, Trash2, AlertTriangle, PenTool, Upload, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
@@ -20,9 +20,69 @@ export const DoctorProfile: React.FC = () => {
     logo: doctor?.logo || '',
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingSignature, setIsUploadingSignature] = useState(false);
+  const signatureInputRef = useRef<HTMLInputElement>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [confirmDeleteText, setConfirmDeleteText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    if (doctor) {
+      setFormData((prev) => ({
+        ...prev,
+        name: doctor.name || user?.name || prev.name,
+        qualification: doctor.qualification || prev.qualification,
+        specialization: doctor.specialization || prev.specialization,
+        bmdcNumber: doctor.bmdcNumber || prev.bmdcNumber,
+        designation: doctor.designation || prev.designation,
+        workplace: doctor.workplace || prev.workplace,
+        phone: doctor.phone || prev.phone,
+        email: doctor.email || user?.email || prev.email,
+        signature: doctor.signature || prev.signature,
+        logo: doctor.logo || prev.logo,
+      }));
+    }
+  }, [doctor, user]);
+
+  const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast.error('Please upload an image file (PNG, JPG, WEBP).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast.error('Signature file size must be less than 5MB.');
+      return;
+    }
+
+    setIsUploadingSignature(true);
+    try {
+      const uploadData = new FormData();
+      uploadData.append('signature', file);
+
+      const res = await api<{ success: boolean; message: string; data: { url: string } }>('/upload/signature', {
+        method: 'POST',
+        body: uploadData,
+      });
+
+      if (res.success && res.data?.url) {
+        setFormData((prev) => ({ ...prev, signature: res.data.url }));
+        showToast.success('Signature uploaded. Click "Save Profile Details" to save changes.');
+      } else {
+        throw new Error(res.message || 'Failed to upload signature.');
+      }
+    } catch (err: any) {
+      showToast.error(err.message || 'Error uploading signature.');
+    } finally {
+      setIsUploadingSignature(false);
+      if (signatureInputRef.current) {
+        signatureInputRef.current.value = '';
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,6 +271,84 @@ export const DoctorProfile: React.FC = () => {
               className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-1 focus:ring-medical-500 focus:outline-none font-mono"
             />
           </div>
+        </div>
+
+        {/* Doctor Signature (for Prescription Footer) */}
+        <div className="border border-dashed border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase flex items-center gap-1.5">
+                <PenTool className="w-3.5 h-3.5 text-medical-600" />
+                Doctor Signature (Prescription Footer) / প্রেসক্রিপশন স্বাক্ষর
+              </label>
+              <p className="text-[11px] text-slate-500">
+                Upload doctor's signature image to automatically appear on the footer of all your prescriptions
+              </p>
+            </div>
+            {formData.signature && (
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, signature: '' })}
+                className="text-xs text-rose-600 hover:text-rose-700 font-semibold hover:underline cursor-pointer"
+              >
+                Remove Signature
+              </button>
+            )}
+          </div>
+
+          {formData.signature ? (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white p-3.5 rounded-xl border border-slate-200">
+              <div className="h-16 w-48 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center p-2 shrink-0 overflow-hidden">
+                <img
+                  src={formData.signature}
+                  alt="Doctor Signature"
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+              <div className="space-y-1">
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+                  <Check className="w-3 h-3" /> Signature Active
+                </span>
+                <p className="text-[11px] text-slate-500">
+                  This signature will appear automatically above your name on the bottom right of all printed and digital prescriptions.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <input
+                ref={signatureInputRef}
+                type="file"
+                accept="image/png, image/jpeg, image/jpg, image/webp"
+                onChange={handleSignatureUpload}
+                className="hidden"
+                id="doctor-signature-file"
+              />
+              <label
+                htmlFor="doctor-signature-file"
+                className={`flex flex-col items-center justify-center p-5 border border-dashed rounded-xl cursor-pointer transition-colors ${
+                  isUploadingSignature
+                    ? 'bg-slate-100 border-slate-300 pointer-events-none'
+                    : 'bg-white hover:bg-slate-50 border-slate-300 hover:border-medical-400 text-slate-600 hover:text-medical-700'
+                }`}
+              >
+                {isUploadingSignature ? (
+                  <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                    <div className="w-4 h-4 border-2 border-medical-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Uploading signature to Cloudinary...</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1.5 text-center">
+                    <div className="w-8 h-8 rounded-full bg-medical-50 flex items-center justify-center text-medical-600">
+                      <Upload className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-semibold">Upload Doctor Signature Image (PNG / JPG / WEBP)</span>
+                    <span className="text-[11px] text-slate-400">Max file size: 5MB. Clean transparent PNG or white background recommended.</span>
+                  </div>
+                )}
+              </label>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end pt-4 border-t border-slate-100">

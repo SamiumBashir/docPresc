@@ -461,15 +461,9 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
           {/* Right: Signature Area */}
           <div className="text-left sm:text-right print:!text-right space-y-1 w-full sm:w-auto ml-auto shrink-0">
             <div className="h-10 flex items-end justify-start sm:justify-end">
-              {chamber?.signature ||
-              (typeof doctor?.defaultChamberId === 'object' && (doctor.defaultChamberId as any).signature) ||
-              doctor?.signature ? (
+              {doctor?.signature || chamber?.signature ? (
                 <img
-                  src={
-                    chamber?.signature ||
-                    (typeof doctor?.defaultChamberId === 'object' && (doctor.defaultChamberId as any).signature) ||
-                    doctor?.signature
-                  }
+                  src={doctor?.signature || chamber?.signature}
                   alt="Doctor Signature"
                   className="max-h-12 object-contain"
                 />

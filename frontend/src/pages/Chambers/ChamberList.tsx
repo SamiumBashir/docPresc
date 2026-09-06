@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Building2, Plus, Phone, Calendar, Clock, Check, Edit2, Trash2, Globe, Upload, PenTool } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Building2, Plus, Phone, Calendar, Clock, Check, Edit2, Trash2, Globe } from 'lucide-react';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
 import { Modal } from '../../components/ui/Modal';
@@ -10,8 +10,6 @@ export const ChamberList: React.FC = () => {
   const { chambers, setActiveChamber, activeChamber, refreshProfile } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingChamber, setEditingChamber] = useState<IChamber | null>(null);
-  const [isUploadingSignature, setIsUploadingSignature] = useState(false);
-  const signatureInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -19,7 +17,6 @@ export const ChamberList: React.FC = () => {
     phone: '',
     appointmentPhone: '',
     website: '',
-    signature: '',
     visitingDays: ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'],
     visitingHours: '5:00 PM - 9:00 PM',
     roomNo: '',
@@ -34,7 +31,6 @@ export const ChamberList: React.FC = () => {
       phone: '',
       appointmentPhone: '',
       website: '',
-      signature: '',
       visitingDays: ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'],
       visitingHours: '5:00 PM - 9:00 PM',
       roomNo: '',
@@ -51,7 +47,6 @@ export const ChamberList: React.FC = () => {
       phone: ch.phone || '',
       appointmentPhone: ch.appointmentPhone || '',
       website: ch.website || '',
-      signature: ch.signature || '',
       visitingDays: ch.visitingDays || ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'],
       visitingHours: ch.visitingHours || '5:00 PM - 9:00 PM',
       roomNo: ch.roomNo || '',
@@ -60,45 +55,6 @@ export const ChamberList: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      showToast.error('Please upload an image file (PNG, JPG, WEBP).');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      showToast.error('Signature file size must be less than 5MB.');
-      return;
-    }
-
-    setIsUploadingSignature(true);
-    try {
-      const uploadData = new FormData();
-      uploadData.append('signature', file);
-
-      const res = await api<{ success: boolean; message: string; data: { url: string } }>('/upload/signature', {
-        method: 'POST',
-        body: uploadData,
-      });
-
-      if (res.success && res.data?.url) {
-        setFormData((prev) => ({ ...prev, signature: res.data.url }));
-        showToast.success('Signature uploaded successfully.');
-      } else {
-        throw new Error(res.message || 'Failed to upload signature.');
-      }
-    } catch (err: any) {
-      showToast.error(err.message || 'Error uploading signature.');
-    } finally {
-      setIsUploadingSignature(false);
-      if (signatureInputRef.current) {
-        signatureInputRef.current.value = '';
-      }
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,12 +211,7 @@ export const ChamberList: React.FC = () => {
                     <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     {ch.visitingDays?.join(', ')}
                   </p>
-                  {ch.signature && (
-                    <p className="flex items-center gap-1.5 text-emerald-700 text-[11px] font-medium font-sans pt-1 border-t border-slate-100">
-                      <PenTool className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>Footer Signature Attached</span>
-                    </p>
-                  )}
+
                 </div>
               </div>
 
@@ -372,79 +323,6 @@ export const ChamberList: React.FC = () => {
             </p>
           </div>
 
-          {/* Upload Signature Section */}
-          <div className="border border-dashed border-slate-200 rounded-2xl p-3.5 bg-slate-50/50 space-y-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase">
-                  Chamber Signature (for Prescription Footer)
-                </label>
-                <p className="text-[11px] text-slate-400">
-                  Upload doctor's signature image to appear in the footer when prescribing for this chamber
-                </p>
-              </div>
-              {formData.signature && (
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, signature: '' })}
-                  className="text-xs text-rose-600 hover:text-rose-700 font-semibold hover:underline"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-
-            {formData.signature ? (
-              <div className="flex items-center gap-4 bg-white p-3 rounded-xl border border-slate-200">
-                <div className="h-14 w-36 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center p-1.5 shrink-0 overflow-hidden">
-                  <img
-                    src={formData.signature}
-                    alt="Chamber Signature"
-                    className="max-h-full max-w-full object-contain"
-                  />
-                </div>
-                <div className="space-y-0.5">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    <Check className="w-3 h-3" /> Signature Attached
-                  </span>
-                  <p className="text-[10px] text-slate-400">
-                    Will appear automatically in the footer of prescriptions for this chamber.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <input
-                  ref={signatureInputRef}
-                  type="file"
-                  accept="image/png, image/jpeg, image/jpg, image/webp"
-                  onChange={handleSignatureUpload}
-                  className="hidden"
-                  id="chamber-signature-file"
-                />
-                <label
-                  htmlFor="chamber-signature-file"
-                  className={`flex flex-col items-center justify-center p-4 border border-dashed rounded-xl cursor-pointer transition-colors ${
-                    isUploadingSignature
-                      ? 'bg-slate-100 border-slate-300 pointer-events-none'
-                      : 'bg-white hover:bg-slate-50 border-slate-300 hover:border-medical-400 text-slate-600 hover:text-medical-700'
-                  }`}
-                >
-                  {isUploadingSignature ? (
-                    <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
-                      <div className="w-4 h-4 border-2 border-medical-600 border-t-transparent rounded-full animate-spin"></div>
-                      <span>Uploading to Cloudinary...</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-xs font-semibold">
-                      <Upload className="w-4 h-4 text-medical-600" />
-                      <span>Upload Signature Image (PNG / JPG)</span>
-                    </div>
-                  )}
-                </label>
-              </div>
-            )}
-          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
