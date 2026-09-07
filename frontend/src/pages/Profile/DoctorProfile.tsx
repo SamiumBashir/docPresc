@@ -67,23 +67,25 @@ export const DoctorProfile: React.FC = () => {
   const { doctor, user, refreshProfile, logout } = useAuth();
 
   const getInitialState = () => {
-    const activeInstitutions: string[] =
-      doctor?.healthcareInstitutions && doctor.healthcareInstitutions.length > 0
-        ? doctor.healthcareInstitutions
-        : doctor?.healthcareAuthority
-        ? [doctor.healthcareAuthority]
-        : doctor?.bmdcNumber
-        ? ['BMDC']
-        : [];
+    const defaultAuth =
+      doctor?.healthcareAuthority ||
+      (doctor?.healthcareInstitutions && doctor.healthcareInstitutions[0]) ||
+      'BMDC';
+
+    const defaultRegNumber =
+      doctor?.registrationNumber ||
+      (doctor?.institutionRegNumbers && doctor.institutionRegNumbers[defaultAuth]) ||
+      doctor?.bmdcNumber ||
+      '';
 
     const regMap: Record<string, string> = {
       ...(doctor?.institutionRegNumbers || {}),
     };
-    if (activeInstitutions.includes('BMDC') && !regMap['BMDC']) {
-      regMap['BMDC'] = doctor?.registrationNumber || doctor?.bmdcNumber || '';
+    if (!regMap[defaultAuth]) {
+      regMap[defaultAuth] = defaultRegNumber;
     }
-    if (doctor?.healthcareAuthority && !regMap[doctor.healthcareAuthority]) {
-      regMap[doctor.healthcareAuthority] = doctor?.registrationNumber || doctor?.bmdcNumber || '';
+    if (doctor?.bmdcNumber && !regMap['BMDC']) {
+      regMap['BMDC'] = doctor.bmdcNumber;
     }
 
     return {
@@ -92,7 +94,8 @@ export const DoctorProfile: React.FC = () => {
       specialization: doctor?.specialization || '',
       designation: doctor?.designation || '',
       workplace: doctor?.workplace || '',
-      healthcareInstitutions: activeInstitutions,
+      selectedAuthority: defaultAuth,
+      registrationNumber: defaultRegNumber,
       institutionRegNumbers: regMap,
       phone: doctor?.phone || '',
       email: doctor?.email || user?.email || '',
@@ -111,73 +114,78 @@ export const DoctorProfile: React.FC = () => {
 
   useEffect(() => {
     if (doctor) {
-      const activeInstitutions: string[] =
-        doctor.healthcareInstitutions && doctor.healthcareInstitutions.length > 0
-          ? doctor.healthcareInstitutions
-          : doctor.healthcareAuthority
-          ? [doctor.healthcareAuthority]
-          : doctor.bmdcNumber
-          ? ['BMDC']
-          : [];
+      const defaultAuth =
+        doctor.healthcareAuthority ||
+        (doctor.healthcareInstitutions && doctor.healthcareInstitutions[0]) ||
+        'BMDC';
+
+      const defaultRegNumber =
+        doctor.registrationNumber ||
+        (doctor.institutionRegNumbers && doctor.institutionRegNumbers[defaultAuth]) ||
+        doctor.bmdcNumber ||
+        '';
 
       const regMap: Record<string, string> = {
         ...(doctor.institutionRegNumbers || {}),
       };
-      if (activeInstitutions.includes('BMDC') && !regMap['BMDC']) {
-        regMap['BMDC'] = doctor.registrationNumber || doctor.bmdcNumber || '';
+      if (!regMap[defaultAuth]) {
+        regMap[defaultAuth] = defaultRegNumber;
       }
-      if (doctor.healthcareAuthority && !regMap[doctor.healthcareAuthority]) {
-        regMap[doctor.healthcareAuthority] = doctor.registrationNumber || doctor.bmdcNumber || '';
+      if (doctor.bmdcNumber && !regMap['BMDC']) {
+        regMap['BMDC'] = doctor.bmdcNumber;
       }
 
-      setFormData((prev) => ({
-        ...prev,
-        name: doctor.name || user?.name || prev.name,
-        qualification: doctor.qualification || prev.qualification,
-        specialization: doctor.specialization || prev.specialization,
-        designation: doctor.designation || prev.designation,
-        workplace: doctor.workplace || prev.workplace,
-        healthcareInstitutions:
-          prev.healthcareInstitutions.length > 0 ? prev.healthcareInstitutions : activeInstitutions,
-        institutionRegNumbers: {
-          ...regMap,
-          ...prev.institutionRegNumbers,
-        },
-        phone: doctor.phone || prev.phone,
-        email: doctor.email || user?.email || prev.email,
-        signature: doctor.signature || prev.signature,
-        logo: doctor.logo || prev.logo,
-      }));
+      setFormData((prev) => {
+        const currentAuth = prev.selectedAuthority || defaultAuth;
+        const currentReg = prev.registrationNumber || regMap[currentAuth] || defaultRegNumber;
+        return {
+          ...prev,
+          name: doctor.name || user?.name || prev.name,
+          qualification: doctor.qualification || prev.qualification,
+          specialization: doctor.specialization || prev.specialization,
+          designation: doctor.designation || prev.designation,
+          workplace: doctor.workplace || prev.workplace,
+          selectedAuthority: currentAuth,
+          registrationNumber: currentReg,
+          institutionRegNumbers: {
+            ...regMap,
+            ...prev.institutionRegNumbers,
+            [currentAuth]: currentReg,
+          },
+          phone: doctor.phone || prev.phone,
+          email: doctor.email || user?.email || prev.email,
+          signature: doctor.signature || prev.signature,
+          logo: doctor.logo || prev.logo,
+        };
+      });
     }
   }, [doctor, user]);
 
-  const handleToggleInstitution = (id: string) => {
+  const handleSelectAuthority = (id: string) => {
     setFormData((prev) => {
-      const exists = prev.healthcareInstitutions.includes(id);
-      const updatedInstitutions = exists
-        ? prev.healthcareInstitutions.filter((item) => item !== id)
-        : [...prev.healthcareInstitutions, id];
+      const savedNumberForThisAuth =
+        prev.institutionRegNumbers[id] ||
+        (id === 'BMDC' ? doctor?.bmdcNumber || '' : '');
 
-      const updatedRegNumbers = { ...prev.institutionRegNumbers };
-      if (!exists && !updatedRegNumbers[id]) {
-        if (id === 'BMDC') {
-          updatedRegNumbers[id] = doctor?.bmdcNumber || doctor?.registrationNumber || '';
-        }
-      }
       return {
         ...prev,
-        healthcareInstitutions: updatedInstitutions,
-        institutionRegNumbers: updatedRegNumbers,
+        selectedAuthority: id,
+        registrationNumber: savedNumberForThisAuth,
+        institutionRegNumbers: {
+          ...prev.institutionRegNumbers,
+          [id]: savedNumberForThisAuth,
+        },
       };
     });
   };
 
-  const handleRegNumberChange = (institutionId: string, value: string) => {
+  const handleRegNumberChange = (value: string) => {
     setFormData((prev) => ({
       ...prev,
+      registrationNumber: value,
       institutionRegNumbers: {
         ...prev.institutionRegNumbers,
-        [institutionId]: value,
+        [prev.selectedAuthority]: value,
       },
     }));
   };
@@ -222,27 +230,29 @@ export const DoctorProfile: React.FC = () => {
     }
   };
 
+  const selectedAuthorityInfo =
+    HEALTHCARE_INSTITUTIONS.find((i) => i.id === formData.selectedAuthority) || HEALTHCARE_INSTITUTIONS[0];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (formData.healthcareInstitutions.length === 0) {
-      showToast.error('Please select at least one Healthcare Institution or Authority.');
+    if (!formData.selectedAuthority) {
+      showToast.error('Please select a Healthcare Institution or Authority.');
       return;
     }
 
-    for (const instId of formData.healthcareInstitutions) {
-      const val = formData.institutionRegNumbers[instId]?.trim();
-      if (!val) {
-        showToast.error(`Please enter your registration number for ${instId}.`);
-        return;
-      }
+    const trimmedRegNum = formData.registrationNumber?.trim() || '';
+    if (!trimmedRegNum) {
+      showToast.error(`Please enter your registration number for ${formData.selectedAuthority}.`);
+      return;
     }
 
     setIsSaving(true);
     try {
-      const primaryInst = formData.healthcareInstitutions[0] || 'BMDC';
-      const primaryRegNum = formData.institutionRegNumbers[primaryInst] || '';
-      const bmdcNum = formData.institutionRegNumbers['BMDC'] || primaryRegNum;
+      const bmdcNum =
+        formData.selectedAuthority === 'BMDC'
+          ? trimmedRegNum
+          : formData.institutionRegNumbers['BMDC'] || trimmedRegNum;
 
       const payload = {
         name: formData.name,
@@ -250,10 +260,13 @@ export const DoctorProfile: React.FC = () => {
         specialization: formData.specialization,
         designation: formData.designation,
         workplace: formData.workplace,
-        healthcareInstitutions: formData.healthcareInstitutions,
-        healthcareAuthority: primaryInst,
-        registrationNumber: primaryRegNum,
-        institutionRegNumbers: formData.institutionRegNumbers,
+        healthcareInstitutions: [formData.selectedAuthority],
+        healthcareAuthority: formData.selectedAuthority,
+        registrationNumber: trimmedRegNum,
+        institutionRegNumbers: {
+          ...formData.institutionRegNumbers,
+          [formData.selectedAuthority]: trimmedRegNum,
+        },
         bmdcNumber: bmdcNum,
         phone: formData.phone,
         email: formData.email,
@@ -305,7 +318,7 @@ export const DoctorProfile: React.FC = () => {
       <div>
         <h2 className="text-xl font-bold text-slate-900">Doctor Profile & Credentials</h2>
         <p className="text-xs text-slate-500">
-          Update your medical qualifications, authority registration numbers, and chamber affiliations
+          Update your medical qualifications, authority registration number, and chamber affiliations
         </p>
       </div>
 
@@ -318,16 +331,10 @@ export const DoctorProfile: React.FC = () => {
             </div>
             <div>
               <p className="text-xs font-bold text-emerald-900">
-                {formData.healthcareInstitutions.length > 0
-                  ? `${formData.healthcareInstitutions.join(' & ')} Registered Practitioner`
-                  : 'Registered Medical Practitioner'}
+                {formData.selectedAuthority} Registered Practitioner
               </p>
-              <p className="text-[11px] text-emerald-700">
-                {formData.healthcareInstitutions.length > 0
-                  ? formData.healthcareInstitutions
-                      .map((id) => `${id} Reg: ${formData.institutionRegNumbers[id] || 'Not set'}`)
-                      .join(' | ')
-                  : 'Select an authority below'}
+              <p className="text-[11px] text-emerald-700 font-mono">
+                {formData.selectedAuthority} Reg: {formData.registrationNumber || 'Pending entry'}
               </p>
             </div>
           </div>
@@ -414,7 +421,7 @@ export const DoctorProfile: React.FC = () => {
           />
         </div>
 
-        {/* Healthcare Institutions & Authorities */}
+        {/* Healthcare Institutions & Authorities (Single Select Radio) */}
         <div className="space-y-4 bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
@@ -423,45 +430,43 @@ export const DoctorProfile: React.FC = () => {
                 Healthcare Institutions & Authorities / স্বাস্থ্যসেবা প্রতিষ্ঠান ও কর্তৃপক্ষ *
               </label>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Select your recognized authority or institution to enter its official practitioner registration number
+                Select your recognized authority or institution (choose one) to enter its official registration number
               </p>
             </div>
-            {formData.healthcareInstitutions.length > 0 ? (
-              <span className="text-[11px] font-semibold text-medical-700 bg-medical-50/90 border border-medical-200 px-2.5 py-0.5 rounded-full self-start sm:self-auto flex items-center gap-1">
-                <Check className="w-3 h-3 text-medical-600" />
-                {formData.healthcareInstitutions.length} Selected
-              </span>
-            ) : (
-              <span className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full self-start sm:self-auto flex items-center gap-1">
-                <AlertCircle className="w-3 h-3 text-amber-600" />
-                Select authority
-              </span>
-            )}
+            <span className="text-[11px] font-semibold text-medical-800 bg-medical-50/90 border border-medical-200 px-3 py-1 rounded-full self-start sm:self-auto flex items-center gap-1.5 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-medical-500"></span>
+              Selected: {formData.selectedAuthority}
+            </span>
           </div>
 
-          {/* 5 Institution Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+          {/* 5 Institution Radio Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1" role="radiogroup" aria-label="Healthcare Institutions & Authorities">
             {HEALTHCARE_INSTITUTIONS.map((inst) => {
-              const isSelected = formData.healthcareInstitutions.includes(inst.id);
+              const isSelected = formData.selectedAuthority === inst.id;
               return (
                 <button
                   key={inst.id}
                   type="button"
-                  onClick={() => handleToggleInstitution(inst.id)}
+                  role="radio"
+                  aria-checked={isSelected}
+                  onClick={() => handleSelectAuthority(inst.id)}
                   className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-medical-50/90 border-medical-500 shadow-2xs ring-2 ring-medical-500/20'
                       : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300'
                   }`}
                 >
+                  {/* Radio Indicator */}
                   <div
-                    className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                    className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-all ${
                       isSelected
-                        ? 'bg-medical-600 text-white shadow-2xs'
-                        : 'border border-slate-300 bg-slate-50 text-transparent'
+                        ? 'border-2 border-medical-600 bg-white shadow-2xs'
+                        : 'border border-slate-300 bg-slate-50'
                     }`}
                   >
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    {isSelected && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-medical-600 animate-in zoom-in-75 duration-150" />
+                    )}
                   </div>
                   <div className="space-y-0.5 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -484,49 +489,32 @@ export const DoctorProfile: React.FC = () => {
             })}
           </div>
 
-          {/* Dynamic Registration Number Input Fields */}
-          {formData.healthcareInstitutions.length > 0 ? (
-            <div className="pt-3 border-t border-slate-200/80 space-y-3">
-              <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-medical-600" />
-                Authority Registration Numbers / রেজিস্ট্রেশন নম্বরসমূহ *
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {formData.healthcareInstitutions.map((instId) => {
-                  const inst = HEALTHCARE_INSTITUTIONS.find((i) => i.id === instId);
-                  const regValue = formData.institutionRegNumbers[instId] || '';
-                  return (
-                    <div key={instId} className="bg-white p-3.5 rounded-xl border border-medical-200 shadow-2xs space-y-1.5 animate-in fade-in duration-150">
-                      <div className="flex items-center justify-between gap-2">
-                        <label className="block text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-medical-500"></span>
-                          {inst?.fieldLabel || `${instId} Registration Number`} *
-                        </label>
-                        <span className="text-[10px] font-bold text-medical-700 bg-medical-50 px-2 py-0.5 rounded border border-medical-200">
-                          {instId}
-                        </span>
-                      </div>
-                      <input
-                        type="text"
-                        required
-                        value={regValue}
-                        onChange={(e) => handleRegNumberChange(instId, e.target.value)}
-                        placeholder={inst?.placeholder || 'Enter registration number'}
-                        className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 focus:outline-none font-mono font-bold text-slate-800 tracking-wide bg-slate-50/50 focus:bg-white"
-                      />
-                      <p className="text-[10px] text-slate-400">
-                        {inst?.desc} ({inst?.banglaLabel})
-                      </p>
-                    </div>
-                  );
-                })}
+          {/* Dynamic Registration Number Input Field for the Selected Authority */}
+          {selectedAuthorityInfo && (
+            <div className="pt-3 border-t border-slate-200/80 space-y-2 animate-in fade-in duration-150">
+              <div className="flex items-center justify-between gap-2">
+                <label htmlFor="authority-reg-number" className="block text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-medical-600" />
+                  {selectedAuthorityInfo.fieldLabel} * ({selectedAuthorityInfo.banglaLabel})
+                </label>
+                <span className="text-[10px] font-bold text-medical-700 bg-medical-50 px-2.5 py-0.5 rounded-md border border-medical-200">
+                  {selectedAuthorityInfo.name}
+                </span>
               </div>
-            </div>
-          ) : (
-            <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>Please select your recognized institution/authority above (BMDC, DGHS, DGDA, BIRDEM, or BSMMU) to enter your registration number.</span>
+              <div className="relative sm:max-w-md">
+                <input
+                  id="authority-reg-number"
+                  type="text"
+                  required
+                  value={formData.registrationNumber}
+                  onChange={(e) => handleRegNumberChange(e.target.value)}
+                  placeholder={selectedAuthorityInfo.placeholder}
+                  className="w-full px-3.5 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 focus:outline-none font-mono font-bold text-slate-900 tracking-wide bg-white shadow-2xs"
+                />
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                {selectedAuthorityInfo.desc}
+              </p>
             </div>
           )}
         </div>
