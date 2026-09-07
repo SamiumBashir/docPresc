@@ -19,6 +19,7 @@ export interface IDoctor extends Document {
   bmdcNumber: string;
   designation?: string;
   workplace?: string;
+  healthcareInstitutions?: string[];
   phone: string;
   email: string;
   profileImage?: string;
@@ -40,6 +41,7 @@ const DoctorSchema: Schema = new Schema(
     bmdcNumber: { type: String, required: true, trim: true },
     designation: { type: String, trim: true },
     workplace: { type: String, trim: true },
+    healthcareInstitutions: [{ type: String, trim: true }],
     phone: { type: String, trim: true },
     email: { type: String, lowercase: true, trim: true },
     profileImage: { type: String },

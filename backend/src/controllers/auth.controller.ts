@@ -233,6 +233,7 @@ export const updateDoctorProfile = async (req: AuthRequest, res: Response): Prom
     specialization,
     designation,
     workplace,
+    healthcareInstitutions,
     phone,
     email,
     profileImage,
@@ -247,6 +248,13 @@ export const updateDoctorProfile = async (req: AuthRequest, res: Response): Prom
   if (specialization) doctor.specialization = specialization;
   if (designation !== undefined) doctor.designation = designation;
   if (workplace !== undefined) doctor.workplace = workplace;
+  if (healthcareInstitutions !== undefined) {
+    doctor.healthcareInstitutions = Array.isArray(healthcareInstitutions)
+      ? healthcareInstitutions
+      : healthcareInstitutions
+      ? [healthcareInstitutions]
+      : [];
+  }
   if (phone) doctor.phone = phone;
   if (email) doctor.email = email;
   if (profileImage !== undefined) doctor.profileImage = profileImage;

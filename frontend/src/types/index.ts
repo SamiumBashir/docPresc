@@ -27,6 +27,7 @@ export interface IDoctor {
   bmdcNumber: string;
   designation?: string;
   workplace?: string;
+  healthcareInstitutions?: string[];
   phone: string;
   email: string;
   profileImage?: string;

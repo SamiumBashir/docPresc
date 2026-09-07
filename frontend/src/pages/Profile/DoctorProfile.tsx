@@ -5,6 +5,44 @@ import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
 import { Modal } from '../../components/ui/Modal';
 
+const HEALTHCARE_INSTITUTIONS = [
+  {
+    id: 'BMDC',
+    name: 'BMDC',
+    fullName: 'Bangladesh Medical & Dental Council',
+    banglaName: 'বাংলাদেশ মেডিকেল অ্যান্ড ডেন্টাল কাউন্সিল',
+    tag: 'Regulatory Authority',
+  },
+  {
+    id: 'DGHS',
+    name: 'DGHS',
+    fullName: 'Directorate General of Health Services',
+    banglaName: 'স্বাস্থ্য অধিদপ্তর',
+    tag: 'Directorate',
+  },
+  {
+    id: 'DGDA',
+    name: 'DGDA',
+    fullName: 'Directorate General of Drug Administration',
+    banglaName: 'ঔষধ প্রশাসন অধিদপ্তর',
+    tag: 'Drug Authority',
+  },
+  {
+    id: 'BIRDEM',
+    name: 'BIRDEM',
+    fullName: 'BIRDEM General Hospital / BADAS',
+    banglaName: 'বারডেম জেনারেল হাসপাতাল / বাডাস',
+    tag: 'Specialized Institute',
+  },
+  {
+    id: 'BSMMU',
+    name: 'BSMMU',
+    fullName: 'Bangabandhu Sheikh Mujib Medical University',
+    banglaName: 'বঙ্গবন্ধু শেখ মুজিব মেডিকেল বিশ্ববিদ্যালয়',
+    tag: 'Medical University',
+  },
+];
+
 export const DoctorProfile: React.FC = () => {
   const { doctor, user, refreshProfile, logout } = useAuth();
   const [formData, setFormData] = useState({
@@ -14,6 +52,7 @@ export const DoctorProfile: React.FC = () => {
     bmdcNumber: doctor?.bmdcNumber || '',
     designation: doctor?.designation || '',
     workplace: doctor?.workplace || '',
+    healthcareInstitutions: (doctor?.healthcareInstitutions as string[]) || [],
     phone: doctor?.phone || '',
     email: doctor?.email || user?.email || '',
     signature: doctor?.signature || '',
@@ -36,6 +75,7 @@ export const DoctorProfile: React.FC = () => {
         bmdcNumber: doctor.bmdcNumber || prev.bmdcNumber,
         designation: doctor.designation || prev.designation,
         workplace: doctor.workplace || prev.workplace,
+        healthcareInstitutions: doctor.healthcareInstitutions || prev.healthcareInstitutions || [],
         phone: doctor.phone || prev.phone,
         email: doctor.email || user?.email || prev.email,
         signature: doctor.signature || prev.signature,
@@ -43,6 +83,16 @@ export const DoctorProfile: React.FC = () => {
       }));
     }
   }, [doctor, user]);
+
+  const handleToggleInstitution = (id: string) => {
+    setFormData((prev) => {
+      const exists = prev.healthcareInstitutions.includes(id);
+      const updated = exists
+        ? prev.healthcareInstitutions.filter((item) => item !== id)
+        : [...prev.healthcareInstitutions, id];
+      return { ...prev, healthcareInstitutions: updated };
+    });
+  };
 
   const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -243,6 +293,75 @@ export const DoctorProfile: React.FC = () => {
               placeholder="e.g. Dhaka Medical College Hospital"
               className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-1 focus:ring-medical-500 focus:outline-none"
             />
+          </div>
+        </div>
+
+        {/* Healthcare Institutions & Authorities */}
+        <div className="space-y-3 bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <label className="block text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
+                <Building className="w-3.5 h-3.5 text-medical-600" />
+                Healthcare Institutions & Authorities / স্বাস্থ্যসেবা প্রতিষ্ঠান ও কর্তৃপক্ষ
+              </label>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Select the regulatory authorities, medical universities, and health bodies you are affiliated with or recognized by
+              </p>
+            </div>
+            {formData.healthcareInstitutions.length > 0 ? (
+              <span className="text-[11px] font-semibold text-medical-700 bg-medical-50/90 border border-medical-200 px-2.5 py-0.5 rounded-full self-start sm:self-auto flex items-center gap-1">
+                <Check className="w-3 h-3 text-medical-600" />
+                {formData.healthcareInstitutions.length} Selected
+              </span>
+            ) : (
+              <span className="text-[11px] font-medium text-slate-400 bg-white border border-slate-200 px-2.5 py-0.5 rounded-full self-start sm:self-auto">
+                None selected
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+            {HEALTHCARE_INSTITUTIONS.map((inst) => {
+              const isSelected = formData.healthcareInstitutions.includes(inst.id);
+              return (
+                <button
+                  key={inst.id}
+                  type="button"
+                  onClick={() => handleToggleInstitution(inst.id)}
+                  className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-medical-50/90 border-medical-500 shadow-2xs ring-1 ring-medical-500/20'
+                      : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                      isSelected
+                        ? 'bg-medical-600 text-white shadow-2xs'
+                        : 'border border-slate-300 bg-slate-50 text-transparent'
+                    }`}
+                  >
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  </div>
+                  <div className="space-y-0.5 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`text-xs font-bold ${isSelected ? 'text-medical-950' : 'text-slate-800'}`}>
+                        {inst.name}
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.2 text-slate-500 bg-slate-100 rounded font-medium">
+                        {inst.tag}
+                      </span>
+                    </div>
+                    <p className={`text-[11px] leading-tight truncate ${isSelected ? 'text-medical-800 font-medium' : 'text-slate-500'}`}>
+                      {inst.fullName}
+                    </p>
+                    <p className="text-[10px] text-slate-400 truncate">
+                      {inst.banglaName}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
