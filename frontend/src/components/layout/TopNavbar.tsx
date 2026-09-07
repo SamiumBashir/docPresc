@@ -43,8 +43,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
   }, []);
 
   const handleLogout = async () => {
+    setProfileDropdownOpen(false);
     await logout();
-    navigate('/login');
   };
 
   return (

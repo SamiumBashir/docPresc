@@ -5,6 +5,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { PageLoader } from './components/ui/PageLoader';
 import { TopProgressBar } from './components/ui/TopProgressBar';
+import { ToastContainer } from './components/ui/Toast';
 
 // Route-level code splitting for non-blocking initial performance
 const Login = lazy(() => import('./pages/Auth/Login').then((m) => ({ default: m.Login })));
@@ -106,6 +107,9 @@ export const App: React.FC = () => {
         <BrowserRouter>
           {/* Luminous Top Route Transition Indicator */}
           <TopProgressBar />
+
+          {/* Global Toast Notification Container across all routes */}
+          <ToastContainer />
 
           <Suspense
             fallback={

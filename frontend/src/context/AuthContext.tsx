@@ -174,19 +174,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    try {
-      await api('/auth/logout', { method: 'POST' });
-    } catch {
-      // continue
-    }
+    // 1. Immediately wipe all tokens, user sessions, and chambers from localStorage
     localStorage.removeItem('docrx_token');
     localStorage.removeItem('docrx_user');
     localStorage.removeItem('docrx_doctor');
     localStorage.removeItem('docrx_chambers');
+    sessionStorage.clear();
+
+    // 2. Synchronously clear react state
     setUser(null);
     setDoctor(null);
     setChambers([]);
     setActiveChamberState(null);
+    setIsLoading(false);
+
+    // 3. Inform backend in background without blocking UI
+    api('/auth/logout', { method: 'POST' }).catch(() => {});
+
+    // 4. Force guaranteed immediate redirect to /login
+    window.location.href = '/login';
   };
 
   const setActiveChamber = (chamber: IChamber | null) => {

@@ -3,7 +3,6 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopNavbar } from './TopNavbar';
 import { QuickPatientSearchModal } from './QuickPatientSearchModal';
-import { ToastContainer } from '../ui/Toast';
 
 export const AppLayout: React.FC = () => {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
@@ -55,9 +54,6 @@ export const AppLayout: React.FC = () => {
         isOpen={isSearchModalOpen}
         onClose={() => setIsSearchModalOpen(false)}
       />
-
-      {/* Toast Notification Mount */}
-      <ToastContainer />
     </div>
   );
 };

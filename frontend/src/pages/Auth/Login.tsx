@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Stethoscope, Lock, Mail, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Stethoscope, Lock, Mail, ArrowRight, Eye, EyeOff, Loader2, AlertCircle, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../components/ui/Toast';
 
@@ -10,19 +10,22 @@ export const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('docrx_remember_me') !== 'false');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const isSubmittingRef = useRef(false);
   const { user, login } = useAuth();
   const navigate = useNavigate();
 
-  // If already authenticated, redirect directly to dashboard
+  // Only redirect if both user and active token exist
   useEffect(() => {
-    if (user) {
+    const token = localStorage.getItem('docrx_token');
+    if (user && token) {
       navigate('/dashboard', { replace: true });
     }
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
 
     // 1. Strictly prevent multiple hits / rapid clicks while authentication is running
     if (isLoading || isSubmittingRef.current) {
@@ -34,18 +37,24 @@ export const Login: React.FC = () => {
 
     // 2. First check email & password validity locally before sending to server
     if (!cleanEmail || !cleanPassword) {
-      showToast.error('Please enter both email address and password.');
+      const msg = 'Please enter both email address and password. (অনুগ্রহ করে ইমেইল ও পাসওয়ার্ড লিখুন)';
+      setErrorMessage(msg);
+      showToast.error(msg);
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(cleanEmail)) {
-      showToast.error('Please enter a valid email address.');
+      const msg = 'Please enter a valid email address. (সঠিক ইমেইল ঠিকানা দিন)';
+      setErrorMessage(msg);
+      showToast.error(msg);
       return;
     }
 
     if (cleanPassword.length < 1) {
-      showToast.error('Please enter your password.');
+      const msg = 'Please enter your password. (পাসওয়ার্ড লিখুন)';
+      setErrorMessage(msg);
+      showToast.error(msg);
       return;
     }
 
@@ -69,7 +78,15 @@ export const Login: React.FC = () => {
       showToast.success('Credentials verified. Welcome back!');
       navigate('/dashboard', { replace: true });
     } catch (err: any) {
-      showToast.error(err.message || 'Invalid email or password. Please check your credentials.');
+      const rawMessage = err?.message || '';
+      let friendlyError = 'Wrong email or password. Please check your credentials and try again. (ভুল ইমেইল বা পাসওয়ার্ড! সঠিক তথ্য দিয়ে পুনরায় চেষ্টা করুন)';
+      if (rawMessage.toLowerCase().includes('suspended') || rawMessage.toLowerCase().includes('pending')) {
+        friendlyError = rawMessage;
+      } else if (rawMessage && !rawMessage.toLowerCase().includes('status')) {
+        friendlyError = `${rawMessage} — Wrong email or password.`;
+      }
+      setErrorMessage(friendlyError);
+      showToast.error(friendlyError, 'Authentication Failed');
     } finally {
       setIsLoading(false);
       isSubmittingRef.current = false;
@@ -98,6 +115,33 @@ export const Login: React.FC = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="bg-slate-800/90 backdrop-blur-xl py-8 px-6 shadow-2xl rounded-3xl border border-slate-700/60 sm:px-10 space-y-6">
           <form onSubmit={handleSubmit} role="form" aria-label="Doctor Sign In Form" className="space-y-4">
+            {/* Prominent Authentication Warning Banner */}
+            {errorMessage && (
+              <div
+                role="alert"
+                aria-live="assertive"
+                className="p-3.5 bg-rose-500/15 border border-rose-500/40 rounded-2xl flex items-start gap-3 text-rose-200 text-xs shadow-lg shadow-rose-950/20 animate-in fade-in duration-200"
+              >
+                <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="flex-1 space-y-0.5">
+                  <p className="font-bold text-rose-100 text-xs flex items-center gap-1.5">
+                    <span>Authentication Warning (ভুল তথ্য)</span>
+                  </p>
+                  <p className="text-[11px] text-rose-300 leading-relaxed font-sans">
+                    {errorMessage}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setErrorMessage(null)}
+                  className="text-rose-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+                  title="Dismiss alert"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
             <div>
               <label
                 htmlFor="login-email"
@@ -116,9 +160,16 @@ export const Login: React.FC = () => {
                   autoComplete="email"
                   aria-required="true"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
                   placeholder="doctor@prescription.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-medical-500/30 focus:border-medical-500 font-mono disabled:opacity-60 disabled:cursor-not-allowed"
+                  className={`w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 font-mono disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                    errorMessage
+                      ? 'border-rose-500/80 focus:ring-rose-500/30 focus:border-rose-500'
+                      : 'border-slate-700 focus:ring-medical-500/30 focus:border-medical-500'
+                  }`}
                 />
               </div>
             </div>
@@ -154,9 +205,16 @@ export const Login: React.FC = () => {
                   autoComplete="current-password"
                   aria-required="true"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
                   placeholder={showPassword ? 'Enter your password' : '••••••••'}
-                  className="w-full pl-10 pr-11 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-medical-500/30 focus:border-medical-500 font-mono disabled:opacity-60 disabled:cursor-not-allowed"
+                  className={`w-full pl-10 pr-11 py-2.5 bg-slate-900/80 border rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 font-mono disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                    errorMessage
+                      ? 'border-rose-500/80 focus:ring-rose-500/30 focus:border-rose-500'
+                      : 'border-slate-700 focus:ring-medical-500/30 focus:border-medical-500'
+                  }`}
                 />
                 <button
                   type="button"
