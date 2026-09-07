@@ -20,6 +20,9 @@ export interface IDoctor extends Document {
   designation?: string;
   workplace?: string;
   healthcareInstitutions?: string[];
+  healthcareAuthority?: string;
+  registrationNumber?: string;
+  institutionRegNumbers?: Record<string, string>;
   phone: string;
   email: string;
   profileImage?: string;
@@ -38,7 +41,10 @@ const DoctorSchema: Schema = new Schema(
     name: { type: String, required: true, trim: true },
     qualification: { type: String, required: true, default: 'MBBS' },
     specialization: { type: String, required: true, default: 'General Physician' },
-    bmdcNumber: { type: String, required: true, trim: true },
+    bmdcNumber: { type: String, trim: true },
+    healthcareAuthority: { type: String, trim: true, default: 'BMDC' },
+    registrationNumber: { type: String, trim: true },
+    institutionRegNumbers: { type: Schema.Types.Mixed, default: {} },
     designation: { type: String, trim: true },
     workplace: { type: String, trim: true },
     healthcareInstitutions: [{ type: String, trim: true }],

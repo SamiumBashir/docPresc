@@ -234,6 +234,10 @@ export const updateDoctorProfile = async (req: AuthRequest, res: Response): Prom
     designation,
     workplace,
     healthcareInstitutions,
+    healthcareAuthority,
+    healthcareInstitution,
+    registrationNumber,
+    institutionRegNumbers,
     phone,
     email,
     profileImage,
@@ -255,12 +259,35 @@ export const updateDoctorProfile = async (req: AuthRequest, res: Response): Prom
       ? [healthcareInstitutions]
       : [];
   }
+  if (healthcareAuthority !== undefined) doctor.healthcareAuthority = healthcareAuthority;
+  if (healthcareInstitution !== undefined) doctor.healthcareAuthority = healthcareInstitution;
+  if (!doctor.healthcareAuthority && doctor.healthcareInstitutions && doctor.healthcareInstitutions.length > 0) {
+    doctor.healthcareAuthority = doctor.healthcareInstitutions[0];
+  }
+
+  if (institutionRegNumbers !== undefined) {
+    doctor.institutionRegNumbers = institutionRegNumbers;
+  }
+
+  const effectiveRegNumber =
+    registrationNumber !== undefined
+      ? registrationNumber
+      : bmdcNumber !== undefined
+      ? bmdcNumber
+      : doctor.healthcareAuthority && doctor.institutionRegNumbers && doctor.institutionRegNumbers[doctor.healthcareAuthority]
+      ? doctor.institutionRegNumbers[doctor.healthcareAuthority]
+      : undefined;
+
+  if (effectiveRegNumber !== undefined) {
+    doctor.registrationNumber = effectiveRegNumber;
+    doctor.bmdcNumber = effectiveRegNumber;
+  }
+
   if (phone) doctor.phone = phone;
   if (email) doctor.email = email;
   if (profileImage !== undefined) doctor.profileImage = profileImage;
   if (signature !== undefined) doctor.signature = signature;
   if (logo !== undefined) doctor.logo = logo;
-  if (bmdcNumber) doctor.bmdcNumber = bmdcNumber;
 
   await doctor.save();
 

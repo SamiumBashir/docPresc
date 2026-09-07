@@ -220,7 +220,9 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
             <div className="hidden lg:block text-left max-w-[140px]">
               <p className="text-xs font-bold text-slate-800 leading-none truncate">{user?.name}</p>
               <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wide truncate">
-                {doctor?.bmdcNumber ? `BMDC: ${doctor.bmdcNumber}` : user?.role}
+                {doctor?.registrationNumber || doctor?.bmdcNumber
+                  ? `${doctor?.healthcareAuthority || 'BMDC'}: ${doctor.registrationNumber || doctor.bmdcNumber}`
+                  : user?.role}
               </p>
             </div>
             <ChevronDown
@@ -244,7 +246,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
                   <p className="text-xs text-slate-500 truncate">{user?.email}</p>
                   {doctor && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 mt-1">
-                      <ShieldCheck className="w-3 h-3" /> BMDC Verified ({doctor.bmdcNumber})
+                      <ShieldCheck className="w-3 h-3" /> {doctor?.healthcareAuthority || 'BMDC'} Verified ({doctor.registrationNumber || doctor.bmdcNumber})
                     </span>
                   )}
                 </div>

@@ -135,8 +135,8 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
                 </div>
               )}
               <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[10px] tracking-wide mt-1">
-                <span>BMDC REG. NO:</span>
-                <span className="text-medical-700">{doctor?.bmdcNumber || 'A-54321'}</span>
+                <span>{(doctor?.healthcareAuthority || (doctor?.healthcareInstitutions && doctor.healthcareInstitutions[0]) || 'BMDC')} REG. NO:</span>
+                <span className="text-medical-700">{doctor?.registrationNumber || doctor?.bmdcNumber || 'A-54321'}</span>
               </div>
             </div>
 

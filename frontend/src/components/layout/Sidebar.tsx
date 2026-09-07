@@ -147,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
               <p className="text-xs font-bold text-white truncate">{doctor.name}</p>
               <p className="text-[11px] text-medical-400 truncate mt-0.5">{doctor.qualification}</p>
               <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-700/40 text-[10px] text-slate-400">
-                <span>BMDC: {doctor.bmdcNumber}</span>
+                <span>{doctor.healthcareAuthority || 'BMDC'}: {doctor.registrationNumber || doctor.bmdcNumber}</span>
                 <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
               </div>
             </div>

@@ -84,7 +84,7 @@ export const Dashboard: React.FC = () => {
             {t('dash_subtitle')}{getGreetingName()}
           </h2>
           <p className="text-xs sm:text-sm text-medical-100/90 leading-relaxed">
-            {doctor?.qualification || 'Consultant Physician'} • BMDC Reg: {doctor?.bmdcNumber || 'A-54321'}
+            {doctor?.qualification || 'Consultant Physician'} • {doctor?.healthcareAuthority || (doctor?.healthcareInstitutions && doctor.healthcareInstitutions[0]) || 'BMDC'} Reg: {doctor?.registrationNumber || doctor?.bmdcNumber || 'A-54321'}
           </p>
         </div>
 

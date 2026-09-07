@@ -28,6 +28,9 @@ export interface IDoctor {
   designation?: string;
   workplace?: string;
   healthcareInstitutions?: string[];
+  healthcareAuthority?: string;
+  registrationNumber?: string;
+  institutionRegNumbers?: Record<string, string>;
   phone: string;
   email: string;
   profileImage?: string;
