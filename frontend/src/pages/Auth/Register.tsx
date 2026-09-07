@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Stethoscope, User, Lock, Mail, Phone, ShieldCheck, ArrowRight, Eye, EyeOff, CornerDownLeft } from 'lucide-react';
+import { Stethoscope, User, Lock, Mail, Phone, ShieldCheck, ArrowRight, Eye, EyeOff, CornerDownLeft, Loader2 } from 'lucide-react';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
 
@@ -17,10 +17,14 @@ export const Register: React.FC = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const isSubmittingRef = useRef(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading || isSubmittingRef.current) {
+      return;
+    }
     if (!formData.name.trim() || !formData.email.trim() || !formData.bmdcNumber.trim() || !formData.qualification.trim() || !formData.password) {
       showToast.error('Please fill in all required registration fields.');
       return;
@@ -31,6 +35,7 @@ export const Register: React.FC = () => {
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsLoading(true);
     try {
       const res = await api<{ success: boolean; message: string }>('/auth/register', {
@@ -55,6 +60,7 @@ export const Register: React.FC = () => {
       showToast.error(err.message || 'Registration failed. Please check your details.');
     } finally {
       setIsLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -250,10 +256,18 @@ export const Register: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
+              aria-busy={isLoading}
               aria-label="Submit doctor registration"
-              className="w-full py-2.5 bg-medical-600 hover:bg-medical-700 text-white font-bold rounded-xl text-sm shadow-md shadow-medical-600/25 transition-all flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-medical-600 hover:bg-medical-700 disabled:bg-slate-700 disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none disabled:hover:scale-100 text-white font-bold rounded-xl text-sm shadow-md shadow-medical-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              {isLoading ? <span>Registering...</span> : <span>Complete Doctor Registration</span>}
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" aria-hidden="true" />
+                  <span>Registering Doctor Account...</span>
+                </>
+              ) : (
+                <span>Complete Doctor Registration</span>
+              )}
             </button>
           </form>
 

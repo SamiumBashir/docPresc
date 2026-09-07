@@ -135,32 +135,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [refreshProfile]);
 
   const login = async (email: string, password: string, rememberMe?: boolean) => {
+    // Clear any previous session leftovers before storing verified session
+    localStorage.removeItem('docrx_token');
+    localStorage.removeItem('docrx_user');
+    localStorage.removeItem('docrx_doctor');
+    localStorage.removeItem('docrx_chambers');
+
     const res = await api<{
       success: boolean;
       data: { user: IUser; doctor: IDoctor | null; chambers?: IChamber[]; token: string };
+      message?: string;
     }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password, rememberMe }),
+      body: JSON.stringify({ email: email.trim().toLowerCase(), password, rememberMe }),
     });
 
-    if (res.success && res.data) {
-      localStorage.setItem('docrx_token', res.data.token);
-      localStorage.setItem('docrx_user', JSON.stringify(res.data.user));
-      setUser(res.data.user);
-      setDoctor(res.data.doctor);
-      if (res.data.doctor) {
-        localStorage.setItem('docrx_doctor', JSON.stringify(res.data.doctor));
-      }
+    if (!res.success || !res.data || !res.data.token) {
+      throw new Error(res.message || 'Invalid email or password.');
+    }
 
-      if (res.data.chambers && res.data.chambers.length > 0) {
-        setChambers(res.data.chambers);
-        localStorage.setItem('docrx_chambers', JSON.stringify(res.data.chambers));
-        const defaultChamber =
-          res.data.chambers.find((c) => c.isDefault) || res.data.chambers[0] || null;
-        setActiveChamberState(defaultChamber);
-      } else if (res.data.user.role === 'doctor') {
-        await fetchChambers();
-      }
+    localStorage.setItem('docrx_token', res.data.token);
+    localStorage.setItem('docrx_user', JSON.stringify(res.data.user));
+    setUser(res.data.user);
+    setDoctor(res.data.doctor);
+    if (res.data.doctor) {
+      localStorage.setItem('docrx_doctor', JSON.stringify(res.data.doctor));
+    }
+
+    if (res.data.chambers && res.data.chambers.length > 0) {
+      setChambers(res.data.chambers);
+      localStorage.setItem('docrx_chambers', JSON.stringify(res.data.chambers));
+      const defaultChamber =
+        res.data.chambers.find((c) => c.isDefault) || res.data.chambers[0] || null;
+      setActiveChamberState(defaultChamber);
+    } else if (res.data.user.role === 'doctor') {
+      await fetchChambers();
     }
   };
 

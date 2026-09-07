@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Stethoscope, Lock, Mail, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Stethoscope, Lock, Mail, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../components/ui/Toast';
 
@@ -10,33 +10,69 @@ export const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('docrx_remember_me') !== 'false');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const isSubmittingRef = useRef(false);
+  const { user, login } = useAuth();
   const navigate = useNavigate();
+
+  // If already authenticated, redirect directly to dashboard
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      showToast.error('Please enter email and password.');
+
+    // 1. Strictly prevent multiple hits / rapid clicks while authentication is running
+    if (isLoading || isSubmittingRef.current) {
       return;
     }
 
+    const cleanEmail = email.trim();
+    const cleanPassword = password;
+
+    // 2. First check email & password validity locally before sending to server
+    if (!cleanEmail || !cleanPassword) {
+      showToast.error('Please enter both email address and password.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      showToast.error('Please enter a valid email address.');
+      return;
+    }
+
+    if (cleanPassword.length < 1) {
+      showToast.error('Please enter your password.');
+      return;
+    }
+
+    // Synchronously lock submission before awaiting network response
+    isSubmittingRef.current = true;
     setIsLoading(true);
+
     try {
       if (rememberMe) {
-        localStorage.setItem('docrx_saved_email', email);
+        localStorage.setItem('docrx_saved_email', cleanEmail);
         localStorage.setItem('docrx_remember_me', 'true');
       } else {
         localStorage.removeItem('docrx_saved_email');
         localStorage.setItem('docrx_remember_me', 'false');
       }
 
-      await login(email, password, rememberMe);
-      showToast.success('Welcome back!');
-      navigate('/dashboard');
+      // 3. Authenticate with server to verify email & password
+      await login(cleanEmail, cleanPassword, rememberMe);
+
+      // 4. Access granted only after server successfully verifies credentials
+      showToast.success('Credentials verified. Welcome back!');
+      navigate('/dashboard', { replace: true });
     } catch (err: any) {
-      showToast.error(err.message || 'Login failed. Please check your credentials.');
+      showToast.error(err.message || 'Invalid email or password. Please check your credentials.');
     } finally {
       setIsLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -76,12 +112,13 @@ export const Login: React.FC = () => {
                   name="email"
                   type="email"
                   required
+                  disabled={isLoading}
                   autoComplete="email"
                   aria-required="true"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="doctor@prescription.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-medical-500/30 focus:border-medical-500 font-mono"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-medical-500/30 focus:border-medical-500 font-mono disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -96,8 +133,9 @@ export const Login: React.FC = () => {
                 </label>
                 <button
                   type="button"
+                  disabled={isLoading}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-xs text-slate-400 hover:text-medical-400 flex items-center gap-1.5 transition-colors cursor-pointer select-none"
+                  className="text-xs text-slate-400 hover:text-medical-400 flex items-center gap-1.5 transition-colors cursor-pointer select-none disabled:opacity-50"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   title={showPassword ? 'Hide password' : 'Show password'}
                 >
@@ -112,17 +150,19 @@ export const Login: React.FC = () => {
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   required
+                  disabled={isLoading}
                   autoComplete="current-password"
                   aria-required="true"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={showPassword ? 'Enter your password' : '••••••••'}
-                  className="w-full pl-10 pr-11 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-medical-500/30 focus:border-medical-500 font-mono"
+                  className="w-full pl-10 pr-11 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-medical-500/30 focus:border-medical-500 font-mono disabled:opacity-60 disabled:cursor-not-allowed"
                 />
                 <button
                   type="button"
+                  disabled={isLoading}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 text-slate-400 hover:text-white p-1 rounded-lg transition-colors focus:outline-none"
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-white p-1 rounded-lg transition-colors focus:outline-none disabled:opacity-50"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   title={showPassword ? 'Hide password' : 'Show password'}
                 >
@@ -135,15 +175,18 @@ export const Login: React.FC = () => {
             <div className="flex items-center justify-between text-xs pt-1">
               <label
                 htmlFor="login-remember-me"
-                className="flex items-center gap-2 cursor-pointer select-none text-slate-200 hover:text-white transition-colors"
+                className={`flex items-center gap-2 select-none text-slate-200 transition-colors ${
+                  isLoading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:text-white'
+                }`}
               >
                 <input
                   id="login-remember-me"
                   name="rememberMe"
                   type="checkbox"
+                  disabled={isLoading}
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-medical-600 focus:ring-medical-500/30 focus:ring-offset-0 cursor-pointer accent-medical-600"
+                  className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-medical-600 focus:ring-medical-500/30 focus:ring-offset-0 cursor-pointer accent-medical-600 disabled:cursor-not-allowed"
                 />
                 <span>Remember me (মনে রাখুন)</span>
               </label>
@@ -159,11 +202,15 @@ export const Login: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
+              aria-busy={isLoading}
               aria-label="Sign in to DocRx account"
-              className="w-full py-2.5 bg-medical-600 hover:bg-medical-700 text-white font-bold rounded-xl text-sm shadow-md shadow-medical-600/25 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] mt-2"
+              className="w-full py-2.5 bg-medical-600 hover:bg-medical-700 disabled:bg-slate-700 disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none disabled:hover:scale-100 text-white font-bold rounded-xl text-sm shadow-md shadow-medical-600/25 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] mt-2 cursor-pointer"
             >
               {isLoading ? (
-                <span>Signing in...</span>
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" aria-hidden="true" />
+                  <span>Verifying Credentials... (যাচাই করা হচ্ছে...)</span>
+                </>
               ) : (
                 <>
                   <span>Sign In</span>
