@@ -198,9 +198,13 @@ export const PrescriptionHistory: React.FC = () => {
 
                     {/* Patient */}
                     <td className="py-3.5 px-4 space-y-0.5">
-                      <p className="font-bold text-slate-900">{rx.patientSnapshot?.name}</p>
+                      <p className="font-bold text-slate-900">{rx.patientSnapshot?.name || 'Unknown Patient'}</p>
                       <p className="text-[11px] text-slate-500">
-                        {rx.patientSnapshot?.age} yrs • {rx.patientSnapshot?.gender} • {rx.patientSnapshot?.phone}
+                        {[
+                          rx.patientSnapshot?.age ? `${rx.patientSnapshot.age} yrs` : null,
+                          rx.patientSnapshot?.gender || null,
+                          rx.patientSnapshot?.phone || null,
+                        ].filter(Boolean).join(' • ') || '—'}
                       </p>
                     </td>
 
@@ -217,7 +221,7 @@ export const PrescriptionHistory: React.FC = () => {
                         ))}
                       </div>
                       <p className="text-[11px] text-slate-500">
-                        {rx.medicines.length} Medicines Prescribed
+                        {(rx.medicines || []).length} Medicines Prescribed
                       </p>
                     </td>
 

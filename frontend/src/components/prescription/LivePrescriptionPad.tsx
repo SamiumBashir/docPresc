@@ -68,13 +68,12 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
   return (
     <div
       id="prescription-pad"
-      className={`prescription-print-container relative bg-white text-slate-900 shadow-xl border border-slate-200/80 rounded-xl overflow-hidden mx-auto transition-all duration-300 flex flex-col justify-between p-4 sm:p-6 md:p-8 print:p-8 ${
-        paperSize === 'Letter'
-          ? 'w-full max-w-[816px] min-h-[1056px] text-xs'
-          : paperSize === 'A5'
+      className={`prescription-print-container relative bg-white text-slate-900 shadow-xl border border-slate-200/80 rounded-xl overflow-hidden mx-auto transition-all duration-300 flex flex-col justify-between p-4 sm:p-6 md:p-8 print:p-8 ${paperSize === 'Letter'
+        ? 'w-full max-w-[816px] min-h-[1056px] text-xs'
+        : paperSize === 'A5'
           ? 'w-full max-w-[560px] min-h-[792px] text-[11px]'
           : 'w-full max-w-[794px] min-h-[1123px] text-xs'
-      }`}
+        }`}
       style={{ fontFamily: "'Inter', 'Hind Siliguri', sans-serif" }}
     >
       {/* Background Chamber Name Watermark */}
@@ -166,15 +165,15 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
               {((chamber as any)?.website ||
                 (typeof doctor?.defaultChamberId === 'object' && (doctor.defaultChamberId as any).website) ||
                 (doctor as any)?.chamberWebsite) && (
-                <p className="text-slate-600 text-[11px] leading-snug break-words">
-                  <span className="font-semibold text-slate-700">Appointment:</span>{' '}
-                  <span className="text-medical-700 font-medium">
-                    {(chamber as any)?.website ||
-                      (doctor?.defaultChamberId as any)?.website ||
-                      (doctor as any)?.chamberWebsite}
-                  </span>
-                </p>
-              )}
+                  <p className="text-slate-600 text-[11px] leading-snug break-words">
+                    <span className="font-semibold text-slate-700">Appointment:</span>{' '}
+                    <span className="text-medical-700 font-medium">
+                      {(chamber as any)?.website ||
+                        (doctor?.defaultChamberId as any)?.website ||
+                        (doctor as any)?.chamberWebsite}
+                    </span>
+                  </p>
+                )}
             </div>
           </div>
         </div>

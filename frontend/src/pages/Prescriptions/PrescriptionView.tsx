@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { exportElementToPdf } from '../../utils/pdfExport';
 import {
   Printer,
-  Download,
   Copy,
   ArrowLeft,
   Share2,
@@ -21,10 +19,9 @@ export const PrescriptionView: React.FC = () => {
   const navigate = useNavigate();
   const [prescription, setPrescription] = useState<IPrescription | null>(null);
   const [doctor, setDoctor] = useState<IDoctor | null>(null);
-  const [paperSize, setPaperSize] = useState<'A4' | 'Letter'>('A4');
+  const [paperSize, setPaperSize] = useState<'A4' | 'Letter' | 'A5'>('A4');
   const [isLoading, setIsLoading] = useState(true);
   const [isPrinting, setIsPrinting] = useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   useEffect(() => {
     const fetchPrescription = async () => {
@@ -39,6 +36,9 @@ export const PrescriptionView: React.FC = () => {
         }
         if (meRes.success && meRes.data?.doctor) {
           setDoctor(meRes.data.doctor);
+          if (meRes.data.doctor.settings?.paperSize) {
+            setPaperSize(meRes.data.doctor.settings.paperSize as 'A4' | 'Letter' | 'A5');
+          }
         }
       } catch (err: any) {
         showToast.error('Failed to load prescription.');
@@ -64,28 +64,6 @@ export const PrescriptionView: React.FC = () => {
     });
   };
 
-  // High-Fidelity Non-blocking PDF Generation
-  const handleDownloadPdf = async () => {
-    const element = document.getElementById('prescription-pad');
-    if (!element || !prescription || isGeneratingPdf) return;
-
-    setIsGeneratingPdf(true);
-    showToast.info('Preparing PDF document...');
-
-    try {
-      await exportElementToPdf({
-        elementId: 'prescription-pad',
-        filename: `${prescription.patientSnapshot.name}_${prescription.prescriptionId}`,
-        paperSize: paperSize as 'A4' | 'Letter',
-      });
-      showToast.success('PDF downloaded successfully!');
-    } catch {
-      showToast.error('PDF generation failed. Please use browser print.');
-    } finally {
-      setIsGeneratingPdf(false);
-    }
-  };
-
   const handleCopyShare = () => {
     if (!prescription) return;
     const url = `${window.location.origin}/prescription/share/${prescription.shareToken}`;
@@ -105,10 +83,10 @@ export const PrescriptionView: React.FC = () => {
     prescription.chamberId && typeof prescription.chamberId === 'object'
       ? prescription.chamberId
       : {
-          name: prescription.doctorSnapshot?.chamberName,
-          address: prescription.doctorSnapshot?.chamberAddress,
-          phone: prescription.doctorSnapshot?.phone,
-        }
+        name: prescription.doctorSnapshot?.chamberName,
+        address: prescription.doctorSnapshot?.chamberAddress,
+        phone: prescription.doctorSnapshot?.phone,
+      }
   ) as IChamber | null;
 
   return (
@@ -129,11 +107,10 @@ export const PrescriptionView: React.FC = () => {
                 {prescription.prescriptionId}
               </h2>
               <span
-                className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase ${
-                  prescription.status === 'FINALIZED'
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-slate-100 text-slate-700'
-                }`}
+                className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase ${prescription.status === 'FINALIZED'
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : 'bg-slate-100 text-slate-700'
+                  }`}
               >
                 {prescription.status}
               </span>
@@ -152,20 +129,26 @@ export const PrescriptionView: React.FC = () => {
             <button
               type="button"
               onClick={() => setPaperSize('A4')}
-              className={`px-2.5 py-1 rounded-md transition-all ${
-                paperSize === 'A4' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
-              }`}
+              className={`px-2.5 py-1 rounded-md transition-all ${paperSize === 'A4' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
+                }`}
             >
               A4
             </button>
             <button
               type="button"
               onClick={() => setPaperSize('Letter')}
-              className={`px-2.5 py-1 rounded-md transition-all ${
-                paperSize === 'Letter' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
-              }`}
+              className={`px-2.5 py-1 rounded-md transition-all ${paperSize === 'Letter' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
+                }`}
             >
               Letter
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaperSize('A5')}
+              className={`px-2.5 py-1 rounded-md transition-all ${paperSize === 'A5' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
+                }`}
+            >
+              A5
             </button>
           </div>
 
@@ -182,16 +165,6 @@ export const PrescriptionView: React.FC = () => {
           >
             <Copy className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Clone as New Rx</span><span className="sm:hidden">Clone</span>
           </Link>
-
-          <button
-            disabled={isGeneratingPdf}
-            onClick={handleDownloadPdf}
-            aria-label="Download prescription as PDF"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            <Download className={`w-3.5 h-3.5 ${isGeneratingPdf ? 'animate-bounce text-teal-300' : ''}`} />
-            <span>{isGeneratingPdf ? 'Generating...' : 'PDF'}</span>
-          </button>
 
           <button
             disabled={isPrinting}

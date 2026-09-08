@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { exportElementToPdf } from '../../utils/pdfExport';
-import { Printer, Download, CheckCircle2, ShieldCheck, Stethoscope } from 'lucide-react';
+import { Printer, CheckCircle2, ShieldCheck, Stethoscope } from 'lucide-react';
 import { api } from '../../api/client';
 import { LivePrescriptionPad } from '../../components/prescription/LivePrescriptionPad';
 import { IPrescription, IChamber } from '../../types';
@@ -9,11 +8,10 @@ import { IPrescription, IChamber } from '../../types';
 export const PublicPrescriptionView: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const [prescription, setPrescription] = useState<IPrescription | null>(null);
-  const [paperSize, setPaperSize] = useState<'A4' | 'Letter'>('A4');
+  const [paperSize, setPaperSize] = useState<'A4' | 'Letter' | 'A5'>('A4');
   const [isLoading, setIsLoading] = useState(true);
 
   const [isPrinting, setIsPrinting] = useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   useEffect(() => {
     const fetchPublicRx = async () => {
@@ -23,6 +21,10 @@ export const PublicPrescriptionView: React.FC = () => {
         );
         if (res.success && res.data) {
           setPrescription(res.data);
+          const docSettings = (res.data.doctorSnapshot as any)?.settings;
+          if (docSettings?.paperSize) {
+            setPaperSize(docSettings.paperSize);
+          }
         }
       } catch {
         setPrescription(null);
@@ -46,26 +48,6 @@ export const PublicPrescriptionView: React.FC = () => {
         }
       }, 40);
     });
-  };
-
-  // High-Fidelity Non-blocking PDF Generation
-  const handleDownloadPdf = async () => {
-    const element = document.getElementById('prescription-pad');
-    if (!element || !prescription || isGeneratingPdf) return;
-
-    setIsGeneratingPdf(true);
-
-    try {
-      await exportElementToPdf({
-        elementId: 'prescription-pad',
-        filename: `${prescription.patientSnapshot.name}_${prescription.prescriptionId}`,
-        paperSize: paperSize as 'A4' | 'Letter',
-      });
-    } catch {
-      handlePrint();
-    } finally {
-      setIsGeneratingPdf(false);
-    }
   };
 
   if (isLoading) {
@@ -123,15 +105,37 @@ export const PublicPrescriptionView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              disabled={isGeneratingPdf}
-              onClick={handleDownloadPdf}
-              aria-label="Download prescription as PDF"
-              className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <Download className={`w-3.5 h-3.5 ${isGeneratingPdf ? 'animate-bounce text-teal-300' : ''}`} />
-              <span>{isGeneratingPdf ? 'Generating...' : 'Download PDF'}</span>
-            </button>
+            {/* Paper Size Switcher */}
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600">
+              <button
+                type="button"
+                onClick={() => setPaperSize('A4')}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  paperSize === 'A4' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
+                }`}
+              >
+                A4
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaperSize('Letter')}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  paperSize === 'Letter' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
+                }`}
+              >
+                Letter
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaperSize('A5')}
+                className={`px-2.5 py-1 rounded-md transition-all ${
+                  paperSize === 'A5' ? 'bg-white text-medical-800 shadow-xs' : 'hover:text-slate-900'
+                }`}
+              >
+                A5
+              </button>
+            </div>
+
             <button
               disabled={isPrinting}
               onClick={handlePrint}
