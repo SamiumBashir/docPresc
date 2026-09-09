@@ -21,8 +21,23 @@ export const ResetPassword: React.FC = () => {
       return;
     }
 
-    if (password.length < 6) {
-      showToast.error('Password must be at least 6 characters long.');
+    if (password.length < 8) {
+      showToast.error('Password must be at least 8 characters long.');
+      return;
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      showToast.error('Password must contain at least one uppercase letter (A-Z).');
+      return;
+    }
+
+    if (!/[a-z]/.test(password)) {
+      showToast.error('Password must contain at least one lowercase letter (a-z).');
+      return;
+    }
+
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      showToast.error('Password must contain at least one special character (!@#$%^&* etc.).');
       return;
     }
 

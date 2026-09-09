@@ -1,13 +1,20 @@
 import { z } from 'zod';
 
+export const PasswordPolicySchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters long')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+  .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
+
 export const RegisterDoctorSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   phone: z.string().min(5, 'Phone must be at least 5 digits').optional().or(z.literal('')),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  qualification: z.string().min(2, 'Qualification is required (e.g. MBBS)'),
+  password: PasswordPolicySchema,
+  qualification: z.string().optional().default('MBBS'),
   specialization: z.string().optional().default('General Physician'),
-  bmdcNumber: z.string().min(3, 'BMDC Registration Number is required'),
+  bmdcNumber: z.string().optional().default(''),
   workplace: z.string().optional(),
 });
 
@@ -32,7 +39,7 @@ export const ResendOtpSchema = z.object({
 
 export const ResetPasswordSchema = z.object({
   resetToken: z.string().min(1, 'Reset authorization token is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters long'),
+  password: PasswordPolicySchema,
 });
 
 export const PatientSchema = z.object({

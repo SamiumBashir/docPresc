@@ -187,8 +187,23 @@ export const ForgotPassword: React.FC = () => {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newPassword || newPassword.length < 6) {
-      showToast.error('Password must be at least 6 characters long.');
+    if (!newPassword || newPassword.length < 8) {
+      showToast.error('Password must be at least 8 characters long.');
+      return;
+    }
+
+    if (!/[A-Z]/.test(newPassword)) {
+      showToast.error('Password must contain at least one uppercase letter (A-Z).');
+      return;
+    }
+
+    if (!/[a-z]/.test(newPassword)) {
+      showToast.error('Password must contain at least one lowercase letter (a-z).');
+      return;
+    }
+
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+      showToast.error('Password must contain at least one special character (!@#$%^&* etc.).');
       return;
     }
 
