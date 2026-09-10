@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema, Types } from 'mongoose';
 
 export interface IDoctorSettings {
-  paperSize: 'A4' | 'A5';
+  paperSize: 'A4' | 'Letter' | 'A5';
   defaultLanguage: 'en' | 'bn';
   defaultFollowUp: string;
   headerVisibility: boolean;
@@ -56,7 +56,7 @@ const DoctorSchema: Schema = new Schema(
     favoriteMedicines: [{ type: Schema.Types.ObjectId, ref: 'Medicine' }],
     defaultChamberId: { type: Schema.Types.ObjectId, ref: 'Chamber' },
     settings: {
-      paperSize: { type: String, enum: ['A4', 'A5'], default: 'A4' },
+      paperSize: { type: String, enum: ['A4', 'Letter', 'A5'], default: 'A4' },
       defaultLanguage: { type: String, enum: ['en', 'bn'], default: 'en' },
       defaultFollowUp: { type: String, default: '7 days' },
       headerVisibility: { type: Boolean, default: true },

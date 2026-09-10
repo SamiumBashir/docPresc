@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import { Prescription } from '../models/Prescription';
 import { Patient } from '../models/Patient';
 import { Chamber } from '../models/Chamber';
@@ -9,9 +10,31 @@ import { PrescriptionSchema } from '../validators/schemas';
 
 const generatePrescriptionId = async (): Promise<string> => {
   const currentYear = new Date().getFullYear();
-  const count = await Prescription.countDocuments();
-  const serial = (count + 1).toString().padStart(6, '0');
-  return `RX-${currentYear}-${serial}`;
+  let count = await Prescription.countDocuments();
+  let prescriptionId = `RX-${currentYear}-${(count + 1).toString().padStart(6, '0')}`;
+  while (await Prescription.exists({ prescriptionId })) {
+    count++;
+    prescriptionId = `RX-${currentYear}-${(count + 1).toString().padStart(6, '0')}`;
+  }
+  return prescriptionId;
+};
+
+const sanitizeFollowUp = (
+  followUp?: { duration?: string; date?: string | null; notes?: string | null } | null
+) => {
+  if (!followUp) return undefined;
+  let dateVal: Date | undefined = undefined;
+  if (followUp.date && typeof followUp.date === 'string' && followUp.date.trim() !== '') {
+    const parsed = new Date(followUp.date);
+    if (!isNaN(parsed.getTime())) {
+      dateVal = parsed;
+    }
+  }
+  return {
+    duration: followUp.duration || '7 days',
+    notes: followUp.notes || undefined,
+    date: dateVal,
+  };
 };
 
 const generateShareToken = (): string => {
@@ -20,8 +43,8 @@ const generateShareToken = (): string => {
 
 export const getPrescriptions = async (req: AuthRequest, res: Response): Promise<void> => {
   const doctorId = req.doctor?._id;
-  if (!doctorId) {
-    res.status(403).json({ success: false, message: 'Doctor scope required.' });
+  if (!doctorId && req.user?.role !== 'admin') {
+    res.status(403).json({ success: false, message: 'Doctor scope or admin role required.' });
     return;
   }
 
@@ -39,7 +62,7 @@ export const getPrescriptions = async (req: AuthRequest, res: Response): Promise
   const limitNum = parseInt(limit as string, 10) || 20;
   const skip = (pageNum - 1) * limitNum;
 
-  const query: any = { doctorId };
+  const query: any = doctorId ? { doctorId } : {};
 
   if (patientId) {
     query.patientId = patientId;
@@ -96,6 +119,11 @@ export const getPrescriptionById = async (req: AuthRequest, res: Response): Prom
   const doctorId = req.doctor?._id;
   const { id } = req.params;
 
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(404).json({ success: false, message: 'Prescription not found or unauthorized.' });
+    return;
+  }
+
   const prescription = await Prescription.findOne({
     _id: id,
     ...(req.user?.role === 'admin' ? {} : { doctorId }),
@@ -121,14 +149,21 @@ export const createPrescription = async (req: AuthRequest, res: Response): Promi
 
   const validated = PrescriptionSchema.parse(req.body);
 
-  const patient = await Patient.findById(validated.patientId);
+  let patient = null;
+  if (mongoose.Types.ObjectId.isValid(validated.patientId)) {
+    patient = await Patient.findById(validated.patientId);
+  }
+  if (!patient) {
+    patient = await Patient.findOne({ patientId: validated.patientId, doctorId: doctor._id });
+  }
+
   if (!patient) {
     res.status(404).json({ success: false, message: 'Patient record not found.' });
     return;
   }
 
   let chamber = null;
-  if (validated.chamberId) {
+  if (validated.chamberId && mongoose.Types.ObjectId.isValid(validated.chamberId)) {
     chamber = await Chamber.findOne({ _id: validated.chamberId, doctorId: doctor._id });
   } else if (doctor.defaultChamberId) {
     chamber = await Chamber.findById(doctor.defaultChamberId);
@@ -174,7 +209,7 @@ export const createPrescription = async (req: AuthRequest, res: Response): Promi
     medicines: validated.medicines.map((m, idx) => ({ ...m, order: idx })),
     investigations: validated.investigations,
     advice: validated.advice,
-    followUp: validated.followUp,
+    followUp: sanitizeFollowUp(validated.followUp),
     notes: validated.notes,
     status: validated.status || 'DRAFT',
     finalizedAt: validated.status === 'FINALIZED' ? new Date() : undefined,
@@ -219,6 +254,11 @@ export const updatePrescription = async (req: AuthRequest, res: Response): Promi
     return;
   }
 
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(404).json({ success: false, message: 'Prescription not found.' });
+    return;
+  }
+
   const existing = await Prescription.findOne({ _id: id, doctorId: doctor._id });
   if (!existing) {
     res.status(404).json({ success: false, message: 'Prescription not found.' });
@@ -237,7 +277,7 @@ export const updatePrescription = async (req: AuthRequest, res: Response): Promi
   const validated = PrescriptionSchema.parse(req.body);
 
   let chamber = null;
-  if (validated.chamberId) {
+  if (validated.chamberId && mongoose.Types.ObjectId.isValid(validated.chamberId)) {
     chamber = await Chamber.findOne({ _id: validated.chamberId, doctorId: doctor._id });
   }
 
@@ -249,7 +289,7 @@ export const updatePrescription = async (req: AuthRequest, res: Response): Promi
   existing.medicines = validated.medicines.map((m, idx) => ({ ...m, order: idx })) as any;
   existing.investigations = validated.investigations as any;
   existing.advice = validated.advice as any;
-  existing.followUp = validated.followUp as any;
+  existing.followUp = sanitizeFollowUp(validated.followUp) as any;
   existing.notes = validated.notes as any;
   if (chamber) {
     existing.chamberId = chamber._id as any;
@@ -289,6 +329,11 @@ export const duplicatePrescription = async (req: AuthRequest, res: Response): Pr
 
   if (!doctor) {
     res.status(403).json({ success: false, message: 'Doctor scope required.' });
+    return;
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(404).json({ success: false, message: 'Source prescription not found.' });
     return;
   }
 

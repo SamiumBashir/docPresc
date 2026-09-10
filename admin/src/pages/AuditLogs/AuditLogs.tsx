@@ -26,17 +26,26 @@ export const AuditLogs: React.FC = () => {
     },
   });
 
-  const filteredLogs = logs.filter((log) => {
-    const userName =
-      typeof log.userId === 'object' && log.userId?.name ? log.userId.name : '';
-    const userEmail =
-      typeof log.userId === 'object' && log.userId?.email ? log.userId.email : '';
+  const filteredLogs = logs.filter((log: any) => {
+    const actorName =
+      typeof log.userId === 'object' && log.userId?.name
+        ? log.userId.name
+        : log.userName || '';
+    const actorEmail =
+      typeof log.userId === 'object' && log.userId?.email
+        ? log.userId.email
+        : '';
+    const actorRole =
+      typeof log.userId === 'object' && log.userId?.role
+        ? log.userId.role
+        : log.userRole || '';
 
     const matchesSearch =
       log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.resource.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      userEmail.toLowerCase().includes(searchTerm.toLowerCase());
+      actorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      actorEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      actorRole.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesAction = actionFilter === 'all' || log.action === actionFilter;
     return matchesSearch && matchesAction;
@@ -122,16 +131,21 @@ export const AuditLogs: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {filteredLogs.map((log) => {
-                  const actor = typeof log.userId === 'object' ? log.userId : null;
+                {filteredLogs.map((log: any) => {
+                  const timestampStr = log.createdAt || log.timestamp;
+                  const actor = typeof log.userId === 'object' && log.userId !== null ? log.userId : null;
+                  const actorName = actor?.name || log.userName || null;
+                  const actorEmail = actor?.email || null;
+                  const actorRole = actor?.role || log.userRole || 'system';
+
                   return (
                     <tr key={log._id} className="hover:bg-slate-800/40 transition-colors text-xs">
                       <td className="py-3.5 px-4 text-slate-400 font-mono">
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5 text-slate-500" />
                           <span>
-                            {log.timestamp
-                              ? format(new Date(log.timestamp), 'MMM dd, HH:mm:ss')
+                            {timestampStr
+                              ? format(new Date(timestampStr), 'MMM dd, HH:mm:ss')
                               : '—'}
                           </span>
                         </div>
@@ -145,11 +159,11 @@ export const AuditLogs: React.FC = () => {
                       </td>
 
                       <td className="py-3.5 px-4">
-                        {actor ? (
+                        {actorName ? (
                           <div>
-                            <span className="font-semibold text-white block">{actor.name}</span>
+                            <span className="font-semibold text-white block">{actorName}</span>
                             <span className="text-slate-500 font-mono text-[11px]">
-                              {actor.email} ({actor.role})
+                              {actorEmail ? `${actorEmail} • ` : ''}({actorRole})
                             </span>
                           </div>
                         ) : (

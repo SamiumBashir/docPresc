@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
+import mongoose from 'mongoose';
 import csvParser from 'csv-parser';
 import { Medicine } from '../models/Medicine';
 import { Doctor } from '../models/Doctor';
@@ -170,6 +171,11 @@ export const toggleFavoriteMedicine = async (req: AuthRequest, res: Response): P
   const { medicineId } = req.params;
   const doctor = req.doctor;
 
+  if (!mongoose.Types.ObjectId.isValid(medicineId)) {
+    res.status(404).json({ success: false, message: 'Medicine not found.' });
+    return;
+  }
+
   const index = doctor.favoriteMedicines.findIndex((id) => id.toString() === medicineId);
   let isFavorite = false;
 
@@ -236,6 +242,11 @@ export const createMedicine = async (req: AuthRequest, res: Response): Promise<v
 export const updateMedicine = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
 
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(404).json({ success: false, message: 'Medicine not found.' });
+    return;
+  }
+
   const normalized = {
     brandName: req.body.brandName?.trim(),
     genericName: req.body.genericName?.trim(),
@@ -291,11 +302,19 @@ export const updateMedicine = async (req: AuthRequest, res: Response): Promise<v
 export const deleteMedicine = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
 
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(404).json({ success: false, message: 'Medicine not found.' });
+    return;
+  }
+
   const medicine = await Medicine.findByIdAndDelete(id);
   if (!medicine) {
     res.status(404).json({ success: false, message: 'Medicine not found.' });
     return;
   }
+
+  // Remove deleted medicine from any doctor favorite lists
+  await Doctor.updateMany({ favoriteMedicines: id }, { $pull: { favoriteMedicines: id } });
 
   await logAuditEvent(req, {
     action: 'MEDICINE_DELETE',
@@ -340,15 +359,17 @@ export const importMedicinesCsv = async (req: AuthRequest, res: Response): Promi
             ? (medicineType as 'Allopathic' | 'Unani' | 'Ayurvedic' | 'Herbal')
             : 'Allopathic';
 
+          const finalStrength = strength || 'N/A';
+
           if (brandName && genericName) {
             operations.push({
               updateOne: {
-                filter: { brandName, genericName, strength },
+                filter: { brandName, genericName, strength: finalStrength },
                 update: {
                   $set: {
                     brandName,
                     genericName,
-                    strength: strength || 'N/A',
+                    strength: finalStrength,
                     dosageForm: dosageForm || 'Tablet',
                     manufacturer,
                     category,

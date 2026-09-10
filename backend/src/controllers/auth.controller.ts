@@ -47,10 +47,12 @@ export const registerDoctor = async (req: AuthRequest, res: Response): Promise<v
     return;
   }
 
-  const existingBmdc = await Doctor.findOne({ bmdcNumber: validated.bmdcNumber });
-  if (existingBmdc) {
-    res.status(400).json({ success: false, message: 'A doctor with this BMDC registration number already exists.' });
-    return;
+  if (validated.bmdcNumber && validated.bmdcNumber.trim()) {
+    const existingBmdc = await Doctor.findOne({ bmdcNumber: validated.bmdcNumber.trim() });
+    if (existingBmdc) {
+      res.status(400).json({ success: false, message: 'A doctor with this BMDC registration number already exists.' });
+      return;
+    }
   }
 
   const salt = await bcrypt.genSalt(10);
@@ -68,10 +70,13 @@ export const registerDoctor = async (req: AuthRequest, res: Response): Promise<v
   const doctor = await Doctor.create({
     userId: user._id,
     name: validated.name,
-    qualification: validated.qualification,
-    specialization: validated.specialization,
-    bmdcNumber: validated.bmdcNumber,
-    workplace: validated.workplace,
+    qualification: validated.qualification || 'MBBS',
+    specialization: validated.specialization || 'General Physician',
+    healthcareAuthority: 'BMDC',
+    registrationNumber: validated.bmdcNumber || '',
+    institutionRegNumbers: validated.bmdcNumber ? { BMDC: validated.bmdcNumber } : {},
+    bmdcNumber: validated.bmdcNumber || '',
+    workplace: validated.workplace || '',
     phone: validated.phone,
     email: validated.email.toLowerCase(),
     settings: {
@@ -107,6 +112,7 @@ export const registerDoctor = async (req: AuthRequest, res: Response): Promise<v
         role: user.role,
       },
       doctor,
+      chambers: [],
       token,
     },
   });
@@ -189,10 +195,7 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
         .lean();
     }
   } else if (req.user.role === 'admin') {
-    doctor = await Doctor.findOne({ userId: req.user._id }).lean();
-    if (!doctor) {
-      doctor = await Doctor.findOne().lean();
-    }
+    doctor = await Doctor.findOne({ userId: req.user._id }).populate('defaultChamberId').lean();
     if (doctor) {
       chambers = await Chamber.find({ doctorId: (doctor as any)._id, status: 'active' })
         .sort({ isDefault: -1, createdAt: 1 })

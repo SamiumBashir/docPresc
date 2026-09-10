@@ -25,6 +25,8 @@ export const authenticate = async (
       res.status(401).json({
         success: false,
         message: 'Authentication required. Please log in.',
+        code: 'UNAUTHORIZED',
+        errors: {},
       });
       return;
     }
@@ -36,6 +38,8 @@ export const authenticate = async (
       res.status(401).json({
         success: false,
         message: 'User account not found or suspended.',
+        code: 'ACCOUNT_INACTIVE',
+        errors: {},
       });
       return;
     }
@@ -57,10 +61,7 @@ export const authenticate = async (
       }
       req.doctor = doctor;
     } else if (user.role === 'admin') {
-      let doctor = await Doctor.findOne({ userId: user._id });
-      if (!doctor) {
-        doctor = await Doctor.findOne();
-      }
+      const doctor = await Doctor.findOne({ userId: user._id });
       if (doctor) {
         req.doctor = doctor;
       }
@@ -71,6 +72,8 @@ export const authenticate = async (
     res.status(401).json({
       success: false,
       message: 'Invalid or expired token.',
+      code: 'INVALID_TOKEN',
+      errors: {},
     });
   }
 };
@@ -81,6 +84,8 @@ export const requireRole = (roles: string[]) => {
       res.status(403).json({
         success: false,
         message: 'Forbidden: You do not have permission to perform this action.',
+        code: 'FORBIDDEN',
+        errors: {},
       });
       return;
     }
@@ -93,10 +98,25 @@ export const requireDoctor = (
   res: Response,
   next: NextFunction
 ): void => {
-  if (!req.user || (req.user.role !== 'doctor' && req.user.role !== 'admin') || !req.doctor) {
+  if (!req.user) {
+    res.status(401).json({
+      success: false,
+      message: 'Authentication required. Please log in.',
+      code: 'UNAUTHORIZED',
+      errors: {},
+    });
+    return;
+  }
+  if (req.user.role === 'admin') {
+    next();
+    return;
+  }
+  if (req.user.role !== 'doctor' || !req.doctor) {
     res.status(403).json({
       success: false,
       message: 'Access restricted to authorized doctors only.',
+      code: 'FORBIDDEN',
+      errors: {},
     });
     return;
   }

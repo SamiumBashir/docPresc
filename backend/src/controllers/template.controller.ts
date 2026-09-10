@@ -1,6 +1,8 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { Template } from '../models/Template';
 import { AuthRequest } from '../middleware/auth';
+import { logAuditEvent } from '../middleware/audit';
 import { TemplateSchema } from '../validators/schemas';
 
 export const getTemplates = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -28,6 +30,13 @@ export const createTemplate = async (req: AuthRequest, res: Response): Promise<v
     doctorId,
   });
 
+  await logAuditEvent(req, {
+    action: 'TEMPLATE_CREATE',
+    resource: 'Template',
+    resourceId: template._id.toString(),
+    details: { name: template.name },
+  });
+
   res.status(201).json({
     success: true,
     message: 'Prescription template saved successfully.',
@@ -38,6 +47,16 @@ export const createTemplate = async (req: AuthRequest, res: Response): Promise<v
 export const updateTemplate = async (req: AuthRequest, res: Response): Promise<void> => {
   const doctorId = req.doctor?._id;
   const { id } = req.params;
+
+  if (!doctorId) {
+    res.status(403).json({ success: false, message: 'Doctor scope required.' });
+    return;
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(404).json({ success: false, message: 'Template not found.' });
+    return;
+  }
 
   const validated = TemplateSchema.parse(req.body);
 
@@ -52,6 +71,13 @@ export const updateTemplate = async (req: AuthRequest, res: Response): Promise<v
     return;
   }
 
+  await logAuditEvent(req, {
+    action: 'TEMPLATE_UPDATE',
+    resource: 'Template',
+    resourceId: id,
+    details: { name: template.name },
+  });
+
   res.json({
     success: true,
     message: 'Template updated successfully.',
@@ -63,11 +89,28 @@ export const deleteTemplate = async (req: AuthRequest, res: Response): Promise<v
   const doctorId = req.doctor?._id;
   const { id } = req.params;
 
+  if (!doctorId) {
+    res.status(403).json({ success: false, message: 'Doctor scope required.' });
+    return;
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(404).json({ success: false, message: 'Template not found.' });
+    return;
+  }
+
   const template = await Template.findOneAndDelete({ _id: id, doctorId });
   if (!template) {
     res.status(404).json({ success: false, message: 'Template not found.' });
     return;
   }
+
+  await logAuditEvent(req, {
+    action: 'TEMPLATE_DELETE',
+    resource: 'Template',
+    resourceId: id,
+    details: { name: template.name },
+  });
 
   res.json({
     success: true,

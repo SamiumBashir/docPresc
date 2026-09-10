@@ -1,6 +1,8 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { User } from '../models/User';
 import { Doctor } from '../models/Doctor';
+import { Chamber } from '../models/Chamber';
 import { Patient } from '../models/Patient';
 import { Prescription } from '../models/Prescription';
 import { Medicine } from '../models/Medicine';
@@ -20,6 +22,7 @@ export const getAdminStats = async (req: AuthRequest, res: Response): Promise<vo
     totalPrescriptions,
     todayPrescriptions,
     totalMedicines,
+    totalChambers,
     recentAuditLogs,
   ] = await Promise.all([
     Doctor.countDocuments(),
@@ -29,7 +32,8 @@ export const getAdminStats = async (req: AuthRequest, res: Response): Promise<vo
     Prescription.countDocuments(),
     Prescription.countDocuments({ createdAt: { $gte: today } }),
     Medicine.countDocuments(),
-    AuditLog.find().sort({ createdAt: -1 }).limit(10),
+    Chamber.countDocuments({ status: 'active' }),
+    AuditLog.find().sort({ createdAt: -1 }).limit(10).populate('userId', 'name email role'),
   ]);
 
   res.json({
@@ -43,6 +47,7 @@ export const getAdminStats = async (req: AuthRequest, res: Response): Promise<vo
         totalPrescriptions,
         todayPrescriptions,
         totalMedicines,
+        totalChambers,
       },
       recentLogs: recentAuditLogs,
     },
@@ -66,6 +71,11 @@ export const updateDoctorStatus = async (req: AuthRequest, res: Response): Promi
 
   if (!['active', 'pending', 'suspended'].includes(status)) {
     res.status(400).json({ success: false, message: 'Invalid status.' });
+    return;
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(doctorId)) {
+    res.status(404).json({ success: false, message: 'Doctor not found.' });
     return;
   }
 
@@ -101,7 +111,11 @@ export const getAuditLogs = async (req: AuthRequest, res: Response): Promise<voi
   if (resource) query.resource = resource;
 
   const [logs, total] = await Promise.all([
-    AuditLog.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+    AuditLog.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .populate('userId', 'name email role'),
     AuditLog.countDocuments(query),
   ]);
 
@@ -121,8 +135,8 @@ export const getAuditLogs = async (req: AuthRequest, res: Response): Promise<voi
 
 export const getDoctorReports = async (req: AuthRequest, res: Response): Promise<void> => {
   const doctorId = req.doctor?._id;
-  if (!doctorId) {
-    res.status(403).json({ success: false, message: 'Doctor scope required.' });
+  if (!doctorId && req.user?.role !== 'admin') {
+    res.status(403).json({ success: false, message: 'Doctor scope or admin role required.' });
     return;
   }
 
@@ -130,6 +144,8 @@ export const getDoctorReports = async (req: AuthRequest, res: Response): Promise
   today.setHours(0, 0, 0, 0);
 
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  const filter: any = doctorId ? { doctorId } : {};
 
   const [
     totalPatients,
@@ -139,12 +155,12 @@ export const getDoctorReports = async (req: AuthRequest, res: Response): Promise
     monthPrescriptions,
     allPrescriptions,
   ] = await Promise.all([
-    Patient.countDocuments({ doctorId }),
-    Patient.countDocuments({ doctorId, createdAt: { $gte: today } }),
-    Prescription.countDocuments({ doctorId }),
-    Prescription.countDocuments({ doctorId, createdAt: { $gte: today } }),
-    Prescription.countDocuments({ doctorId, createdAt: { $gte: startOfMonth } }),
-    Prescription.find({ doctorId }).select('medicines diagnosis createdAt status').limit(200),
+    Patient.countDocuments(filter),
+    Patient.countDocuments({ ...filter, createdAt: { $gte: today } }),
+    Prescription.countDocuments(filter),
+    Prescription.countDocuments({ ...filter, createdAt: { $gte: today } }),
+    Prescription.countDocuments({ ...filter, createdAt: { $gte: startOfMonth } }),
+    Prescription.find(filter).select('medicines diagnosis createdAt status').limit(200),
   ]);
 
   // Aggregate top prescribed medicines

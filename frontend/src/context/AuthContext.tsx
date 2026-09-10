@@ -46,11 +46,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
+  const resolveActiveChamber = (list: IChamber[]): IChamber | null => {
+    if (!list || list.length === 0) return null;
+    const savedActiveId = localStorage.getItem('docrx_active_chamber_id');
+    if (savedActiveId) {
+      const matched = list.find((c) => c._id === savedActiveId);
+      if (matched) return matched;
+    }
+    return list.find((c) => c.isDefault) || list[0] || null;
+  };
+
   const [activeChamber, setActiveChamberState] = useState<IChamber | null>(() => {
     try {
       const savedChambers = localStorage.getItem('docrx_chambers');
       const list: IChamber[] = savedChambers ? JSON.parse(savedChambers) : [];
-      return list.find((c) => c.isDefault) || list[0] || null;
+      return resolveActiveChamber(list);
     } catch {
       return null;
     }
@@ -71,8 +81,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.success && res.data) {
         setChambers(res.data);
         localStorage.setItem('docrx_chambers', JSON.stringify(res.data));
-        const defaultChamber = res.data.find((c) => c.isDefault) || res.data[0] || null;
-        setActiveChamberState(defaultChamber);
+        const active = resolveActiveChamber(res.data);
+        setActiveChamberState(active);
+        if (active?._id) {
+          localStorage.setItem('docrx_active_chamber_id', active._id);
+        }
       }
     } catch {
       // Ignore if not a doctor
@@ -109,9 +122,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (res.data.chambers && res.data.chambers.length > 0) {
           setChambers(res.data.chambers);
           localStorage.setItem('docrx_chambers', JSON.stringify(res.data.chambers));
-          const defaultChamber =
-            res.data.chambers.find((c) => c.isDefault) || res.data.chambers[0] || null;
-          setActiveChamberState(defaultChamber);
+          const active = resolveActiveChamber(res.data.chambers);
+          setActiveChamberState(active);
+          if (active?._id) {
+            localStorage.setItem('docrx_active_chamber_id', active._id);
+          }
         } else if (res.data.user.role === 'doctor') {
           await fetchChambers();
         }
@@ -121,6 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('docrx_user');
       localStorage.removeItem('docrx_doctor');
       localStorage.removeItem('docrx_chambers');
+      localStorage.removeItem('docrx_active_chamber_id');
       setUser(null);
       setDoctor(null);
       setChambers([]);
@@ -140,6 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('docrx_user');
     localStorage.removeItem('docrx_doctor');
     localStorage.removeItem('docrx_chambers');
+    localStorage.removeItem('docrx_active_chamber_id');
 
     const res = await api<{
       success: boolean;
@@ -165,9 +182,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (res.data.chambers && res.data.chambers.length > 0) {
       setChambers(res.data.chambers);
       localStorage.setItem('docrx_chambers', JSON.stringify(res.data.chambers));
-      const defaultChamber =
-        res.data.chambers.find((c) => c.isDefault) || res.data.chambers[0] || null;
-      setActiveChamberState(defaultChamber);
+      const active = resolveActiveChamber(res.data.chambers);
+      setActiveChamberState(active);
+      if (active?._id) {
+        localStorage.setItem('docrx_active_chamber_id', active._id);
+      }
     } else if (res.data.user.role === 'doctor') {
       await fetchChambers();
     }
@@ -179,6 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('docrx_user');
     localStorage.removeItem('docrx_doctor');
     localStorage.removeItem('docrx_chambers');
+    localStorage.removeItem('docrx_active_chamber_id');
     sessionStorage.clear();
 
     // 2. Synchronously clear react state
@@ -197,6 +217,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const setActiveChamber = (chamber: IChamber | null) => {
     setActiveChamberState(chamber);
+    if (chamber?._id) {
+      localStorage.setItem('docrx_active_chamber_id', chamber._id);
+    } else {
+      localStorage.removeItem('docrx_active_chamber_id');
+    }
   };
 
   const updateDoctorSettings = async (newSettings: Partial<IDoctor['settings']>) => {

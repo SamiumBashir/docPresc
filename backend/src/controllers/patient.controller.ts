@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { Patient } from '../models/Patient';
 import { Prescription } from '../models/Prescription';
 import { AuthRequest } from '../middleware/auth';
@@ -7,15 +8,19 @@ import { PatientSchema } from '../validators/schemas';
 
 const generatePatientId = async (): Promise<string> => {
   const currentYear = new Date().getFullYear();
-  const count = await Patient.countDocuments();
-  const serial = (count + 1).toString().padStart(4, '0');
-  return `PAT-${currentYear}-${serial}`;
+  let count = await Patient.countDocuments();
+  let patientId = `PAT-${currentYear}-${(count + 1).toString().padStart(4, '0')}`;
+  while (await Patient.exists({ patientId })) {
+    count++;
+    patientId = `PAT-${currentYear}-${(count + 1).toString().padStart(4, '0')}`;
+  }
+  return patientId;
 };
 
 export const getPatients = async (req: AuthRequest, res: Response): Promise<void> => {
   const doctorId = req.doctor?._id;
-  if (!doctorId) {
-    res.status(403).json({ success: false, message: 'Doctor scope required.' });
+  if (!doctorId && req.user?.role !== 'admin') {
+    res.status(403).json({ success: false, message: 'Doctor scope or admin role required.' });
     return;
   }
 
@@ -24,7 +29,7 @@ export const getPatients = async (req: AuthRequest, res: Response): Promise<void
   const limitNum = parseInt(limit as string, 10) || 20;
   const skip = (pageNum - 1) * limitNum;
 
-  const query: any = { doctorId };
+  const query: any = doctorId ? { doctorId } : {};
 
   if (search && typeof search === 'string' && search.trim() !== '') {
     const searchRegex = new RegExp(search.trim(), 'i');
@@ -57,6 +62,11 @@ export const getPatients = async (req: AuthRequest, res: Response): Promise<void
 export const getPatientById = async (req: AuthRequest, res: Response): Promise<void> => {
   const doctorId = req.doctor?._id;
   const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(404).json({ success: false, message: 'Patient not found or unauthorized.' });
+    return;
+  }
 
   const patient = await Patient.findOne({ _id: id, doctorId });
   if (!patient) {
@@ -104,6 +114,11 @@ export const updatePatient = async (req: AuthRequest, res: Response): Promise<vo
   const doctorId = req.doctor?._id;
   const { id } = req.params;
 
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(404).json({ success: false, message: 'Patient not found or unauthorized.' });
+    return;
+  }
+
   const validated = PatientSchema.parse(req.body);
 
   const patient = await Patient.findOneAndUpdate(
@@ -133,6 +148,11 @@ export const updatePatient = async (req: AuthRequest, res: Response): Promise<vo
 export const getPatientMedicalHistory = async (req: AuthRequest, res: Response): Promise<void> => {
   const doctorId = req.doctor?._id;
   const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(404).json({ success: false, message: 'Patient not found or unauthorized.' });
+    return;
+  }
 
   const patient = await Patient.findOne({ _id: id, doctorId });
   if (!patient) {

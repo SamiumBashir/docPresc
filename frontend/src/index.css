@@ -16,13 +16,16 @@
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: #f1f5f9;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
@@ -36,6 +39,7 @@
   0% {
     stroke-dashoffset: 350;
   }
+
   100% {
     stroke-dashoffset: 0;
   }
@@ -51,9 +55,11 @@
   0% {
     transform: translateX(-100%);
   }
+
   50% {
     transform: translateX(40%);
   }
+
   100% {
     transform: translateX(200%);
   }
@@ -72,6 +78,7 @@
     opacity: 0.96;
     transform: translateY(2px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -97,7 +104,8 @@
   line-height: 1.25;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(13, 148, 136, 0.08); /* Sophisticated medical teal tone */
+  color: rgba(13, 148, 136, 0.08);
+  /* Sophisticated medical teal tone */
   pointer-events: none;
   user-select: none;
   font-family: 'Cinzel', 'Playfair Display', Georgia, serif;
@@ -146,7 +154,9 @@
     size: auto;
   }
 
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
@@ -168,7 +178,12 @@
     print-color-adjust: exact !important;
   }
 
-  html, body, #root, #root > div, main, .rx-pad-scroll-wrapper {
+  html,
+  body,
+  #root,
+  #root>div,
+  main,
+  .rx-pad-scroll-wrapper {
     background: #ffffff !important;
     color: #000000 !important;
     padding: 0 !important;
