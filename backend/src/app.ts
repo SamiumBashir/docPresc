@@ -46,7 +46,12 @@ export const createApp = () => {
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
-    message: { success: false, message: 'Too many requests, please try again later.' },
+    message: {
+      success: false,
+      message: 'Too many requests, please try again later.',
+      code: 'RATE_LIMIT_EXCEEDED',
+      errors: {},
+    },
   });
   app.use('/api/auth/login', authLimiter);
   app.use('/api/auth/register', authLimiter);
@@ -58,6 +63,16 @@ export const createApp = () => {
 
   // Master API routes
   app.use('/api', routes);
+
+  // 404 handler for undefined routes
+  app.use((req, res) => {
+    res.status(404).json({
+      success: false,
+      message: `Route '${req.method} ${req.originalUrl}' not found.`,
+      code: 'ROUTE_NOT_FOUND',
+      errors: {},
+    });
+  });
 
   // Central Error Handler
   app.use(errorHandler);
