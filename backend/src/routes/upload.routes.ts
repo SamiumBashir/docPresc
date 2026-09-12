@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { authenticate } from '../middleware/auth';
 import { uploadSignature } from '../controllers/upload.controller';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
@@ -17,6 +18,6 @@ const upload = multer({
   },
 });
 
-router.post('/signature', authenticate, upload.single('signature'), uploadSignature);
+router.post('/signature', authenticate, upload.single('signature'), asyncHandler(uploadSignature));
 
 export default router;

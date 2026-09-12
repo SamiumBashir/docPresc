@@ -7,15 +7,16 @@ import {
   getPatientMedicalHistory,
 } from '../controllers/patient.controller';
 import { authenticate, requireDoctor } from '../middleware/auth';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
 router.use(authenticate, requireDoctor);
 
-router.get('/', getPatients);
-router.post('/', createPatient);
-router.get('/:id', getPatientById);
-router.put('/:id', updatePatient);
-router.get('/:id/history', getPatientMedicalHistory);
+router.get('/', asyncHandler(getPatients));
+router.post('/', asyncHandler(createPatient));
+router.get('/:id', asyncHandler(getPatientById));
+router.put('/:id', asyncHandler(updatePatient));
+router.get('/:id/history', asyncHandler(getPatientMedicalHistory));
 
 export default router;

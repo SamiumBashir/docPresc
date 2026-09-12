@@ -6,14 +6,15 @@ import {
   deleteTemplate,
 } from '../controllers/template.controller';
 import { authenticate, requireDoctor } from '../middleware/auth';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
 router.use(authenticate, requireDoctor);
 
-router.get('/', getTemplates);
-router.post('/', createTemplate);
-router.put('/:id', updateTemplate);
-router.delete('/:id', deleteTemplate);
+router.get('/', asyncHandler(getTemplates));
+router.post('/', asyncHandler(createTemplate));
+router.put('/:id', asyncHandler(updateTemplate));
+router.delete('/:id', asyncHandler(deleteTemplate));
 
 export default router;

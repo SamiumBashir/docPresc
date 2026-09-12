@@ -13,20 +13,21 @@ import {
   deleteAccount,
 } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = Router();
 
-router.post('/register', registerDoctor);
-router.post('/login', login);
-router.post('/forgot-password', forgotPassword);
-router.post('/verify-otp', verifyOtp);
-router.post('/resend-otp', resendOtp);
-router.post('/reset-password', resetPassword);
-router.post('/reset-password/:token', resetPassword);
-router.get('/me', authenticate, getMe);
-router.post('/logout', authenticate, logout);
-router.delete('/account', authenticate, deleteAccount);
-router.put('/profile', authenticate, updateDoctorProfile);
-router.put('/settings', authenticate, updateDoctorSettings);
+router.post('/register', asyncHandler(registerDoctor));
+router.post('/login', asyncHandler(login));
+router.post('/forgot-password', asyncHandler(forgotPassword));
+router.post('/verify-otp', asyncHandler(verifyOtp));
+router.post('/resend-otp', asyncHandler(resendOtp));
+router.post('/reset-password', asyncHandler(resetPassword));
+router.post('/reset-password/:token', asyncHandler(resetPassword));
+router.get('/me', authenticate, asyncHandler(getMe));
+router.post('/logout', authenticate, asyncHandler(logout));
+router.delete('/account', authenticate, asyncHandler(deleteAccount));
+router.put('/profile', authenticate, asyncHandler(updateDoctorProfile));
+router.put('/settings', authenticate, asyncHandler(updateDoctorSettings));
 
 export default router;
