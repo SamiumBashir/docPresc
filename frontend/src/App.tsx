@@ -6,6 +6,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { PageLoader } from './components/ui/PageLoader';
 import { TopProgressBar } from './components/ui/TopProgressBar';
 import { ToastContainer } from './components/ui/Toast';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 // Route-level code splitting for non-blocking initial performance
 const Login = lazy(() => import('./pages/Auth/Login').then((m) => ({ default: m.Login })));
@@ -18,6 +19,9 @@ const ResetPassword = lazy(() =>
 );
 const PublicPrescriptionView = lazy(() =>
   import('./pages/Public/PublicPrescriptionView').then((m) => ({ default: m.PublicPrescriptionView }))
+);
+const NotFound = lazy(() =>
+  import('./pages/NotFound/NotFound').then((m) => ({ default: m.NotFound }))
 );
 
 // Doctor Pages (code-split)
@@ -102,97 +106,100 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole?: strin
 
 export const App: React.FC = () => {
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          {/* Luminous Top Route Transition Indicator */}
-          <TopProgressBar />
+    <ErrorBoundary>
+      <LanguageProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            {/* Luminous Top Route Transition Indicator */}
+            <TopProgressBar />
 
-          {/* Global Toast Notification Container across all routes */}
-          <ToastContainer />
+            {/* Global Toast Notification Container across all routes */}
+            <ToastContainer />
 
-          <Suspense
-            fallback={
-              <PageLoader
-                variant="inline"
-                message="Preparing clinical workspace..."
-                subMessage="Loading patient & prescription records"
-              />
-            }
-          >
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password/:token" element={<ResetPassword />} />
-              <Route path="/prescription/share/:token" element={<PublicPrescriptionView />} />
+            <Suspense
+              fallback={
+                <PageLoader
+                  variant="inline"
+                  message="Preparing clinical workspace..."
+                  subMessage="Loading patient & prescription records"
+                />
+              }
+            >
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ForgotPassword />} />
+                <Route path="/reset-password/:token" element={<ResetPassword />} />
+                <Route path="/prescription/share/:token" element={<PublicPrescriptionView />} />
 
-              {/* Authenticated Doctor & Staff Routes */}
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="patients" element={<PatientList />} />
-                <Route path="patients/:id" element={<PatientDetails />} />
-                <Route path="prescriptions/new" element={<NewPrescription />} />
-                <Route path="prescriptions" element={<PrescriptionHistory />} />
-                <Route path="prescriptions/:id" element={<PrescriptionView />} />
-                <Route path="medicines" element={<MedicineCatalog />} />
-                <Route path="templates" element={<TemplateList />} />
-                <Route path="chambers" element={<ChamberList />} />
-                <Route path="reports" element={<DoctorReports />} />
-                <Route path="profile" element={<DoctorProfile />} />
-                <Route path="settings" element={<DoctorSettings />} />
-
-                {/* Admin-only Routes */}
+                {/* Authenticated Doctor & Staff Routes */}
                 <Route
-                  path="admin"
+                  path="/"
                   element={
-                    <ProtectedRoute requiredRole="admin">
-                      <AdminDashboard />
+                    <ProtectedRoute>
+                      <AppLayout />
                     </ProtectedRoute>
                   }
-                />
-                <Route
-                  path="admin/doctors"
-                  element={
-                    <ProtectedRoute requiredRole="admin">
-                      <AdminDoctors />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="admin/medicines"
-                  element={
-                    <ProtectedRoute requiredRole="admin">
-                      <AdminMedicines />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="admin/audit-logs"
-                  element={
-                    <ProtectedRoute requiredRole="admin">
-                      <AdminAuditLogs />
-                    </ProtectedRoute>
-                  }
-                />
-              </Route>
+                >
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="patients" element={<PatientList />} />
+                  <Route path="patients/:id" element={<PatientDetails />} />
+                  <Route path="prescriptions/new" element={<NewPrescription />} />
+                  <Route path="prescriptions" element={<PrescriptionHistory />} />
+                  <Route path="prescriptions/:id" element={<PrescriptionView />} />
+                  <Route path="medicines" element={<MedicineCatalog />} />
+                  <Route path="templates" element={<TemplateList />} />
+                  <Route path="chambers" element={<ChamberList />} />
+                  <Route path="reports" element={<DoctorReports />} />
+                  <Route path="profile" element={<DoctorProfile />} />
+                  <Route path="settings" element={<DoctorSettings />} />
 
-              {/* Catch-all fallback */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </AuthProvider>
-    </LanguageProvider>
+                  {/* Admin-only Routes */}
+                  <Route
+                    path="admin"
+                    element={
+                      <ProtectedRoute requiredRole="admin">
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="admin/doctors"
+                    element={
+                      <ProtectedRoute requiredRole="admin">
+                        <AdminDoctors />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="admin/medicines"
+                    element={
+                      <ProtectedRoute requiredRole="admin">
+                        <AdminMedicines />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="admin/audit-logs"
+                    element={
+                      <ProtectedRoute requiredRole="admin">
+                        <AdminAuditLogs />
+                      </ProtectedRoute>
+                    }
+                  />
+                </Route>
+
+                {/* Catch-all 404 Route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </AuthProvider>
+      </LanguageProvider>
+    </ErrorBoundary>
   );
 };
 
