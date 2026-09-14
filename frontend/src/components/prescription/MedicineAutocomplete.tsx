@@ -22,10 +22,12 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
   const [selectedType, setSelectedType] = useState<string>('all');
   const [results, setResults] = useState<IMedicine[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchSeqRef = useRef<number>(0);
 
   // Quick New Medicine Entry Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -90,22 +92,34 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
   };
 
   const fetchResults = async (qStr: string, type: string) => {
+    const currentSeq = ++searchSeqRef.current;
     setIsLoading(true);
+    setSearchError(null);
+
     try {
       let url = `/medicines/search?limit=15`;
       if (qStr.trim()) url += `&q=${encodeURIComponent(qStr.trim())}`;
       if (type !== 'all') url += `&medicineType=${encodeURIComponent(type)}`;
 
       const res = await api<{ success: boolean; data: IMedicine[] }>(url);
+
+      // Discard out-of-order responses if user continued typing
+      if (currentSeq !== searchSeqRef.current) return;
+
       if (res.success && res.data) {
         setResults(res.data);
         setSelectedIndex(0);
-        if (res.data.length > 0) setIsOpen(true);
+        if (res.data.length > 0 || qStr.trim()) setIsOpen(true);
       }
-    } catch {
+    } catch (err: any) {
+      if (currentSeq !== searchSeqRef.current) return;
       setResults([]);
+      setSearchError(err.message || 'Unable to load medicines from database.');
+      if (qStr.trim()) setIsOpen(true);
     } finally {
-      setIsLoading(false);
+      if (currentSeq === searchSeqRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -115,7 +129,9 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
       if (query.trim() || selectedType !== 'all') {
         fetchResults(query, selectedType);
       } else {
+        searchSeqRef.current++;
         setResults([]);
+        setSearchError(null);
         setIsLoading(false);
       }
     }, 280);
@@ -348,8 +364,25 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
         </div>
       )}
 
+      {/* When search error occurs */}
+      {isOpen && searchError && !isLoading && (
+        <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-xl shadow-xl border border-rose-200 p-4 z-50 text-center space-y-2 animate-in fade-in">
+          <div className="flex items-center justify-center gap-1.5 text-rose-600 text-xs font-semibold">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{searchError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => fetchResults(query, selectedType)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-medium transition-colors"
+          >
+            Retry Search
+          </button>
+        </div>
+      )}
+
       {/* When no results found */}
-      {isOpen && results.length === 0 && !isLoading && query.trim() && (
+      {isOpen && !searchError && results.length === 0 && !isLoading && query.trim() && (
         <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-50 text-center space-y-2 animate-in fade-in">
           <p className="text-xs text-slate-500">
             No medicine found matching "<span className="font-semibold text-slate-800">{query}</span>"
