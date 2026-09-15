@@ -1,4 +1,5 @@
 import express from 'express';
+import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -31,6 +32,9 @@ export const createApp = () => {
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     })
   );
+
+  // Gzip/Deflate compression for fast JSON transmission
+  app.use(compression());
 
   // Request Parsers
   app.use(express.json({ limit: '10mb' }));

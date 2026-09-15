@@ -97,7 +97,9 @@ export const getPrescriptions = async (req: AuthRequest, res: Response): Promise
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum)
-      .populate('chamberId', 'name address phone'),
+      .select('prescriptionId patientId patientSnapshot chamberId status createdAt diagnosis medicines.medicineName medicines.strength medicines.dosageForm shareToken')
+      .populate('chamberId', 'name address phone')
+      .lean(),
     Prescription.countDocuments(query),
   ]);
 

@@ -8,6 +8,50 @@ import { AuthRequest } from '../middleware/auth';
 import { logAuditEvent } from '../middleware/audit';
 import { MedicineSchema } from '../validators/schemas';
 
+interface FacetCache {
+  timestamp: number;
+  data: {
+    categories: string[];
+    dosageForms: string[];
+    manufacturers: string[];
+    medicineTypes: string[];
+  };
+}
+
+const facetCache = new Map<string, FacetCache>();
+const FACET_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+export const clearMedicineFacetCache = () => {
+  facetCache.clear();
+};
+
+const getCachedFacets = async (medicineType?: string) => {
+  const cacheKey = medicineType && medicineType !== 'all' ? medicineType : 'all';
+  const cached = facetCache.get(cacheKey);
+  const now = Date.now();
+
+  if (cached && now - cached.timestamp < FACET_TTL_MS) {
+    return cached.data;
+  }
+
+  const filter = medicineType && medicineType !== 'all' ? { medicineType } : {};
+  const [categories, dosageForms, manufacturers, medicineTypes] = await Promise.all([
+    Medicine.distinct('category', filter),
+    Medicine.distinct('dosageForm', filter),
+    Medicine.distinct('manufacturer', filter),
+    Medicine.distinct('medicineType'),
+  ]);
+
+  const facetData = {
+    categories,
+    dosageForms,
+    manufacturers,
+    medicineTypes: medicineTypes.length > 0 ? medicineTypes : ['Allopathic', 'Unani', 'Ayurvedic', 'Herbal'],
+  };
+  facetCache.set(cacheKey, { timestamp: now, data: facetData });
+  return facetData;
+};
+
 export const searchMedicines = async (req: Request, res: Response): Promise<void> => {
   const { q = '', limit = '15', medicineType } = req.query;
   const queryStr = (q as string).trim();
@@ -18,11 +62,15 @@ export const searchMedicines = async (req: Request, res: Response): Promise<void
     baseFilter.medicineType = medicineType;
   }
 
+  const selectFields = 'brandName genericName strength dosageForm manufacturer category medicineType unit price status';
+
   if (!queryStr) {
     // Return top popular medicines for system
     const medicines = await Medicine.find(baseFilter)
       .limit(limitNum)
-      .sort({ brandName: 1 });
+      .sort({ brandName: 1 })
+      .select(selectFields)
+      .lean();
     res.json({ success: true, data: medicines });
     return;
   }
@@ -37,6 +85,7 @@ export const searchMedicines = async (req: Request, res: Response): Promise<void
       $or: [{ brandName: regex }, { genericName: regex }],
     })
       .limit(limitNum)
+      .select(selectFields)
       .lean(),
     Medicine.find({
       ...baseFilter,
@@ -48,6 +97,7 @@ export const searchMedicines = async (req: Request, res: Response): Promise<void
       ],
     })
       .limit(limitNum)
+      .select(selectFields)
       .lean(),
   ]);
 
@@ -100,14 +150,16 @@ export const getMedicines = async (req: Request, res: Response): Promise<void> =
     query.manufacturer = manufacturer;
   }
 
-  const [medicines, total, categories, dosageForms, manufacturers, medicineTypes] = await Promise.all([
-    Medicine.find(query).sort({ brandName: 1 }).skip(skip).limit(limitNum),
-    Medicine.countDocuments(query),
-    Medicine.distinct('category', medicineType && medicineType !== 'all' ? { medicineType } : {}),
-    Medicine.distinct('dosageForm', medicineType && medicineType !== 'all' ? { medicineType } : {}),
-    Medicine.distinct('manufacturer', medicineType && medicineType !== 'all' ? { medicineType } : {}),
-    Medicine.distinct('medicineType'),
+  const [queryResult, facetData] = await Promise.all([
+    Promise.all([
+      Medicine.find(query).sort({ brandName: 1 }).skip(skip).limit(limitNum).lean(),
+      Medicine.countDocuments(query),
+    ]),
+    getCachedFacets(medicineType as string),
   ]);
+
+  const [medicines, total] = queryResult;
+  const { categories, dosageForms, manufacturers, medicineTypes } = facetData;
 
   res.json({
     success: true,
@@ -116,7 +168,7 @@ export const getMedicines = async (req: Request, res: Response): Promise<void> =
       categories,
       dosageForms,
       manufacturers,
-      medicineTypes: medicineTypes.length > 0 ? medicineTypes : ['Allopathic', 'Unani', 'Ayurvedic', 'Herbal'],
+      medicineTypes,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -231,6 +283,8 @@ export const createMedicine = async (req: AuthRequest, res: Response): Promise<v
     resourceId: medicine._id.toString(),
     details: { brandName: medicine.brandName, genericName: medicine.genericName, medicineType: medicine.medicineType },
   });
+
+  clearMedicineFacetCache();
 
   res.status(201).json({
     success: true,
@@ -396,6 +450,8 @@ export const importMedicinesCsv = async (req: AuthRequest, res: Response): Promi
           resource: 'Medicine',
           details: { importedCount, totalRows: results.length },
         });
+
+        clearMedicineFacetCache();
 
         res.json({
           success: true,

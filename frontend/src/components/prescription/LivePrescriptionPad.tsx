@@ -21,7 +21,7 @@ interface LivePrescriptionPadProps {
   createdAt?: string | Date;
 }
 
-export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
+const LivePrescriptionPadComponent: React.FC<LivePrescriptionPadProps> = ({
   doctor,
   chamber,
   patient,
@@ -68,7 +68,8 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
   return (
     <div
       id="prescription-pad"
-      className={`prescription-print-container relative bg-white text-slate-900 shadow-xl border border-slate-200/80 rounded-xl overflow-hidden mx-auto transition-all duration-300 flex flex-col justify-between p-4 sm:p-6 md:p-8 print:p-8 ${paperSize === 'Letter'
+      data-papersize={paperSize}
+      className={`prescription-print-container relative bg-white text-slate-900 shadow-xl border border-slate-200/80 rounded-xl overflow-hidden mx-auto transition-all duration-300 flex flex-col justify-between p-4 sm:p-6 md:p-8 print:!p-3.5 print:!h-[280mm] print:!min-h-[280mm] print:!max-h-[280mm] print:!shadow-none print:!border-none print:!rounded-none ${paperSize === 'Letter'
         ? 'w-full max-w-[816px] min-h-[1056px] text-xs'
         : paperSize === 'A5'
           ? 'w-full max-w-[560px] min-h-[792px] text-[11px]'
@@ -200,9 +201,9 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
       </div>
 
       {/* MAIN TWO-COLUMN BODY */}
-      <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 flex-1 min-h-[480px] border-t-2 border-slate-800">
+      <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 flex-1 min-h-[480px] print:!min-h-0 print:!h-full border-t-2 border-slate-800">
         {/* LEFT COLUMN: Clinical Notes, Vitals, Investigations (Width: 4/12) */}
-        <div className="rx-pad-left-col col-span-1 md:col-span-4 border-b-2 md:border-b-0 md:border-r-2 border-slate-800 p-3 sm:p-3.5 space-y-4">
+        <div className="rx-pad-left-col col-span-1 md:col-span-4 border-b-2 md:border-b-0 md:border-r-2 border-slate-800 p-3 sm:p-3.5 print:!p-2.5 space-y-4 print:!space-y-2 h-full flex flex-col justify-start">
           {/* Empty State / Diagnosis Placeholder matching user specification */}
           {chiefComplaints.length === 0 &&
             !vitals?.bpSystolic &&
@@ -342,8 +343,8 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
         </div>
 
         {/* RIGHT COLUMN: Rx Medicines, Advice, Follow-up (Width: 8/12) */}
-        <div className="col-span-1 md:col-span-8 p-3 sm:p-4 sm:pl-6 flex flex-col justify-between pt-3">
-          <div className="space-y-6">
+        <div className="col-span-1 md:col-span-8 p-3 sm:p-4 sm:pl-6 print:!p-2.5 flex flex-col justify-between pt-3 h-full">
+          <div className="space-y-4 print:!space-y-1.5 flex-1">
             {/* Rx Emblem */}
             <div className="flex items-center gap-2 border-b border-slate-200 pb-1">
               <span className="text-2xl font-black text-medical-800 font-serif italic tracking-wider">
@@ -360,7 +361,7 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
                 No medicines added yet. Use medicine search on the left to add prescribed drugs.
               </div>
             ) : (
-              <div className="space-y-3.5">
+              <div className="space-y-3.5 print:!space-y-1.5">
                 {medicines.map((med, index) => (
                   <div key={index} className="rx-avoid-break space-y-0.5">
                     {/* Medicine Name & Strength */}
@@ -411,51 +412,59 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
                 ))}
               </div>
             )}
-
-            {/* Advice Section */}
-            {advice.length > 0 && (
-              <div className="border-t border-slate-200 pt-3 space-y-1 rx-avoid-break">
-                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">
-                  Advice (পরামর্শ):
-                </h4>
-                <ul className="list-disc list-inside space-y-0.5 text-slate-800">
-                  {advice.map((adv, i) => (
-                    <li key={i} className="leading-snug">
-                      {adv}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Follow-up recommendation */}
-            {followUp?.duration && (
-              <div className="border-t border-slate-200 pt-2 text-slate-800 rx-avoid-break">
-                <span className="font-bold text-medical-800">Follow-up:</span>{' '}
-                <span className="font-medium">
-                  After {followUp.duration} {followUp.notes ? `(${followUp.notes})` : 'with reports or if symptoms persist.'}
-                </span>
-              </div>
-            )}
           </div>
+
+          {/* Advice & Follow-up Section pinned cleanly at bottom of Rx column */}
+          {(advice.length > 0 || followUp?.duration) && (
+            <div className="space-y-2 mt-auto pt-3 border-t border-slate-200">
+              {advice.length > 0 && (
+                <div className="space-y-1 rx-avoid-break">
+                  <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">
+                    Advice (পরামর্শ):
+                  </h4>
+                  <ul className="list-disc list-inside space-y-0.5 text-slate-800">
+                    {advice.map((adv, i) => (
+                      <li key={i} className="leading-snug">
+                        {adv}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {followUp?.duration && (
+                <div className="text-slate-800 rx-avoid-break pt-1">
+                  <span className="font-bold text-medical-800">Follow-up:</span>{' '}
+                  <span className="font-medium">
+                    After {followUp.duration} {followUp.notes ? `(${followUp.notes})` : 'with reports or if symptoms persist.'}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* FOOTER: Signature, Chamber Schedule, QR Code Verification */}
-      <div className="relative z-10 border-t-2 border-slate-800 pt-3 mt-6">
+      <div className="relative z-10 border-t-2 border-slate-800 pt-3 mt-6 print:!mt-auto print:!pt-2 bg-white">
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
           {/* Left: QR Code Verification Token */}
-          <div className="flex items-center gap-2.5">
-            {doctor?.settings?.showQrCode !== false && (
+          {doctor?.settings?.showQrCode !== false ? (
+            <div className="flex items-center gap-2.5">
               <div className="p-1 bg-white border border-slate-200 rounded shrink-0">
-                <QRCodeSVG value={publicUrl} size={48} level="M" />
+                <QRCodeSVG value={publicUrl} size={44} level="M" />
               </div>
-            )}
+              <div className="text-[10px] text-slate-500 space-y-0.5 leading-tight">
+                <p className="font-semibold text-slate-700">Digital Prescription</p>
+                <p>Scan to verify original record</p>
+              </div>
+            </div>
+          ) : (
             <div className="text-[10px] text-slate-500 space-y-0.5 leading-tight">
               <p className="font-semibold text-slate-700">Digital Prescription</p>
-              <p>Scan to verify original record</p>
+              <p className="font-mono text-slate-400 text-[9px]">{prescriptionId}</p>
             </div>
-          </div>
+          )}
 
           {/* Right: Signature Area */}
           <div className="text-left sm:text-right print:!text-right space-y-1 w-full sm:w-auto ml-auto shrink-0">
@@ -477,3 +486,5 @@ export const LivePrescriptionPad: React.FC<LivePrescriptionPadProps> = ({
     </div>
   );
 };
+
+export const LivePrescriptionPad = React.memo(LivePrescriptionPadComponent);

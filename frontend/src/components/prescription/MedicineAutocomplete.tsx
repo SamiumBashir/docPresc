@@ -4,8 +4,6 @@ import { Search, Pill, Sparkles, Star, Plus, Leaf, X, AlertCircle } from 'lucide
 import { api } from '../../api/client';
 import { showToast } from '../ui/Toast';
 import { IMedicine } from '../../types';
-import { MANUFACTURER_NAMES } from '../../data/manufacturers';
-import { DOSAGE_FORM_NAMES } from '../../data/dosageForms';
 
 interface MedicineAutocompleteProps {
   onSelect: (medicine: IMedicine) => void;
@@ -28,8 +26,10 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchSeqRef = useRef<number>(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const searchCacheRef = useRef<Map<string, IMedicine[]>>(new Map());
 
-  // Quick New Medicine Entry Modal State
+  // Quick New Medicine Entry Modal State (loaded lazily on modal open)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -39,6 +39,8 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
   const [medicineType, setMedicineType] = useState<'Allopathic' | 'Unani' | 'Ayurvedic' | 'Herbal'>('Allopathic');
   const [dosageForm, setDosageForm] = useState('Tablet');
   const [manufacturer, setManufacturer] = useState('');
+  const [manufacturers, setManufacturers] = useState<string[]>([]);
+  const [dosageForms, setDosageForms] = useState<string[]>([]);
 
   const handleOpenAddModal = (presetName = '') => {
     setBrandName(presetName || query.trim());
@@ -50,6 +52,19 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
     setFormError('');
     setIsOpen(false);
     setIsModalOpen(true);
+
+    // On-demand lazy import of 500+ manufacturer & dosage form names (avoids 30+ kB in initial bundle)
+    if (manufacturers.length === 0) {
+      Promise.all([
+        import('../../data/manufacturers'),
+        import('../../data/dosageForms'),
+      ])
+        .then(([mfgModule, formModule]) => {
+          setManufacturers(mfgModule.MANUFACTURER_NAMES);
+          setDosageForms(formModule.DOSAGE_FORM_NAMES);
+        })
+        .catch(() => {});
+    }
   };
 
   const handleCreateMedicine = async (e: React.FormEvent) => {
@@ -92,30 +107,61 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
   };
 
   const fetchResults = async (qStr: string, type: string) => {
+    const trimmedQ = qStr.trim();
+    const cacheKey = `${type}:${trimmedQ.toLowerCase()}`;
+
+    // Instant 0ms cache hit
+    if (searchCacheRef.current.has(cacheKey)) {
+      const cached = searchCacheRef.current.get(cacheKey)!;
+      setResults(cached);
+      setSelectedIndex(0);
+      if (cached.length > 0 || trimmedQ) setIsOpen(true);
+      setIsLoading(false);
+      return;
+    }
+
+    // Cancel any previous in-flight HTTP request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     const currentSeq = ++searchSeqRef.current;
     setIsLoading(true);
     setSearchError(null);
 
     try {
       let url = `/medicines/search?limit=15`;
-      if (qStr.trim()) url += `&q=${encodeURIComponent(qStr.trim())}`;
+      if (trimmedQ) url += `&q=${encodeURIComponent(trimmedQ)}`;
       if (type !== 'all') url += `&medicineType=${encodeURIComponent(type)}`;
 
-      const res = await api<{ success: boolean; data: IMedicine[] }>(url);
+      const res = await api<{ success: boolean; data: IMedicine[] }>(url, {
+        signal: abortControllerRef.current.signal,
+      });
 
       // Discard out-of-order responses if user continued typing
       if (currentSeq !== searchSeqRef.current) return;
 
       if (res.success && res.data) {
+        // Cache up to 100 queries
+        if (searchCacheRef.current.size > 100) {
+          const firstKey = searchCacheRef.current.keys().next().value;
+          if (firstKey) searchCacheRef.current.delete(firstKey);
+        }
+        searchCacheRef.current.set(cacheKey, res.data);
+
         setResults(res.data);
         setSelectedIndex(0);
-        if (res.data.length > 0 || qStr.trim()) setIsOpen(true);
+        if (res.data.length > 0 || trimmedQ) setIsOpen(true);
       }
     } catch (err: any) {
+      if (err.name === 'AbortError' || abortControllerRef.current?.signal.aborted) {
+        return;
+      }
       if (currentSeq !== searchSeqRef.current) return;
       setResults([]);
       setSearchError(err.message || 'Unable to load medicines from database.');
-      if (qStr.trim()) setIsOpen(true);
+      if (trimmedQ) setIsOpen(true);
     } finally {
       if (currentSeq === searchSeqRef.current) {
         setIsLoading(false);
@@ -138,6 +184,13 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
 
     return () => clearTimeout(handler);
   }, [query, selectedType]);
+
+  // Clean up abort controller on unmount
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   // Handle outside clicks to close dropdown
   useEffect(() => {
@@ -510,7 +563,7 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
                   />
                   <datalist id="autocompleteDosageFormList">
-                    {DOSAGE_FORM_NAMES.map((form) => (
+                    {dosageForms.map((form) => (
                       <option key={form} value={form} />
                     ))}
                   </datalist>
@@ -532,7 +585,7 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-medical-500 focus:bg-white"
                 />
                 <datalist id="autocompleteManufacturerList">
-                  {MANUFACTURER_NAMES.map((name) => (
+                  {manufacturers.map((name) => (
                     <option key={name} value={name} />
                   ))}
                 </datalist>

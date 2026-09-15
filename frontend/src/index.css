@@ -96,16 +96,16 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) rotate(-20deg);
-  width: 90%;
-  max-width: 660px;
+  width: 80%;
+  max-width: 520px;
   text-align: center;
-  font-size: 40px;
+  font-size: 32px;
   font-weight: 800;
   line-height: 1.25;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(13, 148, 136, 0.08);
-  /* Sophisticated medical teal tone */
+  color: rgba(13, 148, 136, 0.05);
+  /* Sophisticated faint medical teal tone */
   pointer-events: none;
   user-select: none;
   font-family: 'Cinzel', 'Playfair Display', Georgia, serif;
@@ -150,7 +150,7 @@
 /* Custom Print Rules - Fits exact A4 and Letter paper without clipping or clutter */
 @media print {
   @page {
-    margin: 8mm 10mm;
+    margin: 5mm 6mm;
     size: auto;
   }
 
@@ -179,23 +179,39 @@
   }
 
   html,
-  body,
-  #root,
-  #root>div,
-  main,
-  .rx-pad-scroll-wrapper {
+  body {
     background: #ffffff !important;
     color: #000000 !important;
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 100% !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  #root,
+  #root>div,
+  main,
+  .rx-pad-scroll-wrapper,
+  .prescription-print-parent {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 100% !important;
+    overflow: hidden !important;
     position: static !important;
     display: block !important;
     float: none !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   /* Hide all app chrome, sidebars, headers, action bars, inputs, buttons, modals, and toasts */
@@ -213,7 +229,7 @@
     display: none !important;
   }
 
-  /* Ensure the prescription pad container is always displayed and formatted */
+  /* Ensure the prescription pad container fills the exact single page with footer at the bottom */
   .prescription-print-container,
   #prescription-pad {
     box-shadow: none !important;
@@ -221,15 +237,37 @@
     width: 100% !important;
     max-width: 100% !important;
     min-width: 100% !important;
+    height: 280mm !important;
+    min-height: 280mm !important;
+    max-height: 280mm !important;
     margin: 0 auto !important;
-    padding: 0 !important;
+    padding: 3mm 4mm !important;
     border-radius: 0 !important;
     background: #ffffff !important;
-    position: static !important;
+    position: relative !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
-    min-height: 98vh !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .prescription-print-container[data-papersize="Letter"],
+  #prescription-pad[data-papersize="Letter"] {
+    height: 264mm !important;
+    min-height: 264mm !important;
+    max-height: 264mm !important;
+  }
+
+  .prescription-print-container[data-papersize="A5"],
+  #prescription-pad[data-papersize="A5"] {
+    height: 196mm !important;
+    min-height: 196mm !important;
+    max-height: 196mm !important;
   }
 
   /* Force display on the print container wrapper */
@@ -244,9 +282,9 @@
     margin: 0 !important;
     padding: 0 !important;
     position: static !important;
-    overflow: visible !important;
-    height: auto !important;
-    min-height: 0 !important;
+    overflow: hidden !important;
+    height: 100% !important;
+    max-height: 100% !important;
   }
 
   /* Preserve grid systems inside the pad */
@@ -266,18 +304,25 @@
   .prescription-print-container .grid-cols-12,
   .prescription-print-container .md\:grid-cols-12 {
     grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    height: 100% !important;
   }
 
   .prescription-print-container .col-span-4,
   .prescription-print-container .md\:col-span-4 {
     grid-column: span 4 / span 4 !important;
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
   }
 
   .prescription-print-container .col-span-8,
   .prescription-print-container .md\:col-span-8 {
     grid-column: span 8 / span 8 !important;
     display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
   }
 
   /* Remove scroll wrapper container artifacts */

@@ -2,11 +2,15 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
-import { AppLayout } from './components/layout/AppLayout';
 import { PageLoader } from './components/ui/PageLoader';
 import { TopProgressBar } from './components/ui/TopProgressBar';
 import { ToastContainer } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+
+// Code-split AppLayout so unauthenticated/public visitors do not load doctor chrome
+const AppLayout = lazy(() =>
+  import('./components/layout/AppLayout').then((m) => ({ default: m.AppLayout }))
+);
 
 // Route-level code splitting for non-blocking initial performance
 const Login = lazy(() => import('./pages/Auth/Login').then((m) => ({ default: m.Login })));

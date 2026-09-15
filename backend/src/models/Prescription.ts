@@ -184,5 +184,7 @@ const PrescriptionSchema: Schema = new Schema(
 PrescriptionSchema.index({ doctorId: 1, createdAt: -1 });
 PrescriptionSchema.index({ patientId: 1, createdAt: -1 });
 PrescriptionSchema.index({ doctorId: 1, status: 1 });
+PrescriptionSchema.index({ doctorId: 1, 'patientSnapshot.name': 1 });
+PrescriptionSchema.index({ doctorId: 1, 'patientSnapshot.phone': 1 });
 
 export const Prescription = mongoose.model<IPrescription>('Prescription', PrescriptionSchema);

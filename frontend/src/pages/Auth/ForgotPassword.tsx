@@ -14,7 +14,6 @@ import {
   Check,
   AlertTriangle,
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
 
@@ -227,7 +226,9 @@ export const ForgotPassword: React.FC = () => {
 
       if (res.success) {
         setStep('SUCCESS');
-        confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+        import('canvas-confetti').then(({ default: confetti }) => {
+          confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+        }).catch(() => {});
         showToast.success('Password updated successfully!');
       }
     } catch (err: any) {

@@ -183,7 +183,7 @@ export const PrescriptionView: React.FC = () => {
         <div className="sm:hidden no-print pb-2 text-center text-[11px] text-slate-500 font-medium">
           <span>↔ Swipe horizontally to view full prescription pad</span>
         </div>
-        <div className="min-w-[620px] sm:min-w-0 w-full flex justify-center">
+        <div className="min-w-[620px] sm:min-w-0 w-full flex justify-center print:!block print:!w-full">
           <LivePrescriptionPad
             doctor={doctor}
             chamber={chamber}
