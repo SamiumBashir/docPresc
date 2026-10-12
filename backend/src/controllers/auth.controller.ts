@@ -9,7 +9,7 @@ import { Patient } from '../models/Patient';
 import { Prescription } from '../models/Prescription';
 import { Template } from '../models/Template';
 import { PasswordResetOtp } from '../models/PasswordResetOtp';
-import { sendPasswordResetOtpEmail } from '../services/email.service';
+import { sendPasswordResetOtpEmail, sendWelcomeEmail } from '../services/email.service';
 import {
   generateSecureOtp,
   hashOtp,
@@ -106,6 +106,15 @@ export const registerDoctor = async (req: AuthRequest, res: Response): Promise<v
     resource: 'Doctor',
     resourceId: doctor._id.toString(),
     details: { email: user.email, bmdcNumber: doctor.bmdcNumber },
+  });
+
+  // Dispatch Welcome Email asynchronously to onboard the new doctor
+  sendWelcomeEmail({
+    to: user.email,
+    name: user.name,
+    specialization: doctor.specialization,
+  }).catch((err: any) => {
+    console.error('[Auth Controller] Failed to dispatch welcome email:', err.message);
   });
 
   res.status(201).json({

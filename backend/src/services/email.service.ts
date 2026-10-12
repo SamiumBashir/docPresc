@@ -64,8 +64,108 @@ export interface ISendOtpEmailOptions {
   expiresInMinutes?: number;
 }
 
+export interface ISendWelcomeEmailOptions {
+  to: string;
+  name?: string;
+  specialization?: string;
+  loginUrl?: string;
+}
+
 const escapeHtml = (str: string): string =>
   str.replace(/[&<>'"]/g, (tag) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+
+/**
+ * Robust Email Dispatcher:
+ * 1. Prioritizes Resend via HTTPS (Port 443) - immune to cloud hosting SMTP firewall blocks (Render, etc.)
+ * 2. Tries Primary SMTP Transporter (Port 465 SSL or Gmail Service)
+ * 3. Falls back to Secondary SMTP Transporter (Port 587 STARTTLS)
+ * 4. Prints Dev preview in development mode
+ */
+const dispatchEmail = async ({
+  to,
+  subject,
+  html,
+  text,
+  contextTag,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  contextTag: string;
+}): Promise<{ success: boolean; messageId?: string; devPreview?: boolean }> => {
+  // 1. Resend API via HTTPS (Port 443)
+  if (resendClient && ENV.RESEND_API_KEY) {
+    try {
+      const data = await resendClient.emails.send({
+        from: ENV.EMAIL_FROM,
+        to,
+        subject,
+        html,
+        text,
+      });
+
+      console.log(`[Email Service] Sent ${contextTag} email via Resend to ${to} (Message ID: ${data.data?.id})`);
+      return { success: true, messageId: data.data?.id };
+    } catch (error: any) {
+      console.error(`[Email Service] Failed to send ${contextTag} via Resend:`, error.message);
+      // Fall through to SMTP if configured
+    }
+  }
+
+  // 2. Primary SMTP Transporter (Port 465 SSL or Gmail Service)
+  const primaryTransporter = getPrimaryTransporter();
+  if (primaryTransporter) {
+    try {
+      const { cleanUser } = getCleanCredentials();
+      const fromAddress = cleanUser ? `DocPresc <${cleanUser}>` : ENV.EMAIL_FROM;
+      const info = await primaryTransporter.sendMail({
+        from: fromAddress,
+        to,
+        subject,
+        html,
+        text,
+      });
+
+      console.log(`[Email Service] Sent ${contextTag} email via Primary SMTP to ${to} (Message ID: ${info.messageId})`);
+      return { success: true, messageId: info.messageId };
+    } catch (error: any) {
+      console.error(`[Email Service] Primary SMTP failed for ${contextTag} (${error.code || error.message}), attempting Port 587 TLS...`);
+    }
+  }
+
+  // 3. Fallback TLS SMTP Transporter (Port 587 STARTTLS)
+  const fallbackTransporter = getFallbackTlsTransporter();
+  if (fallbackTransporter) {
+    try {
+      const { cleanUser } = getCleanCredentials();
+      const fromAddress = cleanUser ? `DocPresc <${cleanUser}>` : ENV.EMAIL_FROM;
+      const info = await fallbackTransporter.sendMail({
+        from: fromAddress,
+        to,
+        subject,
+        html,
+        text,
+      });
+
+      console.log(`[Email Service] Sent ${contextTag} email via Port 587 TLS to ${to} (Message ID: ${info.messageId})`);
+      return { success: true, messageId: info.messageId };
+    } catch (error: any) {
+      console.error(`[Email Service] Fallback TLS SMTP failed for ${contextTag}:`, error.message);
+    }
+  }
+
+  // Development/Local Fallback when email dispatch is unavailable
+  if (ENV.NODE_ENV !== 'production') {
+    console.log(`\n======================================================`);
+    console.log(`[DEV ${contextTag.toUpperCase()} EMAIL] Recipient: ${to}`);
+    console.log(`[DEV ${contextTag.toUpperCase()} SUBJECT] ${subject}`);
+    console.log(`======================================================\n`);
+    return { success: true, devPreview: true };
+  }
+
+  return { success: false };
+};
 
 export const sendPasswordResetOtpEmail = async ({
   to,
@@ -146,77 +246,155 @@ Security Notice: Never share this OTP with anyone.
 If you did not request a password reset, you can safely ignore this email.
 `;
 
-  // 1. If Resend API Key is configured, prioritize Resend (uses HTTPS Port 443 - zero firewall/port blocks on cloud hosts like Render)
-  if (resendClient && ENV.RESEND_API_KEY) {
-    try {
-      const data = await resendClient.emails.send({
-        from: ENV.EMAIL_FROM,
-        to,
-        subject,
-        html: htmlContent,
-        text: textContent,
-      });
+  return dispatchEmail({
+    to,
+    subject,
+    html: htmlContent,
+    text: textContent,
+    contextTag: 'Password Reset OTP',
+  });
+};
 
-      console.log(`[Email Service] Sent OTP email via Resend to ${to} (Message ID: ${data.data?.id})`);
-      return { success: true, messageId: data.data?.id };
-    } catch (error: any) {
-      console.error(`[Email Service] Failed to send email via Resend:`, error.message);
-      // Fall through to SMTP if configured
-    }
-  }
+/**
+ * Dispatch an onboarding Welcome Email when a new doctor registers
+ */
+export const sendWelcomeEmail = async ({
+  to,
+  name,
+  specialization,
+  loginUrl = 'https://doc-presc.vercel.app/login',
+}: ISendWelcomeEmailOptions): Promise<{ success: boolean; messageId?: string; devPreview?: boolean }> => {
+  const recipientName = escapeHtml(name || 'Doctor');
+  const specText = specialization ? escapeHtml(specialization) : 'Physician';
+  const subject = `Welcome to DocPresc, Dr. ${recipientName}!`;
 
-  // 2. Try Primary SMTP Transporter (Port 465 SSL or Gmail Service)
-  const primaryTransporter = getPrimaryTransporter();
-  if (primaryTransporter) {
-    try {
-      const { cleanUser } = getCleanCredentials();
-      const fromAddress = cleanUser ? `DocPresc <${cleanUser}>` : ENV.EMAIL_FROM;
-      const info = await primaryTransporter.sendMail({
-        from: fromAddress,
-        to,
-        subject,
-        html: htmlContent,
-        text: textContent,
-      });
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 24px 0; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+    .header { background: linear-gradient(135deg, #0f172a 0%, #008ba3 100%); padding: 36px 24px; text-align: center; color: #ffffff; }
+    .header h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+    .header p { margin: 8px 0 0 0; font-size: 14px; color: #cbd5e1; }
+    .body { padding: 32px 28px; }
+    .greeting { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+    .intro { font-size: 14px; line-height: 1.6; color: #475569; margin-bottom: 24px; }
+    
+    .account-card { background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 10px; padding: 18px 20px; margin: 20px 0; }
+    .account-card-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #0f766e; margin-bottom: 10px; }
+    .account-row { display: flex; justify-content: space-between; font-size: 13px; color: #334155; margin-bottom: 6px; }
+    .account-row:last-child { margin-bottom: 0; }
+    .account-label { color: #64748b; font-weight: 500; }
+    .account-value { font-weight: 600; color: #0f172a; }
 
-      console.log(`[Email Service] Sent OTP email via Primary SMTP to ${to} (Message ID: ${info.messageId})`);
-      return { success: true, messageId: info.messageId };
-    } catch (error: any) {
-      console.error(`[Email Service] Primary SMTP failed (${error.code || error.message}), attempting Port 587 TLS fallback...`);
-    }
-  }
+    .feature-grid { margin: 24px 0; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
+    .feature-item { margin-bottom: 16px; }
+    .feature-item:last-child { margin-bottom: 0; }
+    .feature-title { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 3px; }
+    .feature-desc { font-size: 13px; color: #64748b; line-height: 1.5; margin: 0; }
 
-  // 3. Try Fallback TLS SMTP Transporter (Port 587 STARTTLS)
-  const fallbackTransporter = getFallbackTlsTransporter();
-  if (fallbackTransporter) {
-    try {
-      const { cleanUser } = getCleanCredentials();
-      const fromAddress = cleanUser ? `DocPresc <${cleanUser}>` : ENV.EMAIL_FROM;
-      const info = await fallbackTransporter.sendMail({
-        from: fromAddress,
-        to,
-        subject,
-        html: htmlContent,
-        text: textContent,
-      });
+    .cta-container { text-align: center; margin: 32px 0; }
+    .cta-button { display: inline-block; background: #008ba3; color: #ffffff !important; text-decoration: none; font-weight: 700; font-size: 15px; padding: 14px 32px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 139, 163, 0.25); }
+    
+    .tips-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 6px; font-size: 13px; color: #92400e; margin: 24px 0; line-height: 1.5; }
+    
+    .footer { background: #f8fafc; padding: 24px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; line-height: 1.5; }
+    .footer a { color: #008ba3; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Welcome to DocPresc</h1>
+      <p>High-Performance Digital Prescription & Practice Management</p>
+    </div>
+    <div class="body">
+      <div class="greeting">Dear Dr. ${recipientName},</div>
+      <p class="intro">
+        Welcome to <strong>DocPresc</strong>! Your doctor account has been successfully registered. You now have immediate access to our digital prescription pad, patient record history, and chamber management suite.
+      </p>
 
-      console.log(`[Email Service] Sent OTP email via Port 587 TLS to ${to} (Message ID: ${info.messageId})`);
-      return { success: true, messageId: info.messageId };
-    } catch (error: any) {
-      console.error(`[Email Service] Fallback TLS SMTP failed:`, error.message);
-    }
-  }
+      <div class="account-card">
+        <div class="account-card-title">Account Summary</div>
+        <div class="account-row"><span class="account-label">Doctor Name:</span> <span class="account-value">Dr. ${recipientName}</span></div>
+        <div class="account-row"><span class="account-label">Specialization:</span> <span class="account-value">${specText}</span></div>
+        <div class="account-row"><span class="account-label">Registered Email:</span> <span class="account-value">${escapeHtml(to)}</span></div>
+        <div class="account-row"><span class="account-label">Account Status:</span> <span class="account-value" style="color: #16a34a;">● Active</span></div>
+      </div>
 
-  // Development/Local Fallback when email dispatch is unavailable
-  if (ENV.NODE_ENV !== 'production') {
-    console.log(`\n======================================================`);
-    console.log(`[DEV OTP EMAIL] Recipient: ${to}`);
-    console.log(`[DEV OTP CODE]  --> ${otp} <-- (Valid for ${expiresInMinutes} mins)`);
-    console.log(`======================================================\n`);
-    return { success: true, devPreview: true };
-  }
+      <div class="feature-grid">
+        <div class="feature-item">
+          <div class="feature-title">⚡ High-Speed Digital Prescriptions</div>
+          <p class="feature-desc">Search thousands of branded and generic medicines with dosage auto-complete, vitals, and complaints.</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-title">🏥 Chamber & Schedule Organization</div>
+          <p class="feature-desc">Organize clinic chambers, appointment schedules, and custom prescription headers.</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-title">📋 Comprehensive Patient History</div>
+          <p class="feature-desc">Securely access previous prescriptions, consultations, and medical records on any device.</p>
+        </div>
+      </div>
 
-  return { success: false };
+      <div class="cta-container">
+        <a href="${escapeHtml(loginUrl)}" class="cta-button" target="_blank">Access Your Doctor Portal →</a>
+      </div>
+
+      <div class="tips-box">
+        💡 <strong>Quick Pro-Tip:</strong> Before generating your first prescription, visit <strong>Doctor Settings</strong> to configure your prescription pad header, footer, and digital signature.
+      </div>
+
+      <p class="intro" style="font-size: 13px; color: #64748b; margin-bottom: 0;">
+        If you have any questions or need help configuring your account, reply to this email or visit our help center.
+      </p>
+    </div>
+    <div class="footer">
+      &copy; ${new Date().getFullYear()} DocPresc • High-Performance Clinical Management System<br>
+      This email was sent to ${escapeHtml(to)} because an account was registered on <a href="https://doc-presc.vercel.app">DocPresc</a>.
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+  const textContent = `
+Welcome to DocPresc!
+========================================
+Dear Dr. ${recipientName},
+
+Welcome to DocPresc! Your doctor account has been successfully created.
+
+Your Account Details:
+- Name: Dr. ${recipientName}
+- Specialization: ${specText}
+- Email: ${to}
+- Status: Active
+
+Key Platform Features:
+1. Fast, beautiful digital prescriptions with generic medicine search.
+2. Chamber and appointment schedule management.
+3. Secure patient records and consultation history.
+
+Login to your doctor portal:
+${loginUrl}
+
+Best regards,
+The DocPresc Team
+`;
+
+  return dispatchEmail({
+    to,
+    subject,
+    html: htmlContent,
+    text: textContent,
+    contextTag: 'Welcome',
+  });
 };
 
 export const testSmtpDiagnostics = async () => {
