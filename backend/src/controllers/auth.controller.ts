@@ -544,10 +544,19 @@ export const resetPassword = async (req: AuthRequest, res: Response): Promise<vo
     return;
   }
 
-  if (!password || password.length < 6) {
+  if (!password || password.length < 8) {
     res.status(400).json({
       success: false,
-      message: 'Password must be at least 6 characters long.',
+      message: 'Password must be at least 8 characters long.',
+    });
+    return;
+  }
+
+  // Validate standard password complexity policy
+  if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+    res.status(400).json({
+      success: false,
+      message: 'Password must contain at least one uppercase letter, one lowercase letter, and one special character.',
     });
     return;
   }
