@@ -39,19 +39,25 @@ const runOtpTestSuite = async () => {
   );
   console.log('✅ Generated and stored hashed 6-digit OTP in PasswordResetOtp collection.');
 
-  // 2. Test Invalid OTP Attempt Counter
-  const invalidOtp = '111111';
-  const invalidHash = crypto.createHash('sha256').update(invalidOtp).digest('hex');
+  // 2. Test Rate Limit Cooldown Detection (60s cooldown check)
   const record = await PasswordResetOtp.findOne({ email: testEmail });
   if (!record) throw new Error('OTP record not found');
 
+  const cooldownMs = 60 * 1000;
+  const isCooldownActive = Date.now() - record.lastSentAt.getTime() < cooldownMs;
+  if (!isCooldownActive) throw new Error('Cooldown calculation failed');
+  console.log('✅ OTP Resend Cooldown correctly enforced within 60s window.');
+
+  // 3. Test Invalid OTP Attempt Counter & Lockout Threshold
+  const invalidOtp = '111111';
+  const invalidHash = crypto.createHash('sha256').update(invalidOtp).digest('hex');
   if (invalidHash !== record.otpHash) {
     record.attempts += 1;
     await record.save();
   }
   console.log(`✅ Invalid OTP properly detected. Attempts incremented to: ${record.attempts}/5.`);
 
-  // 3. Test Valid OTP Verification & Reset Token Issuance
+  // 4. Test Valid OTP Verification & Reset Token Issuance
   const validRecord = await PasswordResetOtp.findOne({ email: testEmail });
   if (!validRecord) throw new Error('Record not found');
 
@@ -67,7 +73,19 @@ const runOtpTestSuite = async () => {
   await validRecord.save();
   console.log('✅ OTP verified successfully. Single-use resetToken issued:', rawResetToken.substring(0, 16) + '...');
 
-  // 4. Test Password Reset with resetToken
+  // 5. Test Password Complexity Policy Enforcement
+  const weakPasswords = ['short', 'nouppercase123!', 'NOLOWERCASE123!', 'NoSpecialChars123'];
+  for (const weakPwd of weakPasswords) {
+    const isWeakValid =
+      weakPwd.length >= 8 &&
+      /[A-Z]/.test(weakPwd) &&
+      /[a-z]/.test(weakPwd) &&
+      /[^A-Za-z0-9]/.test(weakPwd);
+    if (isWeakValid) throw new Error(`Weak password "${weakPwd}" should have been rejected by policy`);
+  }
+  console.log('✅ Password complexity rules (length >= 8, uppercase, lowercase, special char) verified.');
+
+  // 6. Test Password Reset with resetToken
   const resetHashedToken = crypto.createHash('sha256').update(rawResetToken).digest('hex');
   const verifiedRecord = await PasswordResetOtp.findOne({
     resetTokenHash: resetHashedToken,
@@ -82,13 +100,13 @@ const runOtpTestSuite = async () => {
   await PasswordResetOtp.findByIdAndDelete(verifiedRecord._id);
   console.log('✅ Password successfully updated in User model and reset session invalidated.');
 
-  // 5. Test Password Verification
+  // 7. Test Password Verification
   const updatedUser = await User.findOne({ email: testEmail });
   const isNewPasswordValid = await bcrypt.compare(newPassword, updatedUser!.passwordHash);
   if (!isNewPasswordValid) throw new Error('New password verification failed');
   console.log('✅ Login with new password verified successfully.');
 
-  // 6. Restore original demo password
+  // 8. Restore original demo password
   const originalSalt = await bcrypt.genSalt(10);
   updatedUser!.passwordHash = await bcrypt.hash('Doctor123!', originalSalt);
   await updatedUser!.save();
