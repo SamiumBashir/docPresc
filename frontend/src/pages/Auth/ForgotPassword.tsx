@@ -84,35 +84,51 @@ export const ForgotPassword: React.FC = () => {
     }
   };
 
-  // OTP Input Change Handler (Auto-advance & Paste support)
+  // OTP Input Change Handler (Auto-advance)
   const handleOtpChange = (index: number, value: string) => {
-    // If pasted multi-character string
-    if (value.length > 1) {
-      const digits = value.replace(/\D/g, '').slice(0, 6).split('');
-      const newOtp = [...otp];
-      digits.forEach((digit, idx) => {
-        newOtp[idx] = digit;
-      });
-      setOtp(newOtp);
-      const nextIndex = Math.min(digits.length, 5);
-      otpInputRefs.current[nextIndex]?.focus();
-      return;
-    }
-
-    const singleDigit = value.replace(/\D/g, '');
+    const cleanDigit = value.replace(/\D/g, '').slice(-1);
     const newOtp = [...otp];
-    newOtp[index] = singleDigit;
+    newOtp[index] = cleanDigit;
     setOtp(newOtp);
 
-    // Auto-advance to next box
-    if (singleDigit && index < 5) {
+    // Auto-advance to next box if digit entered
+    if (cleanDigit && index < 5) {
       otpInputRefs.current[index + 1]?.focus();
     }
   };
 
+  // Dedicated paste handler supporting full 6-digit paste
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pasted) return;
+
+    const newOtp = [...otp];
+    pasted.split('').forEach((char, idx) => {
+      newOtp[idx] = char;
+    });
+    setOtp(newOtp);
+
+    const focusIdx = Math.min(pasted.length, 5);
+    otpInputRefs.current[focusIdx]?.focus();
+  };
+
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+    if (e.key === 'Backspace') {
+      if (otp[index]) {
+        const newOtp = [...otp];
+        newOtp[index] = '';
+        setOtp(newOtp);
+      } else if (index > 0) {
+        const newOtp = [...otp];
+        newOtp[index - 1] = '';
+        setOtp(newOtp);
+        otpInputRefs.current[index - 1]?.focus();
+      }
+    } else if (e.key === 'ArrowLeft' && index > 0) {
       otpInputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
     }
   };
 
@@ -386,10 +402,12 @@ export const ForgotPassword: React.FC = () => {
                     ref={(el) => (otpInputRefs.current[index] = el)}
                     type="text"
                     inputMode="numeric"
-                    maxLength={6}
+                    maxLength={1}
                     value={digit}
                     onChange={(e) => handleOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                    onPaste={handleOtpPaste}
+                    aria-label={`OTP digit ${index + 1}`}
                     className="w-11 h-12 sm:w-12 sm:h-14 text-center text-xl font-mono font-black text-white bg-slate-900/90 border-2 border-slate-700 rounded-xl focus:border-medical-500 focus:ring-4 focus:ring-medical-500/20 focus:outline-none transition-all selection:bg-transparent"
                   />
                 ))}
