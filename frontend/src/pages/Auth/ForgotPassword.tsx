@@ -524,8 +524,11 @@ export const ForgotPassword: React.FC = () => {
                 <div>
                   <button
                     type="button"
-                    onClick={() => setStep('EMAIL')}
-                    className="text-[11px] text-slate-500 hover:text-slate-300 underline"
+                    onClick={() => {
+                      setStep('EMAIL');
+                      setDevOtp(null);
+                    }}
+                    className="text-[11px] text-slate-500 hover:text-slate-300 underline cursor-pointer"
                   >
                     Change email address
                   </button>
@@ -555,7 +558,7 @@ export const ForgotPassword: React.FC = () => {
                     autoFocus
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="At least 6 characters"
+                    placeholder="Min 8 characters (e.g. Doctor123!)"
                     className="w-full pl-10 pr-10 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-medical-500/30 focus:border-medical-500 font-mono"
                   />
                   <button
@@ -593,6 +596,45 @@ export const ForgotPassword: React.FC = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Real-time Password Rules Checklist */}
+                <div className="mt-2.5 p-3 bg-slate-900/70 border border-slate-700/60 rounded-xl space-y-1.5 text-[11px]">
+                  <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">
+                    Password Requirements:
+                  </div>
+                  <div className={`flex items-center gap-1.5 transition-colors ${newPassword.length >= 8 ? 'text-emerald-400 font-medium' : 'text-slate-400'}`}>
+                    <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${newPassword.length >= 8 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                      {newPassword.length >= 8 ? '✓' : '•'}
+                    </div>
+                    <span>At least 8 characters long</span>
+                  </div>
+                  <div className={`flex items-center gap-1.5 transition-colors ${/[A-Z]/.test(newPassword) ? 'text-emerald-400 font-medium' : 'text-slate-400'}`}>
+                    <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${/[A-Z]/.test(newPassword) ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                      {/[A-Z]/.test(newPassword) ? '✓' : '•'}
+                    </div>
+                    <span>One uppercase letter (A-Z)</span>
+                  </div>
+                  <div className={`flex items-center gap-1.5 transition-colors ${/[a-z]/.test(newPassword) ? 'text-emerald-400 font-medium' : 'text-slate-400'}`}>
+                    <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${/[a-z]/.test(newPassword) ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                      {/[a-z]/.test(newPassword) ? '✓' : '•'}
+                    </div>
+                    <span>One lowercase letter (a-z)</span>
+                  </div>
+                  <div className={`flex items-center gap-1.5 transition-colors ${/[^A-Za-z0-9]/.test(newPassword) ? 'text-emerald-400 font-medium' : 'text-slate-400'}`}>
+                    <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${/[^A-Za-z0-9]/.test(newPassword) ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                      {/[^A-Za-z0-9]/.test(newPassword) ? '✓' : '•'}
+                    </div>
+                    <span>One special character (!@#$%^&* etc.)</span>
+                  </div>
+                  {confirmPassword && (
+                    <div className={`flex items-center gap-1.5 transition-colors ${newPassword === confirmPassword ? 'text-emerald-400 font-medium' : 'text-rose-400 font-medium'}`}>
+                      <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${newPassword === confirmPassword ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                        {newPassword === confirmPassword ? '✓' : '×'}
+                      </div>
+                      <span>{newPassword === confirmPassword ? 'Passwords match' : 'Passwords do not match'}</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
