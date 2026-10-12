@@ -8,7 +8,14 @@ if (ENV.RESEND_API_KEY) {
 }
 
 const getCleanCredentials = () => {
-  const cleanUser = (ENV.SMTP_USER || '').replace(/['"]/g, '').trim().replace(/@gamil\.com$/i, '@gmail.com');
+  const rawUser = (ENV.SMTP_USER || '').replace(/['"]/g, '').trim();
+  const angleMatch = rawUser.match(/<([^>]+)>/);
+  const userCandidate = angleMatch ? angleMatch[1].trim() : rawUser;
+  const emailRegexMatch = userCandidate.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+  const cleanUser = (emailRegexMatch ? emailRegexMatch[1] : userCandidate)
+    .trim()
+    .replace(/@gamil\.com$/i, '@gmail.com');
+
   const cleanPass = (ENV.SMTP_PASS || '').replace(/\s+/g, '').replace(/['"]/g, '').trim();
   const isGmail =
     (ENV.SMTP_HOST || '').toLowerCase().includes('gmail') ||
