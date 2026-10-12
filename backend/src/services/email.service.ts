@@ -7,41 +7,55 @@ if (ENV.RESEND_API_KEY) {
   resendClient = new Resend(ENV.RESEND_API_KEY);
 }
 
-let smtpTransporter: Transporter | null = null;
-if (ENV.SMTP_HOST && ENV.SMTP_USER && ENV.SMTP_PASS) {
+const getCleanCredentials = () => {
+  const cleanUser = (ENV.SMTP_USER || '').replace(/['"]/g, '').trim().replace(/@gamil\.com$/i, '@gmail.com');
+  const cleanPass = (ENV.SMTP_PASS || '').replace(/\s+/g, '').replace(/['"]/g, '').trim();
   const isGmail =
-    ENV.SMTP_HOST.toLowerCase().includes('gmail') ||
-    ENV.SMTP_USER.toLowerCase().includes('gmail') ||
-    ENV.SMTP_USER.toLowerCase().includes('gamil'); // Handles common typo
-  const cleanUser = ENV.SMTP_USER.replace(/['"]/g, '').trim().replace(/@gamil\.com$/i, '@gmail.com');
-  const cleanPass = ENV.SMTP_PASS.replace(/\s+/g, '').replace(/['"]/g, '').trim(); // Strip spaces & quotes from app passwords
+    (ENV.SMTP_HOST || '').toLowerCase().includes('gmail') ||
+    cleanUser.toLowerCase().includes('gmail');
+  return { cleanUser, cleanPass, isGmail };
+};
 
-  smtpTransporter = nodemailer.createTransport(
+export const getPrimaryTransporter = (): Transporter | null => {
+  const { cleanUser, cleanPass, isGmail } = getCleanCredentials();
+  if (!cleanUser || !cleanPass) return null;
+
+  return nodemailer.createTransport(
     isGmail
       ? {
           service: 'gmail',
-          auth: {
-            user: cleanUser,
-            pass: cleanPass,
-          },
-          connectionTimeout: 10000,
-          greetingTimeout: 10000,
-          socketTimeout: 15000,
+          auth: { user: cleanUser, pass: cleanPass },
+          connectionTimeout: 7000,
+          greetingTimeout: 7000,
+          socketTimeout: 10000,
         }
       : {
-          host: ENV.SMTP_HOST,
-          port: ENV.SMTP_PORT,
-          secure: ENV.SMTP_PORT === 465,
-          auth: {
-            user: cleanUser,
-            pass: cleanPass,
-          },
-          connectionTimeout: 10000,
-          greetingTimeout: 10000,
-          socketTimeout: 15000,
+          host: ENV.SMTP_HOST || 'smtp.gmail.com',
+          port: ENV.SMTP_PORT || 465,
+          secure: (ENV.SMTP_PORT || 465) === 465,
+          auth: { user: cleanUser, pass: cleanPass },
+          connectionTimeout: 7000,
+          greetingTimeout: 7000,
+          socketTimeout: 10000,
         }
   );
-}
+};
+
+export const getFallbackTlsTransporter = (): Transporter | null => {
+  const { cleanUser, cleanPass } = getCleanCredentials();
+  if (!cleanUser || !cleanPass) return null;
+
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    requireTLS: true,
+    auth: { user: cleanUser, pass: cleanPass },
+    connectionTimeout: 7000,
+    greetingTimeout: 7000,
+    socketTimeout: 10000,
+  });
+};
 
 export interface ISendOtpEmailOptions {
   to: string;
@@ -151,12 +165,13 @@ If you did not request a password reset, you can safely ignore this email.
     }
   }
 
-  // 2. If SMTP (Nodemailer) is configured, try SMTP
-  if (smtpTransporter) {
+  // 2. Try Primary SMTP Transporter (Port 465 SSL or Gmail Service)
+  const primaryTransporter = getPrimaryTransporter();
+  if (primaryTransporter) {
     try {
-      const cleanSender = ENV.SMTP_USER.replace(/['"]/g, '').trim().replace(/@gamil\.com$/i, '@gmail.com');
-      const fromAddress = cleanSender ? `DocPresc <${cleanSender}>` : ENV.EMAIL_FROM;
-      const info = await smtpTransporter.sendMail({
+      const { cleanUser } = getCleanCredentials();
+      const fromAddress = cleanUser ? `DocPresc <${cleanUser}>` : ENV.EMAIL_FROM;
+      const info = await primaryTransporter.sendMail({
         from: fromAddress,
         to,
         subject,
@@ -164,10 +179,31 @@ If you did not request a password reset, you can safely ignore this email.
         text: textContent,
       });
 
-      console.log(`[Email Service] Sent OTP email via SMTP to ${to} (Message ID: ${info.messageId})`);
+      console.log(`[Email Service] Sent OTP email via Primary SMTP to ${to} (Message ID: ${info.messageId})`);
       return { success: true, messageId: info.messageId };
     } catch (error: any) {
-      console.error(`[Email Service] Failed to send email via SMTP:`, error.message);
+      console.error(`[Email Service] Primary SMTP failed (${error.code || error.message}), attempting Port 587 TLS fallback...`);
+    }
+  }
+
+  // 3. Try Fallback TLS SMTP Transporter (Port 587 STARTTLS)
+  const fallbackTransporter = getFallbackTlsTransporter();
+  if (fallbackTransporter) {
+    try {
+      const { cleanUser } = getCleanCredentials();
+      const fromAddress = cleanUser ? `DocPresc <${cleanUser}>` : ENV.EMAIL_FROM;
+      const info = await fallbackTransporter.sendMail({
+        from: fromAddress,
+        to,
+        subject,
+        html: htmlContent,
+        text: textContent,
+      });
+
+      console.log(`[Email Service] Sent OTP email via Port 587 TLS to ${to} (Message ID: ${info.messageId})`);
+      return { success: true, messageId: info.messageId };
+    } catch (error: any) {
+      console.error(`[Email Service] Fallback TLS SMTP failed:`, error.message);
     }
   }
 
@@ -181,4 +217,52 @@ If you did not request a password reset, you can safely ignore this email.
   }
 
   return { success: false };
+};
+
+export const testSmtpDiagnostics = async () => {
+  const { cleanUser, cleanPass } = getCleanCredentials();
+  const info: any = {
+    env: {
+      host: ENV.SMTP_HOST || '(empty)',
+      port: ENV.SMTP_PORT,
+      user: cleanUser || '(empty)',
+      passProvided: !!cleanPass,
+      passLength: cleanPass ? cleanPass.length : 0,
+      nodeEnv: ENV.NODE_ENV,
+    },
+    results: {},
+  };
+
+  if (!cleanUser || !cleanPass) {
+    info.error = 'SMTP_USER or SMTP_PASS missing in environment variables';
+    return info;
+  }
+
+  // Test SSL / Service: gmail
+  try {
+    const t1 = getPrimaryTransporter();
+    if (t1) {
+      await t1.verify();
+      info.results.primary_smtp = 'SUCCESS';
+    } else {
+      info.results.primary_smtp = 'Transporter null';
+    }
+  } catch (e: any) {
+    info.results.primary_smtp = { error: e.message, code: e.code };
+  }
+
+  // Test Port 587 STARTTLS
+  try {
+    const t2 = getFallbackTlsTransporter();
+    if (t2) {
+      await t2.verify();
+      info.results.port_587_tls = 'SUCCESS';
+    } else {
+      info.results.port_587_tls = 'Transporter null';
+    }
+  } catch (e: any) {
+    info.results.port_587_tls = { error: e.message, code: e.code };
+  }
+
+  return info;
 };

@@ -85,6 +85,17 @@ export const createApp = () => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // SMTP Email Health Diagnostic Endpoint
+  app.get('/api/health/email-diagnostic', async (req, res) => {
+    try {
+      const { testSmtpDiagnostics } = await import('./services/email.service');
+      const diagnostics = await testSmtpDiagnostics();
+      res.json(diagnostics);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Master API routes
   app.use('/api', routes);
 
