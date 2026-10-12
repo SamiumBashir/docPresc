@@ -96,17 +96,6 @@ export const createApp = () => {
     }
   });
 
-  // Direct Live Email Test Endpoint
-  app.get('/api/health/test-send', async (req, res) => {
-    try {
-      const { sendPasswordResetOtpEmail } = await import('./services/email.service');
-      const to = (req.query.to as string) || 'samiumbashirbosunia@gmail.com';
-      const result = await sendPasswordResetOtpEmail({ to, otp: '887766', name: 'Dr. Test', expiresInMinutes: 10 });
-      res.json(result);
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
-    }
-  });
 
   // Master API routes
   app.use('/api', routes);
