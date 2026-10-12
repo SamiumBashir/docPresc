@@ -13,7 +13,7 @@ if (ENV.SMTP_HOST && ENV.SMTP_USER && ENV.SMTP_PASS) {
     ENV.SMTP_HOST.toLowerCase().includes('gmail') ||
     ENV.SMTP_USER.toLowerCase().includes('gmail') ||
     ENV.SMTP_USER.toLowerCase().includes('gamil'); // Handles common typo
-  const cleanUser = ENV.SMTP_USER.trim().replace(/@gamil\.com$/i, '@gmail.com');
+  const cleanUser = ENV.SMTP_USER.replace(/['"]/g, '').trim().replace(/@gamil\.com$/i, '@gmail.com');
   const cleanPass = ENV.SMTP_PASS.replace(/\s+/g, '').replace(/['"]/g, '').trim(); // Strip spaces & quotes from app passwords
 
   smtpTransporter = nodemailer.createTransport(
@@ -135,7 +135,7 @@ If you did not request a password reset, you can safely ignore this email.
   // 1. If SMTP (Nodemailer) is configured, send via SMTP (e.g. Gmail)
   if (smtpTransporter) {
     try {
-      const cleanSender = ENV.SMTP_USER.trim().replace(/@gamil\.com$/i, '@gmail.com');
+      const cleanSender = ENV.SMTP_USER.replace(/['"]/g, '').trim().replace(/@gamil\.com$/i, '@gmail.com');
       const fromAddress = cleanSender ? `DocPresc <${cleanSender}>` : ENV.EMAIL_FROM;
       const info = await smtpTransporter.sendMail({
         from: fromAddress,
