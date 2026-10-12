@@ -37,10 +37,33 @@ export const ResendOtpSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
 });
 
-export const ResetPasswordSchema = z.object({
-  resetToken: z.string().min(1, 'Reset authorization token is required'),
-  password: PasswordPolicySchema,
-});
+export const ResetPasswordSchema = z
+  .object({
+    resetToken: z.string().optional(),
+    password: PasswordPolicySchema.optional(),
+    newPassword: PasswordPolicySchema.optional(),
+    confirmPassword: z.string().optional(),
+  })
+  .refine(
+    (data) => Boolean(data.password || data.newPassword),
+    {
+      message: 'New password is required and must meet security policy requirements',
+      path: ['newPassword'],
+    }
+  )
+  .refine(
+    (data) => {
+      const pwd = data.newPassword || data.password;
+      if (data.confirmPassword && pwd) {
+        return pwd === data.confirmPassword;
+      }
+      return true;
+    },
+    {
+      message: 'Passwords do not match',
+      path: ['confirmPassword'],
+    }
+  );
 
 export const PatientSchema = z.object({
   name: z.string().min(2, 'Patient name is required'),

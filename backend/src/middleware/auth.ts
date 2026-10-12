@@ -31,7 +31,7 @@ export const authenticate = async (
       return;
     }
 
-    const decoded = jwt.verify(token, ENV.JWT_SECRET) as { id: string; role: string };
+    const decoded = jwt.verify(token, ENV.JWT_SECRET) as { id: string; role: string; iat?: number };
     const user = await User.findById(decoded.id);
 
     if (!user || user.status !== 'active') {
@@ -42,6 +42,20 @@ export const authenticate = async (
         errors: {},
       });
       return;
+    }
+
+    // Invalidate sessions issued before password was reset
+    if (decoded.iat && user.passwordChangedAt) {
+      const changedTimestamp = Math.floor(user.passwordChangedAt.getTime() / 1000);
+      if (changedTimestamp > decoded.iat) {
+        res.status(401).json({
+          success: false,
+          message: 'Password was recently changed. Please log in again with your new credentials.',
+          code: 'SESSION_REVOKED',
+          errors: {},
+        });
+        return;
+      }
     }
 
     req.user = user;

@@ -19,8 +19,9 @@
     "import:medex": "npm --prefix backend run import:medex"
   },
   "dependencies": {
-    "vite": "^5.4.0",
-    "typescript": "^5.5.4"
+    "nodemailer": "^10.1.0",
+    "typescript": "^5.5.4",
+    "vite": "^8.3.4"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

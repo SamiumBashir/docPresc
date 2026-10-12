@@ -19,6 +19,18 @@ import { showToast } from '../../components/ui/Toast';
 
 type WizardStep = 'EMAIL' | 'OTP' | 'PASSWORD' | 'SUCCESS';
 
+const maskEmail = (emailStr: string): string => {
+  if (!emailStr || !emailStr.includes('@')) return emailStr;
+  const [local, domain] = emailStr.split('@');
+  if (local.length <= 2) {
+    return `${local[0]}*@${domain}`;
+  }
+  const visibleStart = local.slice(0, 2);
+  const visibleEnd = local.slice(-1);
+  const maskedLength = Math.max(3, local.length - 3);
+  return `${visibleStart}${'*'.repeat(maskedLength)}${visibleEnd}@${domain}`;
+};
+
 export const ForgotPassword: React.FC = () => {
   const [step, setStep] = useState<WizardStep>('EMAIL');
   const [email, setEmail] = useState('');
@@ -173,14 +185,16 @@ export const ForgotPassword: React.FC = () => {
       const res = await api<{
         success: boolean;
         message: string;
+        resetToken?: string;
         data?: { resetToken: string };
-      }>('/auth/verify-otp', {
+      }>('/auth/verify-reset-otp', {
         method: 'POST',
         body: JSON.stringify({ email: email.trim().toLowerCase(), otp: otpCode }),
       });
 
-      if (res.success && res.data?.resetToken) {
-        setResetToken(res.data.resetToken);
+      const token = res.resetToken || res.data?.resetToken;
+      if (res.success && token) {
+        setResetToken(token);
         setStep('PASSWORD');
         showToast.success('OTP verified. Please create your new password.');
       }
@@ -206,7 +220,7 @@ export const ForgotPassword: React.FC = () => {
         message: string;
         devOtp?: string;
         devWarning?: string;
-      }>('/auth/resend-otp', {
+      }>('/auth/resend-reset-otp', {
         method: 'POST',
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
@@ -278,15 +292,20 @@ export const ForgotPassword: React.FC = () => {
         body: JSON.stringify({
           resetToken,
           password: newPassword,
+          newPassword,
+          confirmPassword,
         }),
       });
 
       if (res.success) {
         setStep('SUCCESS');
+        setResetToken(''); // Clear reset grant from memory immediately
+        setNewPassword('');
+        setConfirmPassword('');
         import('canvas-confetti').then(({ default: confetti }) => {
           confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
         }).catch(() => {});
-        showToast.success('Password updated successfully!');
+        showToast.success('Password updated successfully! Please sign in.');
       }
     } catch (err: any) {
       showToast.error(err.message || 'Failed to update password. Please try again.');
@@ -330,7 +349,7 @@ export const ForgotPassword: React.FC = () => {
 
         <h2 className="text-3xl font-black text-white tracking-tight">
           {step === 'EMAIL' && 'Forgot Password'}
-          {step === 'OTP' && 'Verify Email OTP'}
+          {step === 'OTP' && 'Verify Your Email'}
           {step === 'PASSWORD' && 'Create New Password'}
           {step === 'SUCCESS' && 'Reset Complete!'}
         </h2>
@@ -431,7 +450,7 @@ export const ForgotPassword: React.FC = () => {
                   Enter the 6-digit verification code sent to:
                 </p>
                 <div className="text-xs font-mono font-bold text-medical-400 bg-slate-900/80 px-3 py-1 rounded-lg border border-slate-700 inline-block">
-                  {email}
+                  {maskEmail(email)}
                 </div>
               </div>
 

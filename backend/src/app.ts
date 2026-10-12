@@ -60,6 +60,26 @@ export const createApp = () => {
   app.use('/api/auth/login', authLimiter);
   app.use('/api/auth/register', authLimiter);
 
+  // Rate Limiting on password recovery endpoints
+  const passwordResetLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: ENV.NODE_ENV === 'test' ? 1000 : 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      success: false,
+      message: 'Too many password recovery requests from this IP. Please try again later.',
+      code: 'RATE_LIMIT_EXCEEDED',
+      errors: {},
+    },
+  });
+  app.use('/api/auth/forgot-password', passwordResetLimiter);
+  app.use('/api/auth/verify-reset-otp', passwordResetLimiter);
+  app.use('/api/auth/verify-otp', passwordResetLimiter);
+  app.use('/api/auth/resend-reset-otp', passwordResetLimiter);
+  app.use('/api/auth/resend-otp', passwordResetLimiter);
+  app.use('/api/auth/reset-password', passwordResetLimiter);
+
   // Health check endpoint
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

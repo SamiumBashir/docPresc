@@ -1,9 +1,23 @@
+import nodemailer, { Transporter } from 'nodemailer';
 import { Resend } from 'resend';
 import { ENV } from '../config/env';
 
 let resendClient: Resend | null = null;
 if (ENV.RESEND_API_KEY) {
   resendClient = new Resend(ENV.RESEND_API_KEY);
+}
+
+let smtpTransporter: Transporter | null = null;
+if (ENV.SMTP_HOST && ENV.SMTP_USER && ENV.SMTP_PASS) {
+  smtpTransporter = nodemailer.createTransport({
+    host: ENV.SMTP_HOST,
+    port: ENV.SMTP_PORT,
+    secure: ENV.SMTP_PORT === 465,
+    auth: {
+      user: ENV.SMTP_USER,
+      pass: ENV.SMTP_PASS,
+    },
+  });
 }
 
 export interface ISendOtpEmailOptions {
@@ -13,13 +27,16 @@ export interface ISendOtpEmailOptions {
   expiresInMinutes?: number;
 }
 
+const escapeHtml = (str: string): string =>
+  str.replace(/[&<>'"]/g, (tag) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+
 export const sendPasswordResetOtpEmail = async ({
   to,
   name,
   otp,
-  expiresInMinutes = 5,
+  expiresInMinutes = 10,
 }: ISendOtpEmailOptions): Promise<{ success: boolean; messageId?: string; devPreview?: boolean }> => {
-  const recipientName = name || 'Doctor';
+  const recipientName = escapeHtml(name || 'Doctor');
   const subject = `Your DocPresc Password Reset OTP: ${otp}`;
 
   const htmlContent = `
@@ -92,7 +109,33 @@ Security Notice: Never share this OTP with anyone.
 If you did not request a password reset, you can safely ignore this email.
 `;
 
-  // If Resend API Key is configured, send real email
+  // 1. If SMTP (Nodemailer) is configured, send via SMTP (e.g. Gmail)
+  if (smtpTransporter) {
+    try {
+      const fromAddress = ENV.SMTP_USER ? `DocPresc <${ENV.SMTP_USER}>` : ENV.EMAIL_FROM;
+      const info = await smtpTransporter.sendMail({
+        from: fromAddress,
+        to,
+        subject,
+        html: htmlContent,
+        text: textContent,
+      });
+
+      console.log(`[Email Service] Sent OTP email via SMTP to ${to} (Message ID: ${info.messageId})`);
+      return { success: true, messageId: info.messageId };
+    } catch (error: any) {
+      console.error(`[Email Service] Failed to send email via SMTP:`, error.message);
+      if (ENV.NODE_ENV !== 'production') {
+        console.log(`\n======================================================`);
+        console.log(`[DEV EMAIL FALLBACK] Recipient: ${to} | OTP: ${otp}`);
+        console.log(`======================================================\n`);
+        return { success: true, devPreview: true };
+      }
+      return { success: false };
+    }
+  }
+
+  // 2. If Resend API Key is configured, send via Resend
   if (resendClient && ENV.RESEND_API_KEY) {
     try {
       const data = await resendClient.emails.send({

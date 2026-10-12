@@ -9,6 +9,7 @@ export interface IUser extends Document {
   status: 'active' | 'pending' | 'suspended';
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
+  passwordChangedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +24,7 @@ const UserSchema: Schema = new Schema(
     status: { type: String, enum: ['active', 'pending', 'suspended'], default: 'active' },
     resetPasswordToken: { type: String },
     resetPasswordExpire: { type: Date },
+    passwordChangedAt: { type: Date },
   },
   { timestamps: true }
 );
