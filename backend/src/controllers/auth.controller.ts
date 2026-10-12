@@ -337,6 +337,8 @@ export const forgotPassword = async (req: AuthRequest, res: Response): Promise<v
   const email = validated.email.toLowerCase();
 
   const user = await User.findOne({ email });
+  let generatedOtp: string | undefined;
+
   if (user) {
     // Check if there is an active cooldown
     const existingOtp = await PasswordResetOtp.findOne({ email });
@@ -356,6 +358,7 @@ export const forgotPassword = async (req: AuthRequest, res: Response): Promise<v
     const otp = crypto.randomInt(100000, 1000000).toString();
     const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
     const expiresAt = new Date(Date.now() + ENV.OTP_EXPIRES_IN * 1000); // 5 minutes
+    generatedOtp = otp;
 
     await PasswordResetOtp.findOneAndUpdate(
       { email },
@@ -386,12 +389,18 @@ export const forgotPassword = async (req: AuthRequest, res: Response): Promise<v
       resourceId: user._id.toString(),
       details: { email: user.email },
     });
+  } else if (ENV.NODE_ENV !== 'production') {
+    console.log(`\n[DEV OTP WARNING] Password reset requested for unregistered email: ${email}\n`);
   }
 
-  // Generic anti-enumeration response
+  const isDev = ENV.NODE_ENV !== 'production' && !ENV.RESEND_API_KEY;
+
+  // Generic anti-enumeration response with dev convenience in local test mode
   res.json({
     success: true,
     message: 'If an account exists for this email, a 6-digit password reset OTP has been sent.',
+    ...(isDev && generatedOtp ? { devOtp: generatedOtp } : {}),
+    ...(isDev && !user ? { devWarning: `User "${email}" not found in database. Seed user is doctor@prescription.com` } : {}),
   });
 };
 
@@ -472,10 +481,13 @@ export const resendOtp = async (req: AuthRequest, res: Response): Promise<void> 
   }
 
   const user = await User.findOne({ email });
+  let generatedOtp: string | undefined;
+
   if (user) {
     const otp = crypto.randomInt(100000, 1000000).toString();
     const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
     const expiresAt = new Date(Date.now() + ENV.OTP_EXPIRES_IN * 1000);
+    generatedOtp = otp;
 
     await PasswordResetOtp.findOneAndUpdate(
       { email },
@@ -505,11 +517,17 @@ export const resendOtp = async (req: AuthRequest, res: Response): Promise<void> 
       resourceId: user._id.toString(),
       details: { email: user.email },
     });
+  } else if (ENV.NODE_ENV !== 'production') {
+    console.log(`\n[DEV OTP WARNING] Password reset resend requested for unregistered email: ${email}\n`);
   }
+
+  const isDev = ENV.NODE_ENV !== 'production' && !ENV.RESEND_API_KEY;
 
   res.json({
     success: true,
     message: 'If an account exists for this email, a new password reset OTP has been sent.',
+    ...(isDev && generatedOtp ? { devOtp: generatedOtp } : {}),
+    ...(isDev && !user ? { devWarning: `User "${email}" not found in database. Seed user is doctor@prescription.com` } : {}),
   });
 };
 

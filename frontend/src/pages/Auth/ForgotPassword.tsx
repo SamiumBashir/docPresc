@@ -24,6 +24,7 @@ export const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [resetToken, setResetToken] = useState('');
+  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -61,6 +62,8 @@ export const ForgotPassword: React.FC = () => {
       const res = await api<{
         success: boolean;
         message: string;
+        devOtp?: string;
+        devWarning?: string;
       }>('/auth/forgot-password', {
         method: 'POST',
         body: JSON.stringify({ email: cleanEmail }),
@@ -71,7 +74,19 @@ export const ForgotPassword: React.FC = () => {
         setResendTimer(60);
         setOtp(['', '', '', '', '', '']);
         setAttemptsRemaining(5);
-        showToast.success('6-digit OTP has been sent to your email.');
+
+        if (res.devOtp) {
+          setDevOtp(res.devOtp);
+          showToast.info(`Dev Mode: Generated OTP is ${res.devOtp}`);
+        } else {
+          setDevOtp(null);
+          showToast.success('6-digit OTP has been sent to your email.');
+        }
+
+        if (res.devWarning) {
+          showToast.info(res.devWarning);
+        }
+
         // Focus first OTP input
         setTimeout(() => {
           otpInputRefs.current[0]?.focus();
@@ -132,6 +147,18 @@ export const ForgotPassword: React.FC = () => {
     }
   };
 
+  const handleAutoFillDevOtp = () => {
+    if (!devOtp) return;
+    const digits = devOtp.split('').slice(0, 6);
+    const newOtp = ['', '', '', '', '', ''];
+    digits.forEach((d, i) => {
+      newOtp[i] = d;
+    });
+    setOtp(newOtp);
+    otpInputRefs.current[5]?.focus();
+    showToast.success('Test OTP filled automatically!');
+  };
+
   // Step 2: Verify 6-digit OTP
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,6 +204,8 @@ export const ForgotPassword: React.FC = () => {
       const res = await api<{
         success: boolean;
         message: string;
+        devOtp?: string;
+        devWarning?: string;
       }>('/auth/resend-otp', {
         method: 'POST',
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
@@ -186,7 +215,19 @@ export const ForgotPassword: React.FC = () => {
         setResendTimer(60);
         setOtp(['', '', '', '', '', '']);
         setAttemptsRemaining(5);
-        showToast.success('A new OTP has been dispatched to your email.');
+
+        if (res.devOtp) {
+          setDevOtp(res.devOtp);
+          showToast.info(`Dev Mode: New OTP is ${res.devOtp}`);
+        } else {
+          setDevOtp(null);
+          showToast.success('A new OTP has been dispatched to your email.');
+        }
+
+        if (res.devWarning) {
+          showToast.info(res.devWarning);
+        }
+
         setTimeout(() => {
           otpInputRefs.current[0]?.focus();
         }, 100);
@@ -393,6 +434,27 @@ export const ForgotPassword: React.FC = () => {
                   {email}
                 </div>
               </div>
+
+              {/* Dev Mode Banner for Local Testing */}
+              {devOtp && (
+                <div className="bg-medical-500/10 border border-medical-500/30 rounded-2xl p-3 flex items-center justify-between gap-3 text-xs animate-in fade-in">
+                  <div>
+                    <span className="font-semibold text-medical-300 block text-[11px]">
+                      🧪 Local Dev OTP (Offline Mode):
+                    </span>
+                    <span className="font-mono text-white font-black text-sm tracking-widest">
+                      {devOtp}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAutoFillDevOtp}
+                    className="px-3 py-1.5 bg-medical-500 hover:bg-medical-600 text-white rounded-xl font-bold text-xs transition-colors shrink-0 cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+                  >
+                    Auto-fill OTP
+                  </button>
+                </div>
+              )}
 
               {/* 6 Digit Input Boxes */}
               <div className="flex items-center justify-center gap-2 sm:gap-3 py-1">
