@@ -9,15 +9,38 @@ if (ENV.RESEND_API_KEY) {
 
 let smtpTransporter: Transporter | null = null;
 if (ENV.SMTP_HOST && ENV.SMTP_USER && ENV.SMTP_PASS) {
-  smtpTransporter = nodemailer.createTransport({
-    host: ENV.SMTP_HOST,
-    port: ENV.SMTP_PORT,
-    secure: ENV.SMTP_PORT === 465,
-    auth: {
-      user: ENV.SMTP_USER,
-      pass: ENV.SMTP_PASS,
-    },
-  });
+  const isGmail =
+    ENV.SMTP_HOST.toLowerCase().includes('gmail') ||
+    ENV.SMTP_USER.toLowerCase().includes('gmail') ||
+    ENV.SMTP_USER.toLowerCase().includes('gamil'); // Handles common typo
+  const cleanUser = ENV.SMTP_USER.trim().replace(/@gamil\.com$/i, '@gmail.com');
+  const cleanPass = ENV.SMTP_PASS.replace(/\s+/g, '').replace(/['"]/g, '').trim(); // Strip spaces & quotes from app passwords
+
+  smtpTransporter = nodemailer.createTransport(
+    isGmail
+      ? {
+          service: 'gmail',
+          auth: {
+            user: cleanUser,
+            pass: cleanPass,
+          },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
+        }
+      : {
+          host: ENV.SMTP_HOST,
+          port: ENV.SMTP_PORT,
+          secure: ENV.SMTP_PORT === 465,
+          auth: {
+            user: cleanUser,
+            pass: cleanPass,
+          },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
+        }
+  );
 }
 
 export interface ISendOtpEmailOptions {
@@ -112,7 +135,8 @@ If you did not request a password reset, you can safely ignore this email.
   // 1. If SMTP (Nodemailer) is configured, send via SMTP (e.g. Gmail)
   if (smtpTransporter) {
     try {
-      const fromAddress = ENV.SMTP_USER ? `DocPresc <${ENV.SMTP_USER}>` : ENV.EMAIL_FROM;
+      const cleanSender = ENV.SMTP_USER.trim().replace(/@gamil\.com$/i, '@gmail.com');
+      const fromAddress = cleanSender ? `DocPresc <${cleanSender}>` : ENV.EMAIL_FROM;
       const info = await smtpTransporter.sendMail({
         from: fromAddress,
         to,
