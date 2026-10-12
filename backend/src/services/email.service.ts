@@ -132,7 +132,26 @@ Security Notice: Never share this OTP with anyone.
 If you did not request a password reset, you can safely ignore this email.
 `;
 
-  // 1. If SMTP (Nodemailer) is configured, send via SMTP (e.g. Gmail)
+  // 1. If Resend API Key is configured, prioritize Resend (uses HTTPS Port 443 - zero firewall/port blocks on cloud hosts like Render)
+  if (resendClient && ENV.RESEND_API_KEY) {
+    try {
+      const data = await resendClient.emails.send({
+        from: ENV.EMAIL_FROM,
+        to,
+        subject,
+        html: htmlContent,
+        text: textContent,
+      });
+
+      console.log(`[Email Service] Sent OTP email via Resend to ${to} (Message ID: ${data.data?.id})`);
+      return { success: true, messageId: data.data?.id };
+    } catch (error: any) {
+      console.error(`[Email Service] Failed to send email via Resend:`, error.message);
+      // Fall through to SMTP if configured
+    }
+  }
+
+  // 2. If SMTP (Nodemailer) is configured, try SMTP
   if (smtpTransporter) {
     try {
       const cleanSender = ENV.SMTP_USER.replace(/['"]/g, '').trim().replace(/@gamil\.com$/i, '@gmail.com');
@@ -149,49 +168,17 @@ If you did not request a password reset, you can safely ignore this email.
       return { success: true, messageId: info.messageId };
     } catch (error: any) {
       console.error(`[Email Service] Failed to send email via SMTP:`, error.message);
-      if (ENV.NODE_ENV !== 'production') {
-        console.log(`\n======================================================`);
-        console.log(`[DEV EMAIL FALLBACK] Recipient: ${to} | OTP: ${otp}`);
-        console.log(`======================================================\n`);
-        return { success: true, devPreview: true };
-      }
-      return { success: false };
     }
   }
 
-  // 2. If Resend API Key is configured, send via Resend
-  if (resendClient && ENV.RESEND_API_KEY) {
-    try {
-      const data = await resendClient.emails.send({
-        from: ENV.EMAIL_FROM,
-        to,
-        subject,
-        html: htmlContent,
-        text: textContent,
-      });
-
-      console.log(`[Email Service] Sent OTP email to ${to} (Message ID: ${data.data?.id})`);
-      return { success: true, messageId: data.data?.id };
-    } catch (error: any) {
-      console.error(`[Email Service] Failed to send email via Resend:`, error.message);
-      // If Resend fails, return success false or log
-      if (ENV.NODE_ENV !== 'production') {
-        console.log(`\n======================================================`);
-        console.log(`[DEV EMAIL FALLBACK] Recipient: ${to} | OTP: ${otp}`);
-        console.log(`======================================================\n`);
-        return { success: true, devPreview: true };
-      }
-      return { success: false };
-    }
-  }
-
-  // Development/Local Fallback when no Resend Key is supplied
+  // Development/Local Fallback when email dispatch is unavailable
   if (ENV.NODE_ENV !== 'production') {
     console.log(`\n======================================================`);
     console.log(`[DEV OTP EMAIL] Recipient: ${to}`);
     console.log(`[DEV OTP CODE]  --> ${otp} <-- (Valid for ${expiresInMinutes} mins)`);
     console.log(`======================================================\n`);
+    return { success: true, devPreview: true };
   }
 
-  return { success: true, devPreview: true };
+  return { success: false };
 };
