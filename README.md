@@ -1,4 +1,4 @@
-# 🩺 DocRx — Digital Prescription Management System
+# 🩺 DocPresc — Digital Prescription Management System
 
 A modern, fast, and production-ready **Digital Prescription Management Web Application** designed for doctors and medical chambers in Bangladesh.
 
@@ -11,6 +11,7 @@ A modern, fast, and production-ready **Digital Prescription Management Web Appli
 - **💊 Multi-System Medicine Search**: Fast debounced autocomplete supporting **Allopathic**, **Unani (ইউনানি)**, and **Ayurvedic (আয়ুর্বেদিক)** medicines with quick-dose pills (`1+0+1`, `1+1+1`, meal timing).
 - **📋 Patient Medical Timeline**: Global patient search (`Ctrl+K`), allergy warnings, visit history, and 1-click **"Clone Rx"** for returning patients.
 - **🖨️ Clean Print & PDF**: Instant browser printing and high-fidelity PDF export with full Bengali font support.
+- **🔐 Secure 6-Digit Email OTP Recovery**: Cryptographically secure password reset flow with SHA-256 digests, 60s cooldown, 5-attempt brute-force protection, and zero-enumeration design.
 - **🔒 Secure & Compliant**: Immutability for finalized prescriptions, public QR code verification, and security audit logs.
 - **🌐 Bilingual Support**: Full English and বাংলা (Bengali) interface.
 
