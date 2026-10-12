@@ -89,7 +89,7 @@ export const createApp = () => {
   app.get('/api/health/email-diagnostic', async (req, res) => {
     try {
       const { testSmtpDiagnostics } = await import('./services/email.service');
-      const diagnostics = await testSmtpDiagnostics();
+      const diagnostics = await testSmtpDiagnostics((req.query.to as string) || undefined);
       res.json(diagnostics);
     } catch (err: any) {
       res.status(500).json({ error: err.message });

@@ -97,7 +97,7 @@ const dispatchEmail = async ({
   // 1. Resend API via HTTPS (Port 443)
   if (resendClient && ENV.RESEND_API_KEY) {
     try {
-      const data = await resendClient.emails.send({
+      const response = await resendClient.emails.send({
         from: ENV.EMAIL_FROM,
         to,
         subject,
@@ -105,15 +105,53 @@ const dispatchEmail = async ({
         text,
       });
 
-      console.log(`[Email Service] Sent ${contextTag} email via Resend to ${to} (Message ID: ${data.data?.id})`);
-      return { success: true, messageId: data.data?.id };
+      if (response.error) {
+        console.error(`[Email Service] Resend API error sending ${contextTag} to ${to}:`, response.error);
+        // Do NOT return success: true! Resend failed (e.g. unverified sandbox recipient domain restriction)
+      } else if (response.data?.id) {
+        console.log(`[Email Service] Sent ${contextTag} email via Resend to ${to} (Message ID: ${response.data.id})`);
+        return { success: true, messageId: response.data.id };
+      }
     } catch (error: any) {
-      console.error(`[Email Service] Failed to send ${contextTag} via Resend:`, error.message);
-      // Fall through to SMTP if configured
+      console.error(`[Email Service] Exception sending ${contextTag} via Resend:`, error.message);
+      // Fall through to other providers
     }
   }
 
-  // 2. Primary SMTP Transporter (Port 465 SSL or Gmail Service)
+  // 2. Brevo (Sendinblue) HTTPS API (Port 443 - works on Render without custom domain restrictions)
+  if (ENV.BREVO_API_KEY) {
+    try {
+      const { cleanUser } = getCleanCredentials();
+      const senderEmail = cleanUser || 'onboarding@resend.dev';
+      const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': ENV.BREVO_API_KEY,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          sender: { name: 'DocPresc', email: senderEmail },
+          to: [{ email: to }],
+          subject,
+          htmlContent: html,
+          textContent: text,
+        }),
+      });
+
+      const brevoData: any = await brevoRes.json();
+      if (brevoRes.ok && brevoData.messageId) {
+        console.log(`[Email Service] Sent ${contextTag} email via Brevo to ${to} (Message ID: ${brevoData.messageId})`);
+        return { success: true, messageId: brevoData.messageId };
+      } else {
+        console.error(`[Email Service] Brevo API error for ${to}:`, brevoData);
+      }
+    } catch (error: any) {
+      console.error(`[Email Service] Exception sending ${contextTag} via Brevo:`, error.message);
+    }
+  }
+
+  // 3. Primary SMTP Transporter (Port 465 SSL or Gmail Service)
   const primaryTransporter = getPrimaryTransporter();
   if (primaryTransporter) {
     try {
@@ -134,7 +172,7 @@ const dispatchEmail = async ({
     }
   }
 
-  // 3. Fallback TLS SMTP Transporter (Port 587 STARTTLS)
+  // 4. Fallback TLS SMTP Transporter (Port 587 STARTTLS)
   const fallbackTransporter = getFallbackTlsTransporter();
   if (fallbackTransporter) {
     try {
@@ -397,7 +435,7 @@ The DocPresc Team
   });
 };
 
-export const testSmtpDiagnostics = async () => {
+export const testSmtpDiagnostics = async (targetEmail?: string) => {
   const { cleanUser, cleanPass } = getCleanCredentials();
   const info: any = {
     env: {
@@ -406,14 +444,67 @@ export const testSmtpDiagnostics = async () => {
       user: cleanUser || '(empty)',
       passProvided: !!cleanPass,
       passLength: cleanPass ? cleanPass.length : 0,
+      resendKeyProvided: !!ENV.RESEND_API_KEY,
+      brevoKeyProvided: !!ENV.BREVO_API_KEY,
+      emailFrom: ENV.EMAIL_FROM,
       nodeEnv: ENV.NODE_ENV,
     },
     results: {},
   };
 
-  if (!cleanUser || !cleanPass) {
-    info.error = 'SMTP_USER or SMTP_PASS missing in environment variables';
-    return info;
+  // Test Resend API if configured
+  if (resendClient && ENV.RESEND_API_KEY) {
+    if (targetEmail) {
+      try {
+        const resendRes = await resendClient.emails.send({
+          from: ENV.EMAIL_FROM,
+          to: targetEmail,
+          subject: 'DocPresc Diagnostic Test',
+          html: '<p>Testing Resend delivery probe</p>',
+        });
+        if (resendRes.error) {
+          info.results.resend = { error: resendRes.error.message, statusCode: (resendRes.error as any).statusCode || (resendRes.error as any).status };
+        } else {
+          info.results.resend = { success: true, messageId: resendRes.data?.id };
+        }
+      } catch (e: any) {
+        info.results.resend = { error: e.message };
+      }
+    } else {
+      info.results.resend = 'KEY_CONFIGURED';
+    }
+  }
+
+  // Test Brevo API if configured
+  if (ENV.BREVO_API_KEY) {
+    if (targetEmail) {
+      try {
+        const senderEmail = cleanUser || 'onboarding@resend.dev';
+        const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'api-key': ENV.BREVO_API_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sender: { name: 'DocPresc', email: senderEmail },
+            to: [{ email: targetEmail }],
+            subject: 'DocPresc Brevo Diagnostic Probe',
+            htmlContent: '<p>Testing Brevo delivery probe</p>',
+          }),
+        });
+        const brevoData: any = await brevoRes.json();
+        if (brevoRes.ok && brevoData.messageId) {
+          info.results.brevo = { success: true, messageId: brevoData.messageId };
+        } else {
+          info.results.brevo = { error: brevoData };
+        }
+      } catch (e: any) {
+        info.results.brevo = { error: e.message };
+      }
+    } else {
+      info.results.brevo = 'KEY_CONFIGURED';
+    }
   }
 
   // Test SSL / Service: gmail
