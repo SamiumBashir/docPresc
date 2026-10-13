@@ -132,15 +132,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     } catch (err: any) {
-      localStorage.removeItem('docrx_token');
-      localStorage.removeItem('docrx_user');
-      localStorage.removeItem('docrx_doctor');
-      localStorage.removeItem('docrx_chambers');
-      localStorage.removeItem('docrx_active_chamber_id');
-      setUser(null);
-      setDoctor(null);
-      setChambers([]);
-      setActiveChamberState(null);
+      if (err?.status === 401 || err?.status === 403) {
+        // Only clear credentials when token is strictly invalid or user is suspended
+        localStorage.removeItem('docrx_token');
+        localStorage.removeItem('docrx_user');
+        localStorage.removeItem('docrx_doctor');
+        localStorage.removeItem('docrx_chambers');
+        localStorage.removeItem('docrx_active_chamber_id');
+        setUser(null);
+        setDoctor(null);
+        setChambers([]);
+        setActiveChamberState(null);
+      }
+      // If it's a transient network error or server glitch, retain cached session to avoid kicking doctor out
     } finally {
       setIsLoading(false);
     }

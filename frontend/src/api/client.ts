@@ -70,11 +70,14 @@ const executeFetch = async <T = any>(
 
     if (!response.ok) {
       const code = data.code || (
+        response.status === 400 ? 'BAD_REQUEST' :
         response.status === 401 ? 'UNAUTHORIZED' :
         response.status === 403 ? 'FORBIDDEN' :
         response.status === 404 ? 'NOT_FOUND' :
         response.status === 409 ? 'CONFLICT' :
-        response.status === 422 ? 'VALIDATION_ERROR' : 'API_ERROR'
+        response.status === 422 ? 'VALIDATION_ERROR' :
+        response.status === 429 ? 'RATE_LIMIT_EXCEEDED' :
+        response.status >= 500 ? 'SERVER_ERROR' : 'API_ERROR'
       );
       throw new ApiError(
         data.message || `Request failed with status ${response.status}`,

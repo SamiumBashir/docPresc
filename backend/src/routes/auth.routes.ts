@@ -27,6 +27,7 @@ router.post('/resend-otp', asyncHandler(resendOtp));
 router.post('/reset-password', asyncHandler(resetPassword));
 router.post('/reset-password/:token', asyncHandler(resetPassword));
 router.get('/me', authenticate, asyncHandler(getMe));
+router.get('/profile', authenticate, asyncHandler(getMe));
 router.post('/logout', authenticate, asyncHandler(logout));
 router.delete('/account', authenticate, asyncHandler(deleteAccount));
 router.put('/profile', authenticate, asyncHandler(updateDoctorProfile));

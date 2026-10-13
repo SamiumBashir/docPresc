@@ -78,12 +78,15 @@ export const Login: React.FC = () => {
       showToast.success('Credentials verified. Welcome back!');
       navigate('/dashboard', { replace: true });
     } catch (err: any) {
-      const rawMessage = err?.message || '';
-      let friendlyError = 'Wrong email or password. Please check your credentials and try again. (ভুল ইমেইল বা পাসওয়ার্ড! সঠিক তথ্য দিয়ে পুনরায় চেষ্টা করুন)';
-      if (rawMessage.toLowerCase().includes('suspended') || rawMessage.toLowerCase().includes('pending')) {
-        friendlyError = rawMessage;
-      } else if (rawMessage && !rawMessage.toLowerCase().includes('status')) {
-        friendlyError = `${rawMessage} — Wrong email or password.`;
+      let friendlyError = 'Invalid email or password. Please check your credentials and try again.';
+      if (err?.isNetworkError || err?.code === 'NETWORK_ERROR' || err?.code === 'REQUEST_TIMEOUT') {
+        friendlyError = err.message || 'Unable to reach the server. Please check your connection or try again later.';
+      } else if (err?.code === 'RATE_LIMIT_EXCEEDED' || err?.status === 429) {
+        friendlyError = err.message || 'Too many sign-in attempts. Please wait 15 minutes before trying again.';
+      } else if (err?.message?.toLowerCase().includes('suspended') || err?.message?.toLowerCase().includes('pending')) {
+        friendlyError = err.message;
+      } else if (err?.message) {
+        friendlyError = err.message;
       }
       setErrorMessage(friendlyError);
       showToast.error(friendlyError, 'Authentication Failed');
