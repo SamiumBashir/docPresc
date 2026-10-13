@@ -42,7 +42,7 @@ export const AppLayout: React.FC = () => {
           onToggleSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
         />
 
-        <main className="flex-1 overflow-y-auto p-2.5 sm:p-4 lg:p-6 bg-slate-50/70">
+        <main className="flex-1 overflow-y-auto p-2 sm:p-3 lg:px-4 lg:py-4 bg-slate-50/70">
           <div className="page-enter-transition min-h-full">
             <Outlet />
           </div>

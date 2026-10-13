@@ -69,7 +69,7 @@ const LivePrescriptionPadComponent: React.FC<LivePrescriptionPadProps> = ({
     <div
       id="prescription-pad"
       data-papersize={paperSize}
-      className={`prescription-print-container relative bg-white text-slate-900 shadow-xl border border-slate-200/80 rounded-xl overflow-hidden mx-auto transition-all duration-300 flex flex-col justify-between p-4 sm:p-6 md:p-8 print:!p-3.5 print:!h-[280mm] print:!min-h-[280mm] print:!max-h-[280mm] print:!shadow-none print:!border-none print:!rounded-none ${paperSize === 'Letter'
+      className={`prescription-print-container relative bg-white text-slate-900 shadow-xl border border-slate-200/80 rounded-xl overflow-hidden mx-auto transition-all duration-300 flex flex-col justify-between p-4 sm:p-5 md:p-6 print:!p-3.5 print:!h-[280mm] print:!min-h-[280mm] print:!max-h-[280mm] print:!shadow-none print:!border-none print:!rounded-none ${paperSize === 'Letter'
         ? 'w-full max-w-[816px] min-h-[1056px] text-xs'
         : paperSize === 'A5'
           ? 'w-full max-w-[560px] min-h-[792px] text-[11px]'

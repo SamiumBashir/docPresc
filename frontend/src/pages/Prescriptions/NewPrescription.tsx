@@ -458,7 +458,7 @@ export const NewPrescription: React.FC = () => {
   };
 
   return (
-    <div className="space-y-3 max-w-7xl mx-auto pb-12 -mt-2 sm:-mt-4">
+    <div className="space-y-3 w-full max-w-[1720px] mx-auto pb-12 -mt-2 sm:-mt-4 px-1 sm:px-2">
       {/* Autosave Recovery Banner */}
       {hasAutosaveDraft && (
         <div className="no-print bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-center justify-between shadow-xs animate-in fade-in">
@@ -657,7 +657,7 @@ export const NewPrescription: React.FC = () => {
       </div>
 
       {/* Main Two-Column Prescription Workspace */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-5 items-start">
         {/* ========================================================= */}
         {/* LEFT COLUMN: Input Form Controls (Hidden on Print)        */}
         {/* ========================================================= */}
