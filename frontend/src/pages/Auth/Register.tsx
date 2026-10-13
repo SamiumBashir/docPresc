@@ -64,7 +64,7 @@ export const Register: React.FC = () => {
       });
 
       if (res.success) {
-        showToast.success('Doctor account registered successfully! Please sign in.');
+        showToast.success('Doctor account registered successfully! A welcome email has been sent to your inbox.');
         navigate('/login');
       }
     } catch (err: any) {
