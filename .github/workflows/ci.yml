@@ -1,0 +1,54 @@
+name: DocPresc CI Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  validate:
+    name: Build, Lint & Test Validation
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies (Workspaces)
+        run: |
+          npm --prefix backend ci || npm --prefix backend install
+          npm --prefix frontend ci || npm --prefix frontend install
+
+      - name: Type check backend
+        run: npm --prefix backend run typecheck
+
+      - name: Type check frontend
+        run: npm --prefix frontend run typecheck
+
+      - name: Build backend
+        run: npm --prefix backend run build
+
+      - name: Build frontend
+        run: npm --prefix frontend run build
+
+      - name: Run backend tests
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:27017/prescription_test_ci
+          JWT_SECRET: test_ci_super_secret_jwt_key_2026
+          COOKIE_SECRET: test_ci_cookie_secret_2026
+          OTP_PEPPER: test_ci_otp_pepper_2026
+        run: npm --prefix backend test

@@ -92,6 +92,9 @@ export interface IMedicine {
   price?: number;
   status: 'active' | 'inactive';
   isFavorite?: boolean;
+  defaultDose?: string;
+  defaultDuration?: string;
+  defaultInstruction?: string;
 }
 
 export interface IPrescriptionMedicine {
