@@ -80,7 +80,11 @@ export const createApp = () => {
   app.use('/api/auth/resend-otp', passwordResetLimiter);
   app.use('/api/auth/reset-password', passwordResetLimiter);
 
-  // Health check endpoint
+  // Root & Health check endpoints
+  app.get('/', (req, res) => {
+    res.json({ status: 'ok', service: 'DocRx Prescription API', timestamp: new Date().toISOString() });
+  });
+
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
