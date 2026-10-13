@@ -19,7 +19,7 @@ const startServer = async () => {
     await seedDatabase(false);
 
     const app = createApp();
-    const port = Number(ENV.PORT) || 5000;
+    const port = Number(process.env.PORT) || Number(ENV.PORT) || 5000;
     app.listen(port, '0.0.0.0', () => {
       console.log(`[DocRx Backend] Server running in ${ENV.NODE_ENV} mode on port ${port}`);
       console.log(`[DocRx Backend] Health check: http://localhost:${port}/api/health`);
