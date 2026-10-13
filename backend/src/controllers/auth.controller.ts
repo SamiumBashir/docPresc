@@ -355,81 +355,83 @@ export const forgotPassword = async (req: AuthRequest, res: Response): Promise<v
   const user = await User.findOne({ email });
   let generatedOtp: string | undefined;
 
-  if (user) {
-    // Check if there is an active resend cooldown (60s)
-    const existingOtp = await PasswordResetOtp.findOne({ email });
-    const now = Date.now();
-    const cooldownMs = ENV.OTP_RESEND_COOLDOWN * 1000;
-
-    if (existingOtp && now - existingOtp.lastSentAt.getTime() < cooldownMs) {
-      const waitSeconds = Math.ceil((cooldownMs - (now - existingOtp.lastSentAt.getTime())) / 1000);
-      res.status(429).json({
-        success: false,
-        message: `Please wait ${waitSeconds} seconds before requesting a new OTP.`,
-      });
-      return;
-    }
-
-    // Cryptographically secure 6-digit numeric OTP (100000 - 999999)
-    const otp = generateSecureOtp();
-    const otpHash = hashOtp(otp);
-    const expiresAt = new Date(Date.now() + ENV.OTP_EXPIRES_IN * 1000);
-    generatedOtp = otp;
-
-    // Atomically upsert challenge in state store
-    const record = await PasswordResetOtp.findOneAndUpdate(
-      { email },
-      {
-        email,
-        otpHash,
-        expiresAt,
-        attempts: 0,
-        lastSentAt: new Date(),
-        resetTokenHash: undefined,
-        resetTokenExpiresAt: undefined,
-        verifiedAt: undefined,
-      },
-      { upsert: true, new: true }
-    );
-
-    // Dispatch transactional email via Resend
-    const emailResult = await sendPasswordResetOtpEmail({
-      to: user.email,
-      name: user.name,
-      otp,
-      expiresInMinutes: Math.round(ENV.OTP_EXPIRES_IN / 60),
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      message: `No doctor account found with email "${email}". Please verify your email or create a new account.`,
     });
-
-    // Handle delivery failure safely: invalidate challenge so no orphaned OTP remains
-    if (ENV.NODE_ENV === 'production' && !emailResult.success) {
-      if (record) {
-        await PasswordResetOtp.findByIdAndDelete(record._id);
-      }
-      res.status(500).json({
-        success: false,
-        message: 'Unable to deliver verification code to your email. Please try again later.',
-      });
-      return;
-    }
-
-    await logAuditEvent(req, {
-      action: 'PASSWORD_RESET_OTP_REQUESTED',
-      resource: 'User',
-      resourceId: user._id.toString(),
-      details: { email: user.email },
-    });
-  } else if (ENV.NODE_ENV !== 'production') {
-    console.log(`\n[DEV OTP WARNING] Password reset requested for unregistered email: ${email}\n`);
+    return;
   }
 
-  const isDev = ENV.NODE_ENV !== 'production' && !ENV.RESEND_API_KEY;
+  // Check if there is an active resend cooldown (60s)
+  const existingOtp = await PasswordResetOtp.findOne({ email });
+  const now = Date.now();
+  const cooldownMs = ENV.OTP_RESEND_COOLDOWN * 1000;
 
-  // Generic anti-enumeration response (status 200/202)
+  if (existingOtp && now - existingOtp.lastSentAt.getTime() < cooldownMs) {
+    const waitSeconds = Math.ceil((cooldownMs - (now - existingOtp.lastSentAt.getTime())) / 1000);
+    res.status(429).json({
+      success: false,
+      message: `Please wait ${waitSeconds} seconds before requesting a new OTP.`,
+    });
+    return;
+  }
+
+  // Cryptographically secure 6-digit numeric OTP (100000 - 999999)
+  const otp = generateSecureOtp();
+  const otpHash = hashOtp(otp);
+  const expiresAt = new Date(Date.now() + ENV.OTP_EXPIRES_IN * 1000);
+  generatedOtp = otp;
+
+  // Atomically upsert challenge in state store
+  const record = await PasswordResetOtp.findOneAndUpdate(
+    { email },
+    {
+      email,
+      otpHash,
+      expiresAt,
+      attempts: 0,
+      lastSentAt: new Date(),
+      resetTokenHash: undefined,
+      resetTokenExpiresAt: undefined,
+      verifiedAt: undefined,
+    },
+    { upsert: true, new: true }
+  );
+
+  // Dispatch transactional email
+  const emailResult = await sendPasswordResetOtpEmail({
+    to: user.email,
+    name: user.name,
+    otp,
+    expiresInMinutes: Math.round(ENV.OTP_EXPIRES_IN / 60),
+  });
+
+  // Handle delivery failure safely: invalidate challenge so no orphaned OTP remains
+  if (ENV.NODE_ENV === 'production' && !emailResult.success) {
+    if (record) {
+      await PasswordResetOtp.findByIdAndDelete(record._id);
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Unable to deliver verification code to your email. Please check server email configuration or try again later.',
+    });
+    return;
+  }
+
+  await logAuditEvent(req, {
+    action: 'PASSWORD_RESET_OTP_REQUESTED',
+    resource: 'User',
+    resourceId: user._id.toString(),
+    details: { email: user.email },
+  });
+
+  const isDev = ENV.NODE_ENV !== 'production' && !ENV.RESEND_API_KEY && !ENV.BREVO_API_KEY;
+
   res.status(200).json({
     success: true,
-    message: 'If an account exists for this email, a verification code will be sent.',
+    message: 'Verification code has been sent to your email.',
     ...(isDev && generatedOtp ? { devOtp: generatedOtp } : {}),
-    ...(isDev && !user ? { devWarning: `User "${email}" not found in database. Seed user is doctor@prescription.com` } : {}),
   });
 };
 
@@ -518,64 +520,65 @@ export const resendOtp = async (req: AuthRequest, res: Response): Promise<void> 
   }
 
   const user = await User.findOne({ email });
-  let generatedOtp: string | undefined;
-
-  if (user) {
-    const otp = generateSecureOtp();
-    const otpHash = hashOtp(otp);
-    const expiresAt = new Date(Date.now() + ENV.OTP_EXPIRES_IN * 1000);
-    generatedOtp = otp;
-
-    const updatedRecord = await PasswordResetOtp.findOneAndUpdate(
-      { email },
-      {
-        email,
-        otpHash,
-        expiresAt,
-        attempts: 0,
-        lastSentAt: new Date(),
-        resetTokenHash: undefined,
-        resetTokenExpiresAt: undefined,
-        verifiedAt: undefined,
-      },
-      { upsert: true, new: true }
-    );
-
-    const emailResult = await sendPasswordResetOtpEmail({
-      to: user.email,
-      name: user.name,
-      otp,
-      expiresInMinutes: Math.round(ENV.OTP_EXPIRES_IN / 60),
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      message: `No doctor account found with email "${email}".`,
     });
-
-    if (ENV.NODE_ENV === 'production' && !emailResult.success) {
-      if (updatedRecord) {
-        await PasswordResetOtp.findByIdAndDelete(updatedRecord._id);
-      }
-      res.status(500).json({
-        success: false,
-        message: 'Unable to deliver verification code. Please try again later.',
-      });
-      return;
-    }
-
-    await logAuditEvent(req, {
-      action: 'PASSWORD_RESET_OTP_RESENT',
-      resource: 'User',
-      resourceId: user._id.toString(),
-      details: { email: user.email },
-    });
-  } else if (ENV.NODE_ENV !== 'production') {
-    console.log(`\n[DEV OTP WARNING] Password reset resend requested for unregistered email: ${email}\n`);
+    return;
   }
 
-  const isDev = ENV.NODE_ENV !== 'production' && !ENV.RESEND_API_KEY;
+  const otp = generateSecureOtp();
+  const otpHash = hashOtp(otp);
+  const expiresAt = new Date(Date.now() + ENV.OTP_EXPIRES_IN * 1000);
+  const generatedOtp = otp;
+
+  const updatedRecord = await PasswordResetOtp.findOneAndUpdate(
+    { email },
+    {
+      email,
+      otpHash,
+      expiresAt,
+      attempts: 0,
+      lastSentAt: new Date(),
+      resetTokenHash: undefined,
+      resetTokenExpiresAt: undefined,
+      verifiedAt: undefined,
+    },
+    { upsert: true, new: true }
+  );
+
+  const emailResult = await sendPasswordResetOtpEmail({
+    to: user.email,
+    name: user.name,
+    otp,
+    expiresInMinutes: Math.round(ENV.OTP_EXPIRES_IN / 60),
+  });
+
+  if (ENV.NODE_ENV === 'production' && !emailResult.success) {
+    if (updatedRecord) {
+      await PasswordResetOtp.findByIdAndDelete(updatedRecord._id);
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Unable to deliver verification code. Please try again later.',
+    });
+    return;
+  }
+
+  await logAuditEvent(req, {
+    action: 'PASSWORD_RESET_OTP_RESENT',
+    resource: 'User',
+    resourceId: user._id.toString(),
+    details: { email: user.email },
+  });
+
+  const isDev = ENV.NODE_ENV !== 'production' && !ENV.RESEND_API_KEY && !ENV.BREVO_API_KEY;
 
   res.status(200).json({
     success: true,
-    message: 'If an account exists for this email, a new verification code will be sent.',
+    message: 'A new verification code has been sent to your email.',
     ...(isDev && generatedOtp ? { devOtp: generatedOtp } : {}),
-    ...(isDev && !user ? { devWarning: `User "${email}" not found in database. Seed user is doctor@prescription.com` } : {}),
   });
 };
 
