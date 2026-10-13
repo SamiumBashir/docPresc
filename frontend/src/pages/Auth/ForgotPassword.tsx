@@ -521,6 +521,9 @@ export const ForgotPassword: React.FC = () => {
               {/* Resend Cooldown Section */}
               <div className="pt-2 text-center border-t border-slate-700/60 space-y-2">
                 <p className="text-xs text-slate-400">Didn't receive the OTP code?</p>
+                <p className="text-[11px] text-slate-400">
+                  ইনবক্সে না পেলে অনুগ্রহ করে আপনার মেইলের <strong className="text-amber-400">Spam (স্প্যাম)</strong> ফোল্ডারটি চেক করুন।
+                </p>
                 {resendTimer > 0 ? (
                   <div className="text-xs text-slate-400 font-mono flex items-center justify-center gap-1.5">
                     <span>Resend available in:</span>
