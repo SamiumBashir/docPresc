@@ -41,3 +41,9 @@ services:
         sync: false
       - key: EMAIL_FROM
         value: Doc Presc <7232.badhan@gmail.com>
+      - key: CLOUDINARY_CLOUD_NAME
+        value: p9iqjn0m
+      - key: CLOUDINARY_API_KEY
+        value: "856776764957582"
+      - key: CLOUDINARY_API_SECRET
+        sync: false
