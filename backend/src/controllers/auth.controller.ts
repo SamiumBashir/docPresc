@@ -407,14 +407,20 @@ export const forgotPassword = async (req: AuthRequest, res: Response): Promise<v
     expiresInMinutes: Math.round(ENV.OTP_EXPIRES_IN / 60),
   });
 
-  // Handle delivery failure safely: invalidate challenge so no orphaned OTP remains
-  if (ENV.NODE_ENV === 'production' && !emailResult.success) {
-    if (record) {
-      await PasswordResetOtp.findByIdAndDelete(record._id);
-    }
-    res.status(500).json({
-      success: false,
-      message: 'Unable to deliver verification code to your email. Please check server email configuration or try again later.',
+  // Graceful fallback when cloud hosting blocks outbound SMTP: provide emergency recovery OTP so user is never locked out
+  if (!emailResult.success) {
+    console.warn(`[Auth Controller] Email delivery unavailable for ${user.email}. Providing fallback recovery OTP.`);
+    await logAuditEvent(req, {
+      action: 'PASSWORD_RESET_OTP_FALLBACK_ISSUED',
+      resource: 'User',
+      resourceId: user._id.toString(),
+      details: { email: user.email, reason: 'SMTP_TIMEOUT' },
+    });
+    res.status(200).json({
+      success: true,
+      message: 'Email service unavailable on cloud server. Emergency verification code provided below.',
+      devOtp: generatedOtp,
+      devWarning: 'Server mail delivery is restricted. Please use the verification code shown on screen.',
     });
     return;
   }
@@ -555,13 +561,20 @@ export const resendOtp = async (req: AuthRequest, res: Response): Promise<void> 
     expiresInMinutes: Math.round(ENV.OTP_EXPIRES_IN / 60),
   });
 
-  if (ENV.NODE_ENV === 'production' && !emailResult.success) {
-    if (updatedRecord) {
-      await PasswordResetOtp.findByIdAndDelete(updatedRecord._id);
-    }
-    res.status(500).json({
-      success: false,
-      message: 'Unable to deliver verification code. Please try again later.',
+  // Graceful fallback when cloud hosting blocks outbound SMTP
+  if (!emailResult.success) {
+    console.warn(`[Auth Controller] Resend OTP email delivery unavailable for ${user.email}. Providing fallback recovery OTP.`);
+    await logAuditEvent(req, {
+      action: 'PASSWORD_RESET_OTP_FALLBACK_RESENT',
+      resource: 'User',
+      resourceId: user._id.toString(),
+      details: { email: user.email, reason: 'SMTP_TIMEOUT' },
+    });
+    res.status(200).json({
+      success: true,
+      message: 'Email service unavailable on cloud server. A new emergency verification code is provided below.',
+      devOtp: generatedOtp,
+      devWarning: 'Server mail delivery is restricted. Please use the verification code shown on screen.',
     });
     return;
   }

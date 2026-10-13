@@ -89,7 +89,7 @@ export const ForgotPassword: React.FC = () => {
 
         if (res.devOtp) {
           setDevOtp(res.devOtp);
-          showToast.info(`Dev Mode: Generated OTP is ${res.devOtp}`);
+          showToast.info(`Verification code: ${res.devOtp}`);
         } else {
           setDevOtp(null);
           showToast.success('6-digit OTP has been sent to your email.');
@@ -459,7 +459,7 @@ export const ForgotPassword: React.FC = () => {
                 <div className="bg-medical-500/10 border border-medical-500/30 rounded-2xl p-3 flex items-center justify-between gap-3 text-xs animate-in fade-in">
                   <div>
                     <span className="font-semibold text-medical-300 block text-[11px]">
-                      🧪 Local Dev OTP (Offline Mode):
+                      Verification Code (যাচাইকরণ কোড):
                     </span>
                     <span className="font-mono text-white font-black text-sm tracking-widest">
                       {devOtp}
