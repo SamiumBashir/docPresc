@@ -19,7 +19,11 @@ export const Login: React.FC = () => {
   useEffect(() => {
     const token = localStorage.getItem('docrx_token');
     if (user && token) {
-      navigate('/dashboard', { replace: true });
+      if (user.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     }
   }, [user, navigate]);
 
@@ -76,7 +80,12 @@ export const Login: React.FC = () => {
 
       // 4. Access granted only after server successfully verifies credentials
       showToast.success('Credentials verified. Welcome back!');
-      navigate('/dashboard', { replace: true });
+      const storedUser = JSON.parse(localStorage.getItem('docrx_user') || '{}');
+      if (storedUser.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (err: any) {
       let friendlyError = 'Invalid email or password. Please check your credentials and try again.';
       if (err?.isNetworkError || err?.code === 'NETWORK_ERROR' || err?.code === 'REQUEST_TIMEOUT') {

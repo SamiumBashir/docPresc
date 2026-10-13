@@ -34,6 +34,7 @@ const AdminDashboard = lazy(() => import('../../admin/pages/AdminDashboard').the
 const DoctorManagement = lazy(() => import('../../admin/pages/DoctorManagement').then((m) => ({ default: m.DoctorManagement })));
 const MedicineManagement = lazy(() => import('../../admin/pages/MedicineManagement').then((m) => ({ default: m.MedicineManagement })));
 const AuditLogs = lazy(() => import('../../admin/pages/AuditLogs').then((m) => ({ default: m.AuditLogs })));
+const AdminLogin = lazy(() => import('../../admin/pages/AdminLogin').then((m) => ({ default: m.AdminLogin })));
 
 export const AppRouter: React.FC = () => {
   return (
@@ -49,6 +50,7 @@ export const AppRouter: React.FC = () => {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ForgotPassword />} />
