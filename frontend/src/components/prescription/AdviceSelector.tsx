@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, X, HeartHandshake } from 'lucide-react';
+import { X, HeartHandshake } from 'lucide-react';
 
 interface AdviceSelectorProps {
   advice: string[];
@@ -23,9 +23,10 @@ export const AdviceSelector: React.FC<AdviceSelectorProps> = ({ advice, onChange
   const [customText, setCustomText] = useState('');
 
   const handleAdd = (text: string) => {
-    if (!text.trim()) return;
-    if (advice.includes(text.trim())) return;
-    onChange([...advice, text.trim()]);
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    if (advice.includes(trimmed)) return;
+    onChange([...advice, trimmed]);
     setCustomText('');
   };
 
@@ -43,22 +44,25 @@ export const AdviceSelector: React.FC<AdviceSelectorProps> = ({ advice, onChange
       </div>
 
       {/* Input */}
-      <div className="flex items-center gap-2">
+      <div className="relative w-full">
         <input
           type="text"
           value={customText}
           onChange={(e) => setCustomText(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd(customText)}
-          placeholder="Type custom advice in English or বাংলা..."
-          className="flex-1 min-w-0 px-3 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-medical-500 focus:outline-none"
+          placeholder="Type custom advice in English or বাংলা (Press Enter to add)..."
+          className="w-full pl-3 pr-8 py-2 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 focus:outline-none transition-all"
         />
-        <button
-          type="button"
-          onClick={() => handleAdd(customText)}
-          className="px-3.5 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1 shrink-0 shadow-2xs transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" /> Add
-        </button>
+        {customText && (
+          <button
+            type="button"
+            onClick={() => setCustomText('')}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+            title="Clear text"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
       {/* Preset Chips */}
