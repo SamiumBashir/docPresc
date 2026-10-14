@@ -1,11 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Plus, X, Microscope, Search, Check, Filter, Trash2, ChevronDown } from 'lucide-react';
+import { Plus, X, Microscope, Search, Check, Trash2 } from 'lucide-react';
 import {
-  INVESTIGATIONS_DATA,
   COMMON_INVESTIGATIONS_QUICK,
-  INVESTIGATION_CATEGORIES,
   searchInvestigations,
-  InvestigationItem,
 } from '../../data/investigations';
 
 interface InvestigationsSelectorProps {
@@ -18,7 +15,6 @@ export const InvestigationsSelector: React.FC<InvestigationsSelectorProps> = ({
   onChange,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
 
@@ -36,21 +32,13 @@ export const InvestigationsSelector: React.FC<InvestigationsSelectorProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filtered investigations based on search term & selected category
+  // Filtered investigations based on search term
   const filteredSuggestions = useMemo(() => {
     if (!searchTerm.trim()) {
-      if (selectedCategory === 'All') {
-        return [];
-      }
-      return INVESTIGATIONS_DATA.filter((item) => item.category === selectedCategory).slice(0, 20);
+      return [];
     }
-
-    const results = searchInvestigations(searchTerm);
-    if (selectedCategory === 'All') {
-      return results;
-    }
-    return results.filter((item) => item.category === selectedCategory);
-  }, [searchTerm, selectedCategory]);
+    return searchInvestigations(searchTerm);
+  }, [searchTerm]);
 
   const handleAdd = (testName: string) => {
     const trimmed = testName.trim();
@@ -168,7 +156,7 @@ export const InvestigationsSelector: React.FC<InvestigationsSelectorProps> = ({
                 setHighlightedIndex(0);
               }}
               onFocus={() => {
-                if (searchTerm.trim() || selectedCategory !== 'All') {
+                if (searchTerm.trim()) {
                   setIsOpen(true);
                 }
               }}
@@ -188,26 +176,6 @@ export const InvestigationsSelector: React.FC<InvestigationsSelectorProps> = ({
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
-          </div>
-
-          {/* Category Filter Dropdown */}
-          <div className="relative shrink-0">
-            <select
-              value={selectedCategory}
-              onChange={(e) => {
-                setSelectedCategory(e.target.value);
-                setIsOpen(true);
-              }}
-              className="px-2.5 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-700 font-medium focus:ring-1 focus:ring-medical-500 focus:outline-none cursor-pointer max-w-[140px] truncate"
-              title="Filter by Category"
-            >
-              <option value="All">All Categories (335)</option>
-              {INVESTIGATION_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* Add Button */}
