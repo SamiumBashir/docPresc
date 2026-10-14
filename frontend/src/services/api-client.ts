@@ -21,7 +21,11 @@ export class ApiError extends Error {
 }
 
 export const getApiUrl = (endpoint: string): string => {
-  const base = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
+  let base = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://docpresc.onrender.com/api' : '/api')).replace(/\/+$/, '');
+  // Self-healing migration safeguard: redirect stale deleted Render instance to active docpresc backend
+  if (base.includes('presc-backend.onrender.com')) {
+    base = base.replace('presc-backend.onrender.com', 'docpresc.onrender.com');
+  }
   const path = endpoint.replace(/^\/+/, '');
   return `${base}/${path}`;
 };
