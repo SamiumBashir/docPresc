@@ -83,14 +83,20 @@ export const ForgotPassword: React.FC = () => {
       if (res.success) {
         setStep('OTP');
         setResendTimer(60);
-        setOtp(['', '', '', '', '', '']);
         setAttemptsRemaining(5);
 
-        showToast.success('6-digit OTP has been sent to your email.');
+        if (res.devOtp) {
+          const digits = res.devOtp.split('').slice(0, 6);
+          setOtp(digits);
+          showToast.success(`Verification code: ${res.devOtp}`);
+        } else {
+          setOtp(['', '', '', '', '', '']);
+          showToast.success('6-digit OTP has been sent to your email.');
+        }
 
-        // Focus first OTP input
+        // Focus appropriate OTP input
         setTimeout(() => {
-          otpInputRefs.current[0]?.focus();
+          otpInputRefs.current[res.devOtp ? 5 : 0]?.focus();
         }, 100);
       }
     } catch (err: any) {
@@ -204,13 +210,19 @@ export const ForgotPassword: React.FC = () => {
 
       if (res.success) {
         setResendTimer(60);
-        setOtp(['', '', '', '', '', '']);
         setAttemptsRemaining(5);
 
-        showToast.success('A new OTP has been dispatched to your email.');
+        if (res.devOtp) {
+          const digits = res.devOtp.split('').slice(0, 6);
+          setOtp(digits);
+          showToast.success(`New verification code: ${res.devOtp}`);
+        } else {
+          setOtp(['', '', '', '', '', '']);
+          showToast.success('A new OTP has been dispatched to your email.');
+        }
 
         setTimeout(() => {
-          otpInputRefs.current[0]?.focus();
+          otpInputRefs.current[res.devOtp ? 5 : 0]?.focus();
         }, 100);
       }
     } catch (err: any) {
