@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: docpresc-backend
+    name: docpresc
     runtime: node
     buildCommand: npm install && npm run build
     startCommand: npm run start
@@ -40,3 +40,7 @@ services:
         sync: false
       - key: EMAIL_FROM
         value: Doc Presc <7232.badhan@gmail.com>
+      - key: RESEND_API_KEY
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
