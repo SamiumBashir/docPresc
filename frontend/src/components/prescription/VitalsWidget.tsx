@@ -44,7 +44,7 @@ export const VitalsWidget: React.FC<VitalsWidgetProps> = ({ vitals, onChange }) 
         )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2.5">
         {/* Blood Pressure */}
         <div className="col-span-2 sm:col-span-1 space-y-1">
           <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
