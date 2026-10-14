@@ -245,16 +245,6 @@ export const DiagnosisSelector: React.FC<DiagnosisSelectorProps> = ({ diagnoses,
               </button>
             ))}
           </div>
-
-          {/* Add Button */}
-          <button
-            type="button"
-            onClick={() => handleAdd(searchTerm, icdCode)}
-            disabled={!searchTerm.trim()}
-            className="px-3.5 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1 shrink-0 shadow-2xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="w-3.5 h-3.5" /> Add
-          </button>
         </div>
 
         {/* Live Floating Suggestions Dropdown */}

@@ -220,16 +220,6 @@ export const ChiefComplaintsInput: React.FC<ChiefComplaintsInputProps> = ({
               className="w-full pl-8 pr-2.5 py-2 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 focus:outline-none transition-all"
             />
           </div>
-
-          {/* Add Button */}
-          <button
-            type="button"
-            onClick={() => handleAdd(searchTerm, durationText)}
-            disabled={!searchTerm.trim()}
-            className="px-3.5 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1 shrink-0 shadow-2xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="w-3.5 h-3.5" /> Add
-          </button>
         </div>
 
         {/* Live Floating Suggestions Dropdown */}
