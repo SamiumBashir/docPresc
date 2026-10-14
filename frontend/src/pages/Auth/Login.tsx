@@ -290,7 +290,7 @@ export const Login: React.FC = () => {
             </button>
           </form>
 
-          <div className="text-center pt-4 border-t border-slate-700/60">
+          <div className="text-center pt-4 border-t border-slate-700/60 space-y-2">
             <p className="text-xs text-slate-300">
               New medical practitioner?{' '}
               <Link
@@ -298,6 +298,15 @@ export const Login: React.FC = () => {
                 className="text-medical-300 hover:text-medical-200 font-bold underline-offset-2 hover:underline"
               >
                 Register Doctor Account
+              </Link>
+            </p>
+            <p className="text-[11px] text-slate-400">
+              System Administrator?{' '}
+              <Link
+                to="/admin/login"
+                className="text-indigo-400 hover:text-indigo-300 font-medium underline-offset-2 hover:underline"
+              >
+                Admin Portal Login
               </Link>
             </p>
           </div>
