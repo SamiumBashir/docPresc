@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Heart, Thermometer, Gauge, Scale, Ruler } from 'lucide-react';
+import { Activity, Heart, Thermometer, Gauge, Scale } from 'lucide-react';
 import { IPrescriptionVitals } from '../../types';
 
 interface VitalsWidgetProps {
@@ -10,15 +10,6 @@ interface VitalsWidgetProps {
 export const VitalsWidget: React.FC<VitalsWidgetProps> = ({ vitals, onChange }) => {
   const updateField = (field: keyof IPrescriptionVitals, value: number | null) => {
     const updated = { ...vitals, [field]: value };
-
-    // Auto-calculate BMI if weight (kg) and height (cm) are available
-    if (updated.weight && updated.height && updated.height > 0) {
-      const heightInMeters = updated.height / 100;
-      updated.bmi = parseFloat((updated.weight / (heightInMeters * heightInMeters)).toFixed(1));
-    } else {
-      updated.bmi = null;
-    }
-
     onChange(updated);
   };
 
@@ -123,20 +114,6 @@ export const VitalsWidget: React.FC<VitalsWidgetProps> = ({ vitals, onChange }) 
             value={vitals.weight || ''}
             onChange={(e) => updateField('weight', e.target.value ? Number(e.target.value) : null)}
             placeholder="70"
-            className="w-full px-2 py-1.5 text-xs text-center border border-slate-200 rounded-lg focus:ring-1 focus:ring-medical-500 focus:outline-none font-mono"
-          />
-        </div>
-
-        {/* Height */}
-        <div className="space-y-1">
-          <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
-            <Ruler className="w-3 h-3 text-slate-500" /> Ht (cm)
-          </label>
-          <input
-            type="number"
-            value={vitals.height || ''}
-            onChange={(e) => updateField('height', e.target.value ? Number(e.target.value) : null)}
-            placeholder="170"
             className="w-full px-2 py-1.5 text-xs text-center border border-slate-200 rounded-lg focus:ring-1 focus:ring-medical-500 focus:outline-none font-mono"
           />
         </div>
