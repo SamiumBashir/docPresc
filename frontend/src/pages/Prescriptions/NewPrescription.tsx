@@ -656,12 +656,12 @@ export const NewPrescription: React.FC = () => {
         </button>
       </div>
 
-      {/* Main Two-Column Prescription Workspace */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-5 items-start">
+      {/* Main Two-Column Prescription Workspace (40% Forms, 60% Live Pad Preview) */}
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 lg:gap-5 items-start">
         {/* ========================================================= */}
-        {/* LEFT COLUMN: Input Form Controls (Hidden on Print)        */}
+        {/* LEFT COLUMN: Input Form Controls (Hidden on Print) (40%)  */}
         {/* ========================================================= */}
-        <div className={`no-print xl:col-span-6 space-y-4 ${mobileTab === 'form' ? 'block' : 'hidden xl:block'}`}>
+        <div className={`no-print xl:col-span-2 space-y-4 ${mobileTab === 'form' ? 'block' : 'hidden xl:block'}`}>
           {/* 1. Patient Selector Card */}
           <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
@@ -861,9 +861,9 @@ export const NewPrescription: React.FC = () => {
         </div>
 
         {/* ========================================================= */}
-        {/* RIGHT COLUMN: Real-Time Interactive Live Preview Pad     */}
+        {/* RIGHT COLUMN: Real-Time Interactive Live Preview Pad (60%)*/}
         {/* ========================================================= */}
-        <div className={`prescription-print-parent xl:col-span-6 sticky top-20 print:!block print:!static print:!w-full print:!p-0 print:!m-0 ${mobileTab === 'preview' ? 'block' : 'hidden xl:block'}`}>
+        <div className={`prescription-print-parent xl:col-span-3 sticky top-20 print:!block print:!static print:!w-full print:!p-0 print:!m-0 ${mobileTab === 'preview' ? 'block' : 'hidden xl:block'}`}>
           <div className="no-print flex items-center justify-between mb-2 px-1">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Live Prescription Pad Preview ({paperSize})
