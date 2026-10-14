@@ -458,7 +458,7 @@ export const NewPrescription: React.FC = () => {
   };
 
   return (
-    <div className="space-y-3 w-full max-w-[1720px] mx-auto pb-12 -mt-2 sm:-mt-4 px-1 sm:px-2">
+    <div className="space-y-3 w-full max-w-[1720px] mx-auto pb-12 pt-0 px-1 sm:px-2">
       {/* Autosave Recovery Banner */}
       {hasAutosaveDraft && (
         <div className="no-print bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-center justify-between shadow-xs animate-in fade-in">
