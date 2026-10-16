@@ -21,10 +21,10 @@ export class ApiError extends Error {
 }
 
 export const getApiUrl = (endpoint: string): string => {
-  let base = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://docpresc.onrender.com/api' : '/api')).replace(/\/+$/, '');
-  // Self-healing migration safeguard: redirect stale deleted Render instance to active docpresc backend
-  if (base.includes('presc-backend.onrender.com')) {
-    base = base.replace('presc-backend.onrender.com', 'docpresc.onrender.com');
+  let base = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://presc-backend.vercel.app/api' : '/api')).replace(/\/+$/, '');
+  // Self-healing migration safeguard: route to active Vercel serverless backend
+  if (base.includes('docpresc.onrender.com') || base.includes('presc-backend.onrender.com')) {
+    base = 'https://presc-backend.vercel.app/api';
   }
   const path = endpoint.replace(/^\/+/, '');
   return `${base}/${path}`;
