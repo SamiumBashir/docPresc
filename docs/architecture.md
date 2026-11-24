@@ -1,144 +1,134 @@
-# DocPresc Full-Stack System Architecture
+# docPresc Architecture Guide
+## Modular Monolith with Clean Layered Architecture
 
-## 1. System Overview
-DocPresc is an enterprise-grade digital prescription management system engineered specifically for Bangladeshi medical practitioners, clinical staff, and healthcare organizations. It provides a bilingual (Bengali & English) clinical pad interface, real-time medicine autocomplete across a database of 26,373+ formulary medicines (Allopathic, Unani, Ayurvedic, Herbal), multi-chamber clinic scheduling, patient electronic medical records (EMR), cryptographically secured email OTP password recovery, tamper-proof prescription finalization, and public QR-code authenticity verification.
+docPresc is engineered as a high-reliability **Modular Monolith** with a **Clean Layered Architecture**. It combines enterprise security, doctor-scoped data isolation, and clinical usability in a unified codebase without the operational overhead of microservices.
 
 ---
 
-## 2. Monorepo Organization & Workspaces
-The repository is structured as a unified monorepo containing exactly two production applications: `frontend` and `backend`.
+## 1. Architectural Philosophy
+
+1. **Modular Monolith**: Code is partitioned into domain-driven modules (`auth`, `patients`, `prescriptions`, `medicines`, `chambers`, `templates`, `admin`, `uploads`). Modules encapsulate their domain models, business logic, persistence operations, and HTTP controllers.
+2. **Clean Layered Separation**:
+   - **Routes**: HTTP method and endpoint routing, authentication middleware, schema validation middleware, rate limiters.
+   - **Controllers**: Request unwrapping, parameter extraction, delegation to domain services, audit logging, and standard HTTP response shaping.
+   - **Services**: Pure business logic, authorization verification (doctor scoping), orchestrations, transactional side effects.
+   - **Repositories**: Data access layer isolating Mongoose queries from business logic.
+   - **Models**: Database schema definitions, compound indexes, type definitions, and validation constraints.
+3. **Strict Zero-Trust Ownership (Anti-IDOR)**:
+   Every patient and prescription operation is strictly scoped to the requesting doctor at the service and repository level. An authenticated doctor can never access or modify another doctor's records, even if an internal MongoDB ObjectId is guessed or provided.
+4. **Dual-Route Compatibility**:
+   All endpoints are available under the versioned `/api/v1/*` tree while legacy `/api/*` and `/` routes remain fully operational for backward compatibility.
+
+---
+
+## 2. Directory Hierarchy
 
 ```
-DocPresc/
-├── frontend/                     # React 18 + Vite + Tailwind CSS Single-Page Application
-│   ├── public/                   # Static assets & web manifests
-│   ├── src/
-│   │   ├── app/                  # Application core, routing, layouts, providers, guards
-│   │   │   ├── router/           # React Router v6 centralized route matrix & code splitting
-│   │   │   ├── layouts/          # Clinical consultation AppLayout
-│   │   │   ├── providers/        # ErrorBoundary, LanguageProvider, AuthProvider, QueryClient
-│   │   │   └── guards/           # ProtectedRoute & AdminRoute role guards
-│   │   ├── features/             # Business feature modules
-│   │   │   ├── auth/             # Login, registration, password recovery, session restore
-│   │   │   ├── dashboard/        # Clinical metrics, today's schedule, quick actions
-│   │   │   ├── prescriptions/    # Prescription editor, live pad preview, history, cloning
-│   │   │   ├── patients/         # Patient registry, demographics, search (Ctrl+K)
-│   │   │   ├── medicines/        # Formulary catalog & brand/generic search
-│   │   │   ├── medical-history/  # Patient visit timeline & previous prescription retrieval
-│   │   │   ├── pdf/              # Print engine & client-side PDF export (A4/A5)
-│   │   │   └── qr-verification/  # Public patient verification view
-│   │   ├── admin/                # Consolidated Enterprise Admin Center
-│   │   │   ├── pages/            # Dashboard, Doctor management, Medicines, Audit logs
-│   │   │   ├── layouts/          # Dedicated dark-slate AdminLayout
-│   │   │   ├── components/       # Badges, modals, viewers
-│   │   │   ├── hooks/            # TanStack Query custom hooks
-│   │   │   ├── services/         # Administrative API services
-│   │   │   └── routes/           # Admin route subtree
-│   │   ├── components/           # Shared UI components
-│   │   │   ├── ui/               # Button, Modal, PageLoader, Toast, ProgressBar
-│   │   │   ├── forms/            # Inputs, selects, autosuggest
-│   │   │   ├── feedback/         # Error states, empty states
-│   │   │   └── shared/           # Navigation bars, sidebar, language switcher
-│   │   ├── services/             # Canonical API client & endpoint definitions
-│   │   ├── locales/              # English & Bengali clinical translation matrices
-│   │   ├── types/                # Domain TypeScript interfaces
-│   │   └── main.tsx              # Application entrypoint
-│   └── package.json
+backend/src/
+├── config/                     # Environment, Database, and Cloudinary configuration
+│   ├── env.ts                  # Zod-validated environment schema & fail-fast checks
+│   ├── db.ts                   # Connection management with automatic MongoMemoryServer test fallback
+│   └── cloudinary.ts           # Cloudinary SDK client configuration
 │
-├── backend/                      # Node.js + Express + TypeScript API Server
-│   ├── src/
-│   │   ├── config/               # Database connection (db.ts) & Environment (env.ts)
-│   │   ├── modules/              # Cohesive feature modules
-│   │   │   ├── auth/             # JWT auth, doctor signup, credentials verification
-│   │   │   ├── users/            # Doctor profile & account preferences
-│   │   │   ├── patients/         # Patient EMR records & search
-│   │   │   ├── prescriptions/    # Prescription CRUD, finalization immutability, cloning
-│   │   │   ├── medicines/        # 26,373+ MedEx formulary search & indexing
-│   │   │   ├── medical-history/  # Patient visit history & prescription timeline
-│   │   │   ├── admin/            # Doctor license approval, system telemetry, audit trail
-│   │   │   ├── otp/              # 6-digit cryptographic OTP generation & verification
-│   │   │   ├── email/            # Nodemailer Gmail SMTP & Resend transactional delivery
-│   │   │   ├── audit-logs/       # Security compliance audit logging
-│   │   │   └── qr-verification/  # Public prescription verification token resolution
-│   │   ├── middleware/           # Auth, error handler, rate limiter, file uploads
-│   │   ├── repositories/         # Data access abstractions for Mongoose models
-│   │   ├── validators/           # Zod schema definitions for input validation
-│   │   ├── errors/               # Centralized AppError hierarchy
-│   │   ├── constants/            # HTTP status codes, roles, pagination limits
-│   │   ├── types/                # Express request extensions, API contracts
-│   │   ├── app.ts                # Express application factory & middleware pipeline
-│   │   └── server.ts             # Server startup, multi-port binding, graceful shutdown
-│   ├── data/medex/               # Cleaned MedEx datasets (25,341 allopathic, 916 herbal)
-│   ├── scripts/                  # Scraping, cleaning, seeding automation
-│   ├── tests/                    # Unit, regression, flow, and end-to-end integration test suites
-│   └── package.json
+├── modules/                    # Domain-Driven Business Modules
+│   ├── auth/                   # Registration, Login, Token Refresh Rotation, Password Reset
+│   │   ├── auth.types.ts
+│   │   ├── auth.validation.ts
+│   │   ├── auth.service.ts
+│   │   ├── auth.controller.ts
+│   │   ├── auth.routes.ts
+│   │   └── index.ts
+│   ├── patients/               # Patient Registry, Demographics, Visit History
+│   │   ├── patient.types.ts
+│   │   ├── patient.validation.ts
+│   │   ├── patient.repository.ts
+│   │   ├── patient.service.ts
+│   │   ├── patient.controller.ts
+│   │   ├── patient.routes.ts
+│   │   └── index.ts
+│   ├── prescriptions/          # Prescription Lifecycle, Immutability, Duplication, Sharing
+│   │   ├── prescription.types.ts
+│   │   ├── prescription.validation.ts
+│   │   ├── prescription.repository.ts
+│   │   ├── prescription.service.ts
+│   │   ├── prescription.controller.ts
+│   │   ├── prescription.routes.ts
+│   │   └── index.ts
+│   ├── medicines/              # 26,373+ Allopathic, Unani, Ayurvedic Formulary Catalog
+│   │   ├── medicine.types.ts
+│   │   ├── medicine.validation.ts
+│   │   ├── medicine.repository.ts
+│   │   ├── medicine.service.ts
+│   │   ├── medicine.controller.ts
+│   │   ├── medicine.routes.ts
+│   │   └── index.ts
+│   ├── chambers/               # Doctor Consultation Chamber Locations & Schedules
+│   ├── templates/              # Clinical Prescription Templates
+│   ├── admin/                  # System Telemetry, Doctor Verification, Audit Log Viewer
+│   └── uploads/                # Signature and Image Processing
 │
-├── docs/                         # System architecture, API contracts, deployment guides
-├── .github/workflows/ci.yml      # Automated continuous integration workflow
-├── .env.example                  # Consolidated environment variable configuration template
-└── package.json                  # Root workspace definition & unified scripts
+├── shared/                     # Cross-Cutting Core Utilities
+│   ├── errors/                 # AppError, NotFoundError, ForbiddenError, UnauthorizedError
+│   ├── middleware/             # Central Error Handler, Role Guards, Audit Interceptor
+│   ├── utils/                  # Concurrency-safe ID generators, asyncHandler
+│   ├── types/                  # Shared TypeScript Interfaces
+│   └── constants/              # System-wide Enums and Configuration Constants
+│
+├── infrastructure/             # External Integrations & Storage Abstractions
+│   ├── storage/                # IStorageService, Cloudinary & LocalBase64 implementations
+│   └── email/                  # Nodemailer SMTP and Template Dispatcher
+│
+├── routes/                     # Central Routing Trees
+│   ├── v1/index.ts             # Versioned API v1 Router
+│   └── index.ts                # Legacy Canonical Router
+│
+├── docs/                       # OpenAPI 3.0 Specifications & Swagger UI
+│   └── openapi.ts
+│
+├── app.ts                      # Express Application Factory, Middleware Pipeline
+└── server.ts                   # HTTP Server Entrypoint with Graceful Shutdown
 ```
 
 ---
 
-## 3. Request Processing Pipeline
-Every incoming API request follows a strictly layered, predictable lifecycle:
+## 3. Request Lifecycle
 
-```
-HTTP Request
-     │
-     ▼
-[Security & Network Middleware]
-  - Helmet (HTTP security headers)
-  - CORS Origin Reflection
-  - Compression (Gzip/Deflate)
-  - Rate Limiting (express-rate-limit)
-     │
-     ▼
-[Routing Layer] (`backend/src/routes/`)
-     │
-     ▼
-[Authentication & Authorization] (`backend/src/middleware/auth.ts`)
-  - Centralized Bearer JWT validation
-  - Doctor / Admin Role-Based Access Control (RBAC)
-  - Object-level tenant ownership enforcement
-     │
-     ▼
-[Input Validation] (`backend/src/validators/schemas.ts`)
-  - Strict Zod schema parsing
-  - Sanitization of user-submitted text & payloads
-     │
-     ▼
-[Controller Layer] (`backend/src/controllers/`)
-  - HTTP concern handling (status codes, headers, cookie lifecycle)
-  - Delegation to domain services
-     │
-     ▼
-[Service Layer] (`backend/src/services/` & `backend/src/modules/`)
-  - Business rules implementation
-  - Finalization immutability enforcement
-  - Audit log emission
-     │
-     ▼
-[Repository / Model Layer] (`backend/src/repositories/` & `backend/src/models/`)
-  - Mongoose ODM schema validation
-  - MongoDB Atlas query execution & indexing
-     │
-     ▼
-JSON HTTP Response / Structured Error (`backend/src/middleware/errorHandler.ts`)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Frontend Client
+    participant App as Express (app.ts)
+    participant Rate as Rate Limiter
+    participant Auth as Auth Middleware
+    participant Controller as Module Controller
+    participant Service as Domain Service
+    participant Repo as Repository
+    participant DB as MongoDB Atlas
+
+    Client->>App: POST /api/v1/patients
+    App->>Rate: Verify rate limits
+    Rate->>Auth: Verify JWT / Cookie Session
+    Auth->>Auth: Attach req.user & req.doctor
+    Auth->>Controller: Invoke controller.createPatient
+    Controller->>Controller: Validate payload with Zod Schema
+    Controller->>Service: service.createPatient(data, doctorId)
+    Service->>Service: Check permissions & business rules
+    Service->>Repo: repo.create(payloadWithDoctorId)
+    Repo->>DB: Patient.create()
+    DB-->>Repo: Saved Document
+    Repo-->>Service: Patient Record
+    Service-->>Controller: Return Entity DTO
+    Controller->>App: Audit Log & Response JSON
+    App-->>Client: 201 Created { success: true, data: Patient }
 ```
 
 ---
 
-## 4. Decoupled Application Architecture
-- `app.ts` encapsulates the creation and configuration of the Express application instance without triggering network listeners or opening database connections on import. This enables test runners to evaluate routes and middleware in isolation.
-- `server.ts` performs runtime preflight checks, validates environment variables, starts the HTTP server with multi-port binding (`PORT`, `5000`, `8080`), triggers background database connectivity, and handles `SIGTERM`/`SIGINT` signals for graceful shutdown.
+## 4. API Versioning & Documentation
 
----
-
-## 5. Security Architecture
-1. **Password Hashing**: Uses `bcryptjs` with salt rounds = 10 for user authentication passwords.
-2. **Cryptographic OTP Flow**: 6-digit password reset OTPs are hashed using `crypto.createHash('sha256')` combined with a server-side `OTP_PEPPER` before persistent storage. Raw OTP tokens are never written to disk or logs.
-3. **Immutability of Medical Prescriptions**: Finalized prescriptions (`status: 'FINALIZED'`) reject direct update mutations. If corrections are required, returning patients receive a fresh clone prescription preserving the parent lineage.
-4. **Tenant Isolation**: Doctors cannot inspect or mutate patients or prescriptions owned by other practitioners. Object-level doctor ID ownership checks are enforced on every query.
-5. **Zero Enumeration Password Reset**: Forgot password and OTP requests return generic success messages, preventing malicious enumeration of registered clinical emails.
+- **Base URL v1**: `/api/v1/*`
+- **Interactive Swagger UI**: `/api/v1/docs` (and `/api-docs` redirect)
+- **Machine-Readable OpenAPI Specification**: `/api/v1/openapi.json`
+- **Health Probes**:
+  - `/api/health/liveness`: Checks process availability and uptime.
+  - `/api/health/readiness`: Checks MongoDB connectivity; returns HTTP 503 if disconnected.

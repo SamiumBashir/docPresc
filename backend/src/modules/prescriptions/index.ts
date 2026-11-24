@@ -1,5 +1,7 @@
-export * as prescriptionController from '../../controllers/prescription.controller';
-export { default as prescriptionRoutes } from '../../routes/prescription.routes';
+export * from './prescription.types';
+export * from './prescription.validation';
+export * from './prescription.repository';
+export * from './prescription.service';
+export * from './prescription.controller';
+export { default as prescriptionRoutes } from './prescription.routes';
 export { Prescription, IPrescription } from '../../models/Prescription';
-export { prescriptionRepository } from '../../repositories/prescription.repository';
-export { PrescriptionSchema } from '../../validators/schemas';

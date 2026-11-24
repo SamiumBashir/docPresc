@@ -225,7 +225,7 @@ export const NewPrescription: React.FC = () => {
         if (data.investigations) setInvestigations(data.investigations);
         if (data.advice) setAdvice(data.advice);
         if (data.followUp) setFollowUp(data.followUp);
-        showToast.success('Unfinished draft restored successfully!');
+        showToast.success('Unfinished draft restored successfully.');
       } catch { }
     }
     setHasAutosaveDraft(false);
@@ -321,7 +321,7 @@ export const NewPrescription: React.FC = () => {
         setSelectedPatient(res.data);
         setShowNewPatientModal(false);
         setNewPatientForm({ name: '', phone: '', address: '', age: '', gender: 'Male', bloodGroup: 'Unknown' });
-        showToast.success(`Patient ${res.data.name} created!`);
+        showToast.success(`Patient ${res.data.name} created successfully.`);
       }
     } catch (err: any) {
       showToast.error(err.message || 'Failed to create patient.');
@@ -408,7 +408,7 @@ export const NewPrescription: React.FC = () => {
           import('canvas-confetti').then(({ default: confetti }) => {
             confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
           });
-          showToast.success(`Prescription ${res.data.prescriptionId} finalized successfully!`);
+          showToast.success(`Prescription ${res.data.prescriptionId} finalized successfully.`);
         } else {
           showToast.success('Prescription draft saved.');
         }
@@ -603,7 +603,7 @@ export const NewPrescription: React.FC = () => {
               type="button"
               disabled={isSaving}
               onClick={() => setFinalizeConfirmOpen(true)}
-              className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm shadow-emerald-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition-colors active:scale-[0.98]"
             >
               <FileCheck2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span>{t('rx_finalize')}</span>
@@ -615,7 +615,7 @@ export const NewPrescription: React.FC = () => {
             <button
               type="button"
               onClick={handleStartNew}
-              className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 bg-medical-600 hover:bg-medical-700 text-white rounded-lg text-xs font-bold shadow-sm shadow-medical-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 bg-medical-600 hover:bg-medical-700 text-white rounded-lg text-xs font-medium transition-colors active:scale-[0.98]"
               title="Start New Prescription"
             >
               <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -665,7 +665,7 @@ export const NewPrescription: React.FC = () => {
           {/* 1. Patient Selector Card */}
           <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              <h4 className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
                 <User className="w-4 h-4 text-medical-600" /> Patient Demographics
               </h4>
               <button
@@ -747,7 +747,7 @@ export const NewPrescription: React.FC = () => {
 
           {/* 4. History & Examination Accordion / Textareas */}
           <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            <h4 className="text-xs font-semibold text-slate-700">
               Clinical History & Examination (O/E)
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -784,7 +784,7 @@ export const NewPrescription: React.FC = () => {
           {/* 6. Smart Medicine Search & Dose Configurator */}
           <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              <h4 className="text-xs font-semibold text-slate-700">
                 Prescribe Medicine (Rx)
               </h4>
               <span className="text-[11px] text-slate-400">Search 100+ Bangladesh medicines</span>
@@ -865,7 +865,7 @@ export const NewPrescription: React.FC = () => {
         {/* ========================================================= */}
         <div className={`prescription-print-parent xl:col-span-3 sticky top-20 print:!block print:!static print:!w-full print:!p-0 print:!m-0 ${mobileTab === 'preview' ? 'block' : 'hidden xl:block'}`}>
           <div className="no-print flex items-center justify-between mb-2 px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-medium text-slate-500">
               Live Prescription Pad Preview ({paperSize})
             </span>
             <span className="text-[11px] text-slate-400 hidden sm:inline">Updates instantly on every change</span>

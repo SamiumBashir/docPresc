@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Pill, Search, Star, Filter, Plus, ChevronLeft, ChevronRight, Leaf, X, AlertCircle } from 'lucide-react';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
 import { IMedicine } from '../../types';
@@ -74,7 +75,7 @@ export const MedicineCatalog: React.FC = () => {
       });
 
       if (res.success) {
-        showToast.success('New medicine added successfully! 💊');
+        showToast.success('New medicine added successfully.');
         setIsModalOpen(false);
         fetchMedicines(1);
       }
@@ -190,9 +191,9 @@ export const MedicineCatalog: React.FC = () => {
         {[
           { id: 'all', label: 'All Systems (সকল ওষুধ)', icon: Pill },
           { id: 'Allopathic', label: 'Allopathic (অ্যালোপ্যাথিক)', icon: Pill },
-          { id: 'Unani', label: '🌿 Unani (ইউনানি চিকিৎসা)', icon: Leaf },
-          { id: 'Ayurvedic', label: '🌱 Ayurvedic (আয়ুর্বেদিক)', icon: Leaf },
-          { id: 'Herbal', label: '🍀 Herbal & Nutra (হারবাল)', icon: Leaf },
+          { id: 'Unani', label: 'Unani (ইউনানি চিকিৎসা)', icon: Leaf },
+          { id: 'Ayurvedic', label: 'Ayurvedic (আয়ুর্বেদিক)', icon: Leaf },
+          { id: 'Herbal', label: 'Herbal & Nutra (হারবাল)', icon: Leaf },
         ].map((tab) => {
           const isActive = selectedType === tab.id;
           return (
@@ -297,8 +298,8 @@ export const MedicineCatalog: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse min-w-[760px]">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
-                <th className="py-3 px-4 w-10 text-center">⭐</th>
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-medium">
+                <th className="py-3 px-4 w-10 text-center">Fav</th>
                 <th className="py-3 px-4">Brand Name & Strength</th>
                 <th className="py-3 px-4">System</th>
                 <th className="py-3 px-4">Generic / Botanical Composition</th>
@@ -311,7 +312,10 @@ export const MedicineCatalog: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-slate-400">
-                    Searching medicine database...
+                    <div className="flex flex-col items-center gap-2">
+                      <InfinityLoop className="w-12 h-6 text-medical-600" duration="1.8s" strokeWidth={5.5} />
+                      <span className="text-xs text-slate-500 font-medium">Searching medicine database...</span>
+                    </div>
                   </td>
                 </tr>
               ) : medicines.length === 0 ? (
@@ -357,16 +361,16 @@ export const MedicineCatalog: React.FC = () => {
                       {/* System Badge */}
                       <td className="py-3 px-4">
                         {isUnani ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap">
-                            🌿 Unani
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap">
+                            Unani
                           </span>
                         ) : isAyurvedic ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 whitespace-nowrap">
-                            🌱 Ayurvedic
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-900 border border-amber-200 whitespace-nowrap">
+                            Ayurvedic
                           </span>
                         ) : m.medicineType === 'Herbal' ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200 whitespace-nowrap">
-                            🍀 Herbal
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-teal-100 text-teal-800 border border-teal-200 whitespace-nowrap">
+                            Herbal
                           </span>
                         ) : (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
@@ -382,7 +386,7 @@ export const MedicineCatalog: React.FC = () => {
 
                       {/* Dosage Form */}
                       <td className="py-3 px-4">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-[10px] uppercase tracking-wider">
+                        <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-medium text-xs">
                           {m.dosageForm}
                         </span>
                       </td>
@@ -470,7 +474,7 @@ export const MedicineCatalog: React.FC = () => {
               {/* Brands & Strength */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
                     Brand Name *
                   </label>
                   <input
@@ -483,7 +487,7 @@ export const MedicineCatalog: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
                     Strength / Dose
                   </label>
                   <input
@@ -498,7 +502,7 @@ export const MedicineCatalog: React.FC = () => {
 
               {/* Generic Name */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                <label className="block text-xs font-medium text-slate-600 mb-1">
                   Generic Formula *
                 </label>
                 <input
@@ -514,7 +518,7 @@ export const MedicineCatalog: React.FC = () => {
               {/* Dosage Form & System Type */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
                     Medicine System
                   </label>
                   <select
@@ -530,7 +534,7 @@ export const MedicineCatalog: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
                     Dosage Form *
                   </label>
                   <input
@@ -552,7 +556,7 @@ export const MedicineCatalog: React.FC = () => {
 
               {/* Manufacture / Company */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                <label className="block text-xs font-medium text-slate-600 mb-1">
                   Manufacture (Company) *
                 </label>
                 <input

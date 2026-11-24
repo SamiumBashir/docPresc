@@ -32,6 +32,21 @@ export default {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.03)',
         'card': '0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.1)',
         'card-hover': '0 0 0 1px rgba(0, 139, 163, 0.2), 0 10px 25px -5px rgba(0, 139, 163, 0.1)',
+      },
+      keyframes: {
+        'infinity-loop': {
+          '0%': { strokeDashoffset: '280' },
+          '50%': { strokeDashoffset: '0' },
+          '100%': { strokeDashoffset: '-280' },
+        },
+        'infinity-dash': {
+          '0%': { strokeDashoffset: '280' },
+          '100%': { strokeDashoffset: '0' },
+        },
+      },
+      animation: {
+        'infinity-loop': 'infinity-loop var(--duration, 2s) ease-in-out infinite',
+        'infinity-dash': 'infinity-dash var(--duration, 2s) linear infinite',
       }
     },
   },

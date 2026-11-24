@@ -12,6 +12,31 @@ interface ChiefComplaintsInputProps {
   onChange: (complaints: IPrescriptionChiefComplaint[]) => void;
 }
 
+/**
+ * Smart natural language parser that detects duration in English and Bengali
+ * (e.g., "Fever for 3 days", "Fever 3 days", "Fever - 5 days", "জ্বর ৩ দিন")
+ */
+const parseComplaintAndDuration = (input: string): { complaint: string; duration?: string } => {
+  const trimmed = input.trim();
+  if (!trimmed) return { complaint: '' };
+
+  // Format: "Fever (3 days)"
+  const parenthesized = trimmed.match(/^(.+?)\s*\(([^)]+)\)$/);
+  if (parenthesized) {
+    return { complaint: parenthesized[1].trim(), duration: parenthesized[2].trim() };
+  }
+
+  // Format: "Fever for 3 days", "Fever - 3 days", "Fever x 3 days", "Fever 3 days", "জ্বর ৩ দিন"
+  const durationMatch = trimmed.match(
+    /^(.+?)(?:\s+(?:for|-|x|since)\s+|\s+)([0-9০-৯]+\s*(?:days?|weeks?|months?|years?|hours?|d|w|m|y|দিন|মাস|সপ্তাহ|বছর|ঘণ্টা)|since\s+[\w\s]+|yesterday|today)$/i
+  );
+  if (durationMatch) {
+    return { complaint: durationMatch[1].trim(), duration: durationMatch[2].trim() };
+  }
+
+  return { complaint: trimmed };
+};
+
 export const ChiefComplaintsInput: React.FC<ChiefComplaintsInputProps> = ({
   complaints,
   onChange,
@@ -20,6 +45,7 @@ export const ChiefComplaintsInput: React.FC<ChiefComplaintsInputProps> = ({
   const [durationText, setDurationText] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,31 +69,106 @@ export const ChiefComplaintsInput: React.FC<ChiefComplaintsInputProps> = ({
     return searchChiefComplaints(searchTerm);
   }, [searchTerm]);
 
-  const handleAdd = (complaintName: string, duration?: string) => {
-    const trimmed = complaintName.trim();
-    if (!trimmed) return;
+  // Update duration for a specific complaint by index
+  const handleUpdateDuration = (index: number, newDuration: string) => {
+    if (index < 0 || index >= complaints.length) return;
+    const updated = [...complaints];
+    updated[index] = {
+      ...updated[index],
+      duration: newDuration.trim() || undefined,
+    };
+    onChange(updated);
+  };
 
-    // Check if already exists
-    const exists = complaints.some((c) => c.complaint.toLowerCase() === trimmed.toLowerCase());
-    if (exists) return;
+  // When duration text input changes
+  const handleDurationInputChange = (val: string) => {
+    setDurationText(val);
+    const targetIdx =
+      activeIndex !== null && complaints[activeIndex]
+        ? activeIndex
+        : complaints.length > 0
+        ? complaints.length - 1
+        : null;
 
+    if (targetIdx !== null) {
+      handleUpdateDuration(targetIdx, val);
+    }
+  };
+
+  // When doctor clicks a duration preset chip
+  const handlePresetClick = (dp: string) => {
+    setDurationText(dp);
+    const targetIdx =
+      activeIndex !== null && complaints[activeIndex]
+        ? activeIndex
+        : complaints.length > 0
+        ? complaints.length - 1
+        : null;
+
+    if (targetIdx !== null) {
+      handleUpdateDuration(targetIdx, dp);
+      setActiveIndex(targetIdx);
+    }
+  };
+
+  const handleAdd = (complaintRaw: string, explicitDuration?: string) => {
+    const parsed = parseComplaintAndDuration(complaintRaw);
+    const complaintName = parsed.complaint.trim();
+    if (!complaintName) return;
+
+    const finalDuration =
+      explicitDuration?.trim() || parsed.duration?.trim() || durationText.trim() || undefined;
+
+    // Check if complaint already exists
+    const existingIdx = complaints.findIndex(
+      (c) => c.complaint.toLowerCase() === complaintName.toLowerCase()
+    );
+
+    if (existingIdx >= 0) {
+      // If complaint exists, update its duration
+      const updated = [...complaints];
+      updated[existingIdx] = {
+        ...updated[existingIdx],
+        duration: finalDuration || updated[existingIdx].duration,
+      };
+      onChange(updated);
+      setActiveIndex(existingIdx);
+      if (finalDuration) setDurationText(finalDuration);
+      setSearchTerm('');
+      setIsOpen(false);
+      return;
+    }
+
+    // Add new complaint
     const newComplaint: IPrescriptionChiefComplaint = {
-      complaint: trimmed,
-      duration: duration?.trim() || durationText.trim() || undefined,
+      complaint: complaintName,
+      duration: finalDuration,
     };
 
-    onChange([...complaints, newComplaint]);
+    const nextComplaints = [...complaints, newComplaint];
+    onChange(nextComplaints);
+    setActiveIndex(nextComplaints.length - 1);
+    if (finalDuration) setDurationText(finalDuration);
     setSearchTerm('');
     setIsOpen(false);
     inputRef.current?.focus();
   };
 
   const handleRemove = (index: number) => {
-    onChange(complaints.filter((_, i) => i !== index));
+    const nextComplaints = complaints.filter((_, i) => i !== index);
+    onChange(nextComplaints);
+    if (activeIndex === index) {
+      setActiveIndex(nextComplaints.length > 0 ? nextComplaints.length - 1 : null);
+      setDurationText(nextComplaints.length > 0 ? nextComplaints[nextComplaints.length - 1].duration || '' : '');
+    } else if (activeIndex !== null && activeIndex > index) {
+      setActiveIndex(activeIndex - 1);
+    }
   };
 
   const handleClearAll = () => {
     onChange([]);
+    setActiveIndex(null);
+    setDurationText('');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -85,9 +186,9 @@ export const ChiefComplaintsInput: React.FC<ChiefComplaintsInputProps> = ({
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (isOpen && filteredSuggestions.length > 0 && filteredSuggestions[highlightedIndex]) {
-        handleAdd(filteredSuggestions[highlightedIndex].name);
+        handleAdd(filteredSuggestions[highlightedIndex].name, durationText);
       } else if (searchTerm.trim()) {
-        handleAdd(searchTerm);
+        handleAdd(searchTerm, durationText);
       }
     } else if (e.key === 'Escape') {
       setIsOpen(false);
@@ -161,7 +262,7 @@ export const ChiefComplaintsInput: React.FC<ChiefComplaintsInputProps> = ({
             <button
               type="button"
               onClick={handleClearAll}
-              className="text-[11px] text-slate-400 hover:text-rose-600 flex items-center gap-0.5 transition-colors"
+              className="text-[11px] text-slate-400 hover:text-rose-600 flex items-center gap-0.5 transition-colors cursor-pointer"
               title="Clear all chief complaints"
             >
               <Trash2 className="w-3 h-3" /> Clear
@@ -209,13 +310,30 @@ export const ChiefComplaintsInput: React.FC<ChiefComplaintsInputProps> = ({
           </div>
 
           {/* Duration Input */}
-          <div className="relative w-32 sm:w-36 shrink-0">
+          <div className="relative w-36 sm:w-44 shrink-0">
             <Clock className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={durationText}
-              onChange={(e) => setDurationText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAdd(searchTerm, durationText)}
+              onChange={(e) => handleDurationInputChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (searchTerm.trim()) {
+                    handleAdd(searchTerm, durationText);
+                  } else {
+                    const targetIdx =
+                      activeIndex !== null && complaints[activeIndex]
+                        ? activeIndex
+                        : complaints.length > 0
+                        ? complaints.length - 1
+                        : null;
+                    if (targetIdx !== null) {
+                      handleUpdateDuration(targetIdx, durationText);
+                    }
+                  }
+                }
+              }}
               placeholder="Duration (e.g. 3 days)"
               className="w-full pl-8 pr-2.5 py-2 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 focus:outline-none transition-all"
             />
@@ -289,7 +407,7 @@ export const ChiefComplaintsInput: React.FC<ChiefComplaintsInputProps> = ({
             <button
               type="button"
               onClick={() => handleAdd(searchTerm, durationText)}
-              className="mt-2 text-xs font-semibold text-medical-700 bg-medical-50 hover:bg-medical-100 border border-medical-200 px-3 py-1.5 rounded-lg inline-flex items-center gap-1 transition-colors"
+              className="mt-2 text-xs font-semibold text-medical-700 bg-medical-50 hover:bg-medical-100 border border-medical-200 px-3 py-1.5 rounded-lg inline-flex items-center gap-1 transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" /> Add as custom complaint
             </button>
@@ -300,22 +418,30 @@ export const ChiefComplaintsInput: React.FC<ChiefComplaintsInputProps> = ({
       {/* Quick Duration Presets */}
       <div className="flex items-center gap-1.5 flex-wrap">
         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1">
-          Duration:
+          Duration Presets:
         </span>
-        {DURATION_PRESETS.map((dp) => (
-          <button
-            key={dp}
-            type="button"
-            onClick={() => setDurationText(dp)}
-            className={`px-2 py-0.5 rounded text-[10px] font-medium border transition-colors ${
-              durationText === dp
-                ? 'bg-medical-100 text-medical-800 border-medical-300 font-semibold'
-                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-            }`}
-          >
-            {dp}
-          </button>
-        ))}
+        {DURATION_PRESETS.map((dp) => {
+          const activeDuration =
+            activeIndex !== null && complaints[activeIndex]
+              ? complaints[activeIndex].duration
+              : durationText;
+          const isCurrent = activeDuration === dp;
+
+          return (
+            <button
+              key={dp}
+              type="button"
+              onClick={() => handlePresetClick(dp)}
+              className={`px-2 py-0.5 rounded text-[10px] font-medium border transition-colors cursor-pointer ${
+                isCurrent
+                  ? 'bg-medical-600 text-white border-medical-600 font-semibold shadow-xs'
+                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-medical-50 hover:text-medical-700 hover:border-medical-200'
+              }`}
+            >
+              {dp}
+            </button>
+          );
+        })}
       </div>
 
       {/* Quick Common Symptoms Chips */}
@@ -335,16 +461,26 @@ export const ChiefComplaintsInput: React.FC<ChiefComplaintsInputProps> = ({
               <button
                 key={symptom}
                 type="button"
-                onClick={() =>
-                  isSelected
-                    ? onChange(
+                onClick={() => {
+                  if (isSelected) {
+                    const existing = complaints.find(
+                      (c) => c.complaint.toLowerCase() === symptom.toLowerCase()
+                    );
+                    // If user has entered a new duration, update it instead of removing
+                    if (durationText && existing && existing.duration !== durationText) {
+                      handleAdd(symptom, durationText);
+                    } else {
+                      onChange(
                         complaints.filter(
                           (c) => c.complaint.toLowerCase() !== symptom.toLowerCase()
                         )
-                      )
-                    : handleAdd(symptom, durationText || '3 days')
-                }
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all flex items-center gap-1 ${
+                      );
+                    }
+                  } else {
+                    handleAdd(symptom, durationText || '3 days');
+                  }
+                }}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all flex items-center gap-1 cursor-pointer ${
                   isSelected
                     ? 'bg-medical-700 text-white shadow-2xs font-semibold'
                     : 'bg-slate-50 hover:bg-medical-50 text-slate-700 hover:text-medical-800 border border-slate-200'
@@ -360,36 +496,69 @@ export const ChiefComplaintsInput: React.FC<ChiefComplaintsInputProps> = ({
 
       {/* Selected Complaints List on the Prescription Pad */}
       {complaints.length > 0 && (
-        <div className="pt-2 border-t border-slate-100 space-y-1.5">
+        <div className="pt-2.5 border-t border-slate-100 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-slate-700">
               Complaints to be included on Prescription Pad ({complaints.length}):
             </span>
+            <span className="text-[10px] text-slate-400">
+              Click complaint to customize duration or edit inline
+            </span>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {complaints.map((c, idx) => (
-              <span
-                key={idx}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-medical-50/80 border border-medical-200/90 text-medical-950 text-xs font-semibold shadow-2xs"
-              >
-                <span className="text-medical-700 font-mono text-[11px] font-bold">{idx + 1}.</span>
-                <span>{c.complaint}</span>
-                {c.duration && (
-                  <span className="text-[10px] font-semibold text-medical-700 bg-medical-100/80 px-1.5 py-0.5 rounded border border-medical-200">
-                    {c.duration}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => handleRemove(idx)}
-                  className="text-medical-400 hover:text-rose-600 p-0.5 rounded transition-colors ml-1"
-                  title="Remove complaint"
+            {complaints.map((c, idx) => {
+              const isActive = activeIndex === idx;
+
+              return (
+                <div
+                  key={`${c.complaint}-${idx}`}
+                  onClick={() => {
+                    setActiveIndex(idx);
+                    setDurationText(c.duration || '');
+                  }}
+                  className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-lg border text-xs transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-medical-50/90 border-medical-400 ring-2 ring-medical-500/20 text-medical-950 shadow-xs'
+                      : 'bg-slate-50 hover:bg-slate-100/80 border-slate-200 text-slate-800'
+                  }`}
                 >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </span>
-            ))}
+                  <span className="font-mono text-[11px] font-bold text-medical-700">{idx + 1}.</span>
+                  <span className="font-semibold text-slate-900">{c.complaint}</span>
+
+                  {/* Inline Editable Duration Field */}
+                  <div
+                    className="flex items-center gap-1 bg-white border border-slate-200 rounded px-1.5 py-0.5 focus-within:border-medical-500 focus-within:ring-1 focus-within:ring-medical-500/20"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Clock className="w-3 h-3 text-medical-600 shrink-0" />
+                    <input
+                      type="text"
+                      value={c.duration || ''}
+                      placeholder="Add duration"
+                      onChange={(e) => {
+                        handleUpdateDuration(idx, e.target.value);
+                        setDurationText(e.target.value);
+                        setActiveIndex(idx);
+                      }}
+                      className="w-20 sm:w-24 bg-transparent text-[11px] font-semibold text-medical-900 placeholder:text-slate-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemove(idx);
+                    }}
+                    className="text-slate-400 hover:text-rose-600 p-0.5 rounded transition-colors ml-0.5 cursor-pointer"
+                    title="Remove complaint"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

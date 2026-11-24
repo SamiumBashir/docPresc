@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import {
   Pill,
   Search,
@@ -145,8 +146,8 @@ export const MedicineManagement: React.FC = () => {
       genericName: genericName.trim(),
       medicineType,
       dosageForm,
-      strength: strength.trim(),
-      manufacturer: manufacturer.trim(),
+      strength: strength.trim() || 'Standard',
+      manufacturer: manufacturer.trim() || 'General',
       systemNameBangla: systemNameBangla.trim(),
       defaultDose,
       defaultDuration,
@@ -167,7 +168,7 @@ export const MedicineManagement: React.FC = () => {
         method: 'POST',
         body: formData,
       });
-      showToast.success(res.message || `Imported ${res.count || 0} medicines successfully!`);
+      showToast.success(res.message || `Imported ${res.count || 0} medicines successfully.`);
       queryClient.invalidateQueries({ queryKey: ['admin-medicines'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
     } catch (err: any) {
@@ -183,11 +184,11 @@ export const MedicineManagement: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl font-semibold text-white tracking-tight">
             Medicine Database
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Master formulary management: Allopathic, Unani, Ayurvedic, and Herbal medicines.
+          <p className="text-xs text-slate-400 mt-1">
+            Master formulary management: Allopathic, Unani, Ayurvedic, and Herbal medicines
           </p>
         </div>
 
@@ -202,18 +203,18 @@ export const MedicineManagement: React.FC = () => {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isImporting}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold border border-slate-700 transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors"
           >
-            <Upload className="w-4 h-4 text-slate-400" />
+            <Upload className="w-3.5 h-3.5 text-slate-400" />
             <span>{isImporting ? 'Importing...' : 'Import CSV'}</span>
           </button>
 
           <button
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/30 transition-all"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors active:scale-[0.98]"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Medicine</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add medicine</span>
           </button>
         </div>
       </div>
@@ -248,10 +249,10 @@ export const MedicineManagement: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden shadow-xl">
+      <div className="rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-950/60 border-b border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <thead className="bg-slate-950/60 border-b border-slate-800 text-xs font-medium text-slate-400">
               <tr>
                 <th className="py-3 px-4 sm:px-6">Brand Name</th>
                 <th className="py-3 px-4">Generic / Composition</th>
@@ -266,7 +267,7 @@ export const MedicineManagement: React.FC = () => {
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-8 h-8 border-3 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                      <InfinityLoop className="w-12 h-6 text-indigo-400" duration="1.6s" />
                       <span>Loading formulary...</span>
                     </div>
                   </td>
@@ -457,7 +458,7 @@ export const MedicineManagement: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                <label className="block text-xs font-medium text-slate-400 mb-1">
                   Manufacturer
                 </label>
                 <input
@@ -479,14 +480,14 @@ export const MedicineManagement: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-colors"
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saveMutation.isPending}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/30 transition-all"
+                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors active:scale-[0.98]"
                 >
                   {saveMutation.isPending ? 'Saving...' : 'Save Medicine'}
                 </button>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import {
   Users,
   Search,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 import { api } from '../../services/api-client';
 import { format } from 'date-fns';
+import { showToast } from '../../components/ui/Toast';
 
 export const DoctorManagement: React.FC = () => {
   const queryClient = useQueryClient();
@@ -37,6 +39,10 @@ export const DoctorManagement: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-doctors'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      showToast.success('Doctor status updated successfully.');
+    },
+    onError: (err: any) => {
+      showToast.error(err.message || 'Failed to update doctor status.');
     },
   });
 
@@ -62,11 +68,11 @@ export const DoctorManagement: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl font-semibold text-white tracking-tight">
             Doctors & BMDC Verification
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Review registered practitioners, BMDC licenses, and control account active status.
+          <p className="text-xs text-slate-400 mt-1">
+            Review registered practitioners, BMDC licenses, and control account active status
           </p>
         </div>
       </div>
@@ -100,10 +106,10 @@ export const DoctorManagement: React.FC = () => {
       </div>
 
       {/* Doctors Table */}
-      <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden shadow-xl">
+      <div className="rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-950/60 border-b border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <thead className="bg-slate-950/60 border-b border-slate-800 text-xs font-medium text-slate-400">
               <tr>
                 <th className="py-3 px-4 sm:px-6">Doctor Details</th>
                 <th className="py-3 px-4">BMDC License</th>
@@ -118,7 +124,7 @@ export const DoctorManagement: React.FC = () => {
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-8 h-8 border-3 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                      <InfinityLoop className="w-12 h-6 text-indigo-400" duration="1.6s" />
                       <span>Loading practitioners...</span>
                     </div>
                   </td>
@@ -204,7 +210,7 @@ export const DoctorManagement: React.FC = () => {
                         <div className="flex items-center justify-end gap-2">
                           {status !== 'active' && (
                             <button
-                              onClick={() => updateStatusMutation.mutate({ doctorId: docUserId, status: 'active' })}
+                              onClick={() => updateStatusMutation.mutate({ doctorId: docId || docUserId, status: 'active' })}
                               disabled={updateStatusMutation.isPending}
                               title="Approve / Activate"
                               className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-semibold border border-emerald-500/20 transition-colors inline-flex items-center gap-1"
@@ -215,7 +221,7 @@ export const DoctorManagement: React.FC = () => {
                           )}
                           {status === 'active' && (
                             <button
-                              onClick={() => updateStatusMutation.mutate({ doctorId: docUserId, status: 'suspended' })}
+                              onClick={() => updateStatusMutation.mutate({ doctorId: docId || docUserId, status: 'suspended' })}
                               disabled={updateStatusMutation.isPending}
                               title="Suspend Access"
                               className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/20 transition-colors inline-flex items-center gap-1"

@@ -12,6 +12,7 @@ import { Template } from '../models/Template';
 import { Prescription } from '../models/Prescription';
 import { AuditLog } from '../models/AuditLog';
 import { connectDatabase, closeDatabase } from '../config/db';
+import { ENV } from '../config/env';
 
 export const POPULAR_BANGLADESH_MEDICINES = [
   // Paracetamol & Analgesics
@@ -175,7 +176,13 @@ export const seedDatabase = async (force: boolean = false) => {
     const MEDEX_JSON_PATH = path.resolve(__dirname, '../../data/medex/processed/medex_brands.json');
 
     if (force) {
-      console.log('[Seed] Force flag active. Clearing existing collection data...');
+      if (ENV.NODE_ENV === 'production' || process.env.NODE_ENV === 'production') {
+        throw new Error('[Security Guard] Destructive database wipe is strictly forbidden in production.');
+      }
+      if (process.env.ALLOW_DESTRUCTIVE_RESET !== 'true') {
+        throw new Error('[Security Guard] Destructive database wipe blocked. Explicit opt-in required via ALLOW_DESTRUCTIVE_RESET=true.');
+      }
+      console.log('[Seed] Force flag and opt-in verified. Clearing existing collection data...');
       await Promise.all([
         User.deleteMany({}),
         Doctor.deleteMany({}),
@@ -303,21 +310,46 @@ export const seedDatabase = async (force: boolean = false) => {
       return;
     }
 
-    // 1. Create Admin User
+    const isProduction = ENV.NODE_ENV === 'production' || process.env.NODE_ENV === 'production';
+
+    // 1. Admin Provisioning
+    if (isProduction) {
+      if (ENV.ADMIN_PASSWORD && ENV.ADMIN_PASSWORD.length >= 10) {
+        console.log('[Seed] Securely provisioning initial production administrator from environment...');
+        const adminSalt = await bcrypt.genSalt(12);
+        const adminPasswordHash = await bcrypt.hash(ENV.ADMIN_PASSWORD, adminSalt);
+        await User.create({
+          name: 'System Administrator',
+          email: ENV.ADMIN_EMAIL.toLowerCase().trim(),
+          passwordHash: adminPasswordHash,
+          role: 'admin',
+          status: 'active',
+        });
+        console.log(`[Seed] ✅ Production administrator provisioned: ${ENV.ADMIN_EMAIL}`);
+      } else {
+        console.log('[Seed] Production mode: skipping default admin creation. Set ADMIN_PASSWORD in environment to provision.');
+      }
+      // Never seed demo doctor or mock patient records in production
+      return;
+    }
+
+    // 1. Create Development Admin User
+    const devAdminPassword = ENV.ADMIN_PASSWORD || 'Admin123!';
     const adminSalt = await bcrypt.genSalt(10);
-    const adminPasswordHash = await bcrypt.hash('Admin123!', adminSalt);
+    const adminPasswordHash = await bcrypt.hash(devAdminPassword, adminSalt);
     const adminUser = await User.create({
       name: 'System Administrator',
-      email: 'admin@prescription.com',
+      email: ENV.ADMIN_EMAIL || 'admin@prescription.com',
       phone: '01700000000',
       passwordHash: adminPasswordHash,
       role: 'admin',
       status: 'active',
     });
 
-    // 2. Create Demo Doctor (Dr. Moshfiqur Rahman)
+    // 2. Create Demo Doctor (Dr. Moshfiqur Rahman) - Development only
+    const devDoctorPassword = process.env.DEMO_DOCTOR_PASSWORD || 'Doctor123!';
     const doctorSalt = await bcrypt.genSalt(10);
-    const doctorPasswordHash = await bcrypt.hash('Doctor123!', doctorSalt);
+    const doctorPasswordHash = await bcrypt.hash(devDoctorPassword, doctorSalt);
     const doctorUser = await User.create({
       name: 'Dr. Moshfiqur Rahman',
       email: 'doctor@prescription.com',
@@ -684,6 +716,7 @@ export const seedDatabase = async (force: boolean = false) => {
     console.log('[Seed] Default Admin:  admin@prescription.com  / Admin123!');
   } catch (error) {
     console.error('[Seed] Database seeding failed:', error);
+    throw error;
   }
 };
 

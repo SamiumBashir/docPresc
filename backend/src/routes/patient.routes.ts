@@ -18,5 +18,6 @@ router.post('/', asyncHandler(createPatient));
 router.get('/:id', asyncHandler(getPatientById));
 router.put('/:id', asyncHandler(updatePatient));
 router.get('/:id/history', asyncHandler(getPatientMedicalHistory));
+router.get('/:id/timeline', asyncHandler(getPatientMedicalHistory));
 
 export default router;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import {
   ShieldAlert,
   Search,
@@ -82,10 +83,10 @@ export const AuditLogs: React.FC = () => {
         <button
           onClick={() => refetch()}
           disabled={isFetching}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors w-fit"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors w-fit"
         >
-          <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
-          <span>Refresh Logs</span>
+          <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+          <span>Refresh logs</span>
         </button>
       </div>
 
@@ -120,10 +121,10 @@ export const AuditLogs: React.FC = () => {
       </div>
 
       {/* Logs Table */}
-      <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden shadow-xl">
+      <div className="rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-950/60 border-b border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <thead className="bg-slate-950/60 border-b border-slate-800 text-xs font-medium text-slate-400">
               <tr>
                 <th className="py-3 px-4 sm:px-6">Timestamp</th>
                 <th className="py-3 px-4">Action</th>
@@ -137,7 +138,7 @@ export const AuditLogs: React.FC = () => {
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-8 h-8 border-3 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                      <InfinityLoop className="w-12 h-6 text-indigo-400" duration="1.6s" />
                       <span>Loading security trail...</span>
                     </div>
                   </td>

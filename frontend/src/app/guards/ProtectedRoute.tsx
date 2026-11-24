@@ -25,7 +25,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={requiredRole === 'admin' ? '/admin/login' : '/login'} replace />;
   }
 
   if (requiredRole && user.role !== requiredRole && user.role !== 'admin') {

@@ -11,6 +11,9 @@ import {
   ShieldCheck,
   Stethoscope,
   Menu,
+  Clock,
+  Phone,
+  Globe,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -158,19 +161,22 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
                             )}
                             <div className="flex items-center gap-3 mt-1 flex-wrap">
                               {ch.visitingHours && (
-                                <p className="text-[11px] text-medical-700 font-medium leading-snug">
-                                  🕒 {ch.visitingHours}
+                                <p className="text-[11px] text-medical-700 font-medium leading-snug flex items-center gap-1">
+                                  <Clock className="w-3 h-3 text-medical-600 shrink-0" />
+                                  <span>{ch.visitingHours}</span>
                                 </p>
                               )}
                               {ch.phone && (
-                                <p className="text-[11px] text-slate-500 font-medium leading-snug">
-                                  📞 {ch.phone}
+                                <p className="text-[11px] text-slate-500 font-medium leading-snug flex items-center gap-1">
+                                  <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                                  <span>{ch.phone}</span>
                                 </p>
                               )}
                             </div>
                             {ch.website && (
-                              <p className="text-[11px] text-medical-600 font-medium leading-snug mt-0.5 truncate">
-                                🌐 Appointment: {ch.website}
+                              <p className="text-[11px] text-medical-600 font-medium leading-snug mt-0.5 truncate flex items-center gap-1">
+                                <Globe className="w-3 h-3 text-medical-500 shrink-0" />
+                                <span>Appointment: {ch.website}</span>
                               </p>
                             )}
                           </div>
@@ -198,7 +204,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
           <Link
             to="/prescriptions/new"
             aria-label="Write New Prescription"
-            className="flex items-center gap-1.5 bg-medical-600 hover:bg-medical-700 text-white p-2 sm:px-3.5 sm:py-1.5 rounded-xl text-xs sm:text-sm font-semibold shadow-sm shadow-medical-600/20 transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0"
+            className="flex items-center gap-1.5 bg-medical-600 hover:bg-medical-700 active:scale-[0.98] text-white p-2 sm:px-3.5 sm:py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-colors shrink-0"
             title="Write New Prescription (Ctrl + N)"
           >
             <PlusCircle className="w-4 h-4" />
@@ -279,7 +285,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
                     className="flex items-center gap-2.5 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-medical-700 font-medium"
                   >
                     <ShieldCheck className="w-4 h-4 text-slate-400" />
-                    {t('nav_admin')}
+                    Admin Portal
                   </Link>
                 )}
 

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { IUser, IDoctor, IChamber } from '../types';
-import { api } from '../api/client';
+import { api, setAccessToken, clearAuthTokens } from '../api/client';
 
 interface AuthContextType {
   user: IUser | null;
@@ -134,11 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err: any) {
       if (err?.status === 401 || err?.status === 403) {
         // Only clear credentials when token is strictly invalid or user is suspended
-        localStorage.removeItem('docrx_token');
-        localStorage.removeItem('docrx_user');
-        localStorage.removeItem('docrx_doctor');
-        localStorage.removeItem('docrx_chambers');
-        localStorage.removeItem('docrx_active_chamber_id');
+        clearAuthTokens();
         setUser(null);
         setDoctor(null);
         setChambers([]);
@@ -156,11 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string, rememberMe?: boolean) => {
     // Clear any previous session leftovers before storing verified session
-    localStorage.removeItem('docrx_token');
-    localStorage.removeItem('docrx_user');
-    localStorage.removeItem('docrx_doctor');
-    localStorage.removeItem('docrx_chambers');
-    localStorage.removeItem('docrx_active_chamber_id');
+    clearAuthTokens();
 
     const res = await api<{
       success: boolean;
@@ -175,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error(res.message || 'Invalid email or password.');
     }
 
-    localStorage.setItem('docrx_token', res.data.token);
+    setAccessToken(res.data.token);
     localStorage.setItem('docrx_user', JSON.stringify(res.data.user));
     setUser(res.data.user);
     setDoctor(res.data.doctor);
@@ -197,12 +189,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    // 1. Immediately wipe all tokens, user sessions, and chambers from localStorage
-    localStorage.removeItem('docrx_token');
-    localStorage.removeItem('docrx_user');
-    localStorage.removeItem('docrx_doctor');
-    localStorage.removeItem('docrx_chambers');
-    localStorage.removeItem('docrx_active_chamber_id');
+    // 1. Immediately wipe all tokens, user sessions, and chambers
+    clearAuthTokens();
     sessionStorage.clear();
 
     // 2. Synchronously clear react state

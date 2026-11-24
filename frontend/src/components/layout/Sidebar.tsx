@@ -115,25 +115,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
                 end={item.to === '/dashboard' || item.to === '/admin'}
                 onClick={handleNavClick}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group ${
+                  `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors duration-150 ${
                     item.highlight
                       ? isActive
-                        ? 'bg-medical-500 text-white shadow-md shadow-medical-500/25'
+                        ? 'bg-medical-600 text-white'
                         : 'bg-medical-950/60 hover:bg-medical-900/80 text-medical-300 border border-medical-700/40'
                       : isActive
-                      ? 'bg-medical-600/20 text-medical-300 font-semibold border border-medical-500/30'
+                      ? 'bg-medical-600/20 text-medical-300 font-medium border border-medical-500/30'
                       : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
                   }`
                 }
               >
                 <Icon
-                  className={`w-4 h-4 transition-transform group-hover:scale-110 ${
+                  className={`w-4 h-4 ${
                     item.highlight ? 'text-medical-400' : 'text-slate-400 group-hover:text-slate-200'
                   }`}
                 />
                 <span className="truncate">{item.label}</span>
                 {item.highlight && (
-                  <Sparkles className="w-3 h-3 text-amber-400 ml-auto animate-pulse shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400 ml-auto shrink-0" />
                 )}
               </NavLink>
             );

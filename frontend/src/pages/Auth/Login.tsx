@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Stethoscope, Lock, Mail, ArrowRight, Eye, EyeOff, Loader2, AlertCircle, X } from 'lucide-react';
+import { Stethoscope, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle, X } from 'lucide-react';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../components/ui/Toast';
 
@@ -79,7 +80,7 @@ export const Login: React.FC = () => {
       await login(cleanEmail, cleanPassword, rememberMe);
 
       // 4. Access granted only after server successfully verifies credentials
-      showToast.success('Credentials verified. Welcome back!');
+      showToast.success('Credentials verified');
       const storedUser = JSON.parse(localStorage.getItem('docrx_user') || '{}');
       if (storedUser.role === 'admin') {
         navigate('/admin', { replace: true });
@@ -110,17 +111,13 @@ export const Login: React.FC = () => {
       role="main"
       className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
     >
-      {/* Background glow effects */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-medical-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-medical-600/10 rounded-full blur-3xl pointer-events-none" />
-
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center space-y-2">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-medical-600 to-medical-500 flex items-center justify-center text-white mx-auto shadow-lg shadow-medical-600/30">
+        <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-teal-400 mx-auto shadow-sm">
           <Stethoscope className="w-8 h-8" aria-hidden="true" />
         </div>
-        <h1 className="text-3xl font-black text-white tracking-tight">DocRx System</h1>
-        <p className="text-xs text-slate-300">
-          Doctor Digital Prescription Management Platform for Bangladesh
+        <h1 className="text-2xl font-semibold text-white tracking-tight">DocRx System</h1>
+        <p className="text-xs text-slate-400">
+          Doctor Digital Prescription Management Platform
         </p>
       </div>
 
@@ -157,7 +154,7 @@ export const Login: React.FC = () => {
             <div>
               <label
                 htmlFor="login-email"
-                className="block text-xs font-bold text-slate-200 uppercase mb-1"
+                className="block text-xs font-medium text-slate-300 mb-1"
               >
                 Email Address
               </label>
@@ -274,16 +271,16 @@ export const Login: React.FC = () => {
               disabled={isLoading}
               aria-busy={isLoading}
               aria-label="Sign in to DocRx account"
-              className="w-full py-2.5 bg-medical-600 hover:bg-medical-700 disabled:bg-slate-700 disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none disabled:hover:scale-100 text-white font-bold rounded-xl text-sm shadow-md shadow-medical-600/25 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] mt-2 cursor-pointer"
+              className="w-full py-2.5 bg-medical-600 hover:bg-medical-700 active:scale-[0.98] disabled:bg-slate-700 disabled:opacity-60 text-white font-medium rounded-xl text-sm transition-colors flex items-center justify-center gap-2 mt-2 cursor-pointer"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin text-white" aria-hidden="true" />
-                  <span>Verifying Credentials... (যাচাই করা হচ্ছে...)</span>
+                  <InfinityLoop className="w-7 h-3.5 text-white" duration="1.6s" strokeWidth={7} />
+                  <span>Verifying credentials...</span>
                 </>
               ) : (
                 <>
-                  <span>Sign In</span>
+                  <span>Sign in</span>
                   <ArrowRight className="w-4 h-4" aria-hidden="true" />
                 </>
               )}

@@ -1,2 +1,4 @@
-export * as adminController from '../../controllers/admin.controller';
-export { default as adminRoutes } from '../../routes/admin.routes';
+export * from './admin.types';
+export * from './admin.service';
+export * from './admin.controller';
+export { default as adminRoutes } from './admin.routes';

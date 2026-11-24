@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, Users, FilePlus, Calendar, Pill, BookmarkCheck } from 'lucide-react';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
 
@@ -35,7 +36,12 @@ export const DoctorReports: React.FC = () => {
   }, []);
 
   if (isLoading) {
-    return <div className="p-12 text-center text-slate-400">Loading clinical analytics...</div>;
+    return (
+      <div className="p-16 flex flex-col items-center justify-center gap-3 text-center">
+        <InfinityLoop className="w-16 h-8 text-medical-600" duration="1.8s" strokeWidth={5.5} />
+        <p className="text-xs text-slate-500 font-medium">Loading clinical analytics...</p>
+      </div>
+    );
   }
 
   const stats = data?.stats || {
@@ -60,26 +66,26 @@ export const DoctorReports: React.FC = () => {
       {/* Stats Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
-          <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">Total Consultations</span>
-          <p className="text-xl sm:text-2xl font-black text-slate-900">{stats.totalPrescriptions}</p>
+          <span className="text-[10px] sm:text-xs text-slate-500 font-medium">Total Consultations</span>
+          <p className="text-xl sm:text-2xl font-semibold text-slate-900 tabular-nums">{stats.totalPrescriptions}</p>
           <span className="text-[10px] sm:text-[11px] text-medical-600 font-medium">All Time Prescriptions</span>
         </div>
 
         <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
-          <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">This Month</span>
-          <p className="text-xl sm:text-2xl font-black text-slate-900">{stats.monthPrescriptions}</p>
+          <span className="text-[10px] sm:text-xs text-slate-500 font-medium">This Month</span>
+          <p className="text-xl sm:text-2xl font-semibold text-slate-900 tabular-nums">{stats.monthPrescriptions}</p>
           <span className="text-[10px] sm:text-[11px] text-emerald-600 font-medium">Current Month</span>
         </div>
 
         <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
-          <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">Registered Patients</span>
-          <p className="text-xl sm:text-2xl font-black text-slate-900">{stats.totalPatients}</p>
+          <span className="text-[10px] sm:text-xs text-slate-500 font-medium">Registered Patients</span>
+          <p className="text-xl sm:text-2xl font-semibold text-slate-900 tabular-nums">{stats.totalPatients}</p>
           <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium">In Patient Roster</span>
         </div>
 
         <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-1">
-          <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">Today's Visits</span>
-          <p className="text-xl sm:text-2xl font-black text-slate-900">{stats.todayPrescriptions}</p>
+          <span className="text-[10px] sm:text-xs text-slate-500 font-medium">Today's Visits</span>
+          <p className="text-xl sm:text-2xl font-semibold text-slate-900 tabular-nums">{stats.todayPrescriptions}</p>
           <span className="text-[10px] sm:text-[11px] text-cyan-600 font-medium">Active Today</span>
         </div>
       </div>

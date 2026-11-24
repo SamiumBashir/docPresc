@@ -7,7 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "echo \"Backend lint: OK\" && exit 0",
+    "lint": "tsc --noEmit",
     "postinstall": "npm run build",
     "prestart": "npm run build",
     "start": "node dist/server.js",

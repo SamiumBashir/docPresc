@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Pill, Plus, Upload, Trash2, Edit2, Search, FileSpreadsheet, Leaf } from 'lucide-react';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
 import { Modal } from '../../components/ui/Modal';
@@ -211,9 +212,9 @@ export const AdminMedicines: React.FC = () => {
         {[
           { id: 'all', label: 'All Systems' },
           { id: 'Allopathic', label: 'Allopathic' },
-          { id: 'Unani', label: '🌿 Unani' },
-          { id: 'Ayurvedic', label: '🌱 Ayurvedic' },
-          { id: 'Herbal', label: '🍀 Herbal' },
+          { id: 'Unani', label: 'Unani' },
+          { id: 'Ayurvedic', label: 'Ayurvedic' },
+          { id: 'Herbal', label: 'Herbal' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -273,7 +274,10 @@ export const AdminMedicines: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-slate-400">
-                    Loading medicine database...
+                    <div className="flex flex-col items-center gap-2">
+                      <InfinityLoop className="w-12 h-6 text-medical-600" duration="1.8s" strokeWidth={5.5} />
+                      <span className="text-xs text-slate-500 font-medium">Loading medicine database...</span>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -290,15 +294,15 @@ export const AdminMedicines: React.FC = () => {
                       <td className="py-3 px-4">
                         {isUnani ? (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                            🌿 Unani
+                            Unani
                           </span>
                         ) : isAyurvedic ? (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
-                            🌱 Ayurvedic
+                            Ayurvedic
                           </span>
                         ) : m.medicineType === 'Herbal' ? (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200">
-                            🍀 Herbal
+                            Herbal
                           </span>
                         ) : (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">

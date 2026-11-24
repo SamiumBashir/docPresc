@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import {
   Mail,
   ArrowLeft,
@@ -284,7 +285,7 @@ export const ForgotPassword: React.FC = () => {
         import('canvas-confetti').then(({ default: confetti }) => {
           confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
         }).catch(() => {});
-        showToast.success('Password updated successfully! Please sign in.');
+        showToast.success('Password updated successfully. Please sign in.');
       }
     } catch (err: any) {
       showToast.error(err.message || 'Failed to update password. Please try again.');
@@ -312,13 +313,9 @@ export const ForgotPassword: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Dynamic Background Glows */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-medical-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-medical-600/10 rounded-full blur-3xl pointer-events-none"></div>
-
       {/* Header Banner */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center space-y-2">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-medical-600 to-medical-400 flex items-center justify-center text-white mx-auto shadow-lg shadow-medical-600/30">
+        <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-teal-400 mx-auto shadow-sm">
           {step === 'PASSWORD' || step === 'SUCCESS' ? (
             <ShieldCheck className="w-8 h-8" />
           ) : (
@@ -326,11 +323,11 @@ export const ForgotPassword: React.FC = () => {
           )}
         </div>
 
-        <h2 className="text-3xl font-black text-white tracking-tight">
+        <h2 className="text-2xl font-semibold text-white tracking-tight">
           {step === 'EMAIL' && 'Forgot Password'}
           {step === 'OTP' && 'Verify Your Email'}
           {step === 'PASSWORD' && 'Create New Password'}
-          {step === 'SUCCESS' && 'Reset Complete!'}
+          {step === 'SUCCESS' && 'Reset Complete'}
         </h2>
 
         <p className="text-xs text-slate-400">
@@ -385,7 +382,7 @@ export const ForgotPassword: React.FC = () => {
               </p>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                <label className="block text-xs font-medium text-slate-300 mb-1">
                   Registered Email Address *
                 </label>
                 <div className="relative">
@@ -405,10 +402,13 @@ export const ForgotPassword: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 bg-medical-500 hover:bg-medical-600 text-white font-bold rounded-xl text-sm shadow-md shadow-medical-500/25 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 mt-2"
+                className="w-full py-2.5 bg-medical-600 hover:bg-medical-700 active:scale-[0.98] text-white font-medium rounded-xl text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
               >
                 {isLoading ? (
-                  <span>Sending OTP...</span>
+                  <div className="flex items-center justify-center gap-2">
+                    <InfinityLoop className="w-7 h-3.5 text-white" duration="1.6s" strokeWidth={7} />
+                    <span>Sending OTP...</span>
+                  </div>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
@@ -447,7 +447,7 @@ export const ForgotPassword: React.FC = () => {
                     onKeyDown={(e) => handleOtpKeyDown(index, e)}
                     onPaste={handleOtpPaste}
                     aria-label={`OTP digit ${index + 1}`}
-                    className="w-11 h-12 sm:w-12 sm:h-14 text-center text-xl font-mono font-black text-white bg-slate-900/90 border-2 border-slate-700 rounded-xl focus:border-medical-500 focus:ring-4 focus:ring-medical-500/20 focus:outline-none transition-all selection:bg-transparent"
+                    className="w-11 h-12 sm:w-12 sm:h-14 text-center text-xl font-mono font-medium text-white bg-slate-900 border border-slate-700 rounded-xl focus:border-medical-500 focus:outline-none transition-colors selection:bg-transparent"
                   />
                 ))}
               </div>
@@ -464,10 +464,13 @@ export const ForgotPassword: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading || otp.join('').length !== 6}
-                className="w-full py-2.5 bg-medical-500 hover:bg-medical-600 text-white font-bold rounded-xl text-sm shadow-md shadow-medical-500/25 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+                className="w-full py-2.5 bg-medical-600 hover:bg-medical-700 active:scale-[0.98] text-white font-medium rounded-xl text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isLoading ? (
-                  <span>Verifying OTP...</span>
+                  <div className="flex items-center justify-center gap-2">
+                    <InfinityLoop className="w-7 h-3.5 text-white" duration="1.6s" strokeWidth={7} />
+                    <span>Verifying OTP...</span>
+                  </div>
                 ) : (
                   <>
                     <ShieldCheck className="w-4 h-4" />
@@ -526,7 +529,7 @@ export const ForgotPassword: React.FC = () => {
               </p>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                <label className="block text-xs font-medium text-slate-300 mb-1">
                   New Password *
                 </label>
                 <div className="relative">
@@ -554,21 +557,21 @@ export const ForgotPassword: React.FC = () => {
                   <div className="mt-2 space-y-1">
                     <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium">
                       <span>Password Strength</span>
-                      <span className="font-bold text-slate-300">{strength.label}</span>
+                      <span className="font-semibold text-slate-300">{strength.label}</span>
                     </div>
                     <div className="w-full h-1 bg-slate-700 rounded-full overflow-hidden flex gap-1">
                       <div
-                        className={`h-full rounded-full transition-all duration-300 ${
+                        className={`h-full rounded-full transition-colors duration-200 ${
                           strength.score >= 1 ? strength.color : 'bg-transparent'
                         } flex-1`}
                       />
                       <div
-                        className={`h-full rounded-full transition-all duration-300 ${
+                        className={`h-full rounded-full transition-colors duration-200 ${
                           strength.score >= 2 ? strength.color : 'bg-transparent'
                         } flex-1`}
                       />
                       <div
-                        className={`h-full rounded-full transition-all duration-300 ${
+                        className={`h-full rounded-full transition-colors duration-200 ${
                           strength.score >= 3 ? strength.color : 'bg-transparent'
                         } flex-1`}
                       />
@@ -578,8 +581,8 @@ export const ForgotPassword: React.FC = () => {
 
                 {/* Real-time Password Rules Checklist */}
                 <div className="mt-2.5 p-3 bg-slate-900/70 border border-slate-700/60 rounded-xl space-y-1.5 text-[11px]">
-                  <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">
-                    Password Requirements:
+                  <div className="text-xs font-medium text-slate-400 mb-1">
+                    Password requirements:
                   </div>
                   <div className={`flex items-center gap-1.5 transition-colors ${newPassword.length >= 8 ? 'text-emerald-400 font-medium' : 'text-slate-400'}`}>
                     <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] ${newPassword.length >= 8 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
@@ -617,7 +620,7 @@ export const ForgotPassword: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                <label className="block text-xs font-medium text-slate-300 mb-1">
                   Confirm New Password *
                 </label>
                 <div className="relative">
@@ -643,10 +646,13 @@ export const ForgotPassword: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 bg-medical-500 hover:bg-medical-600 text-white font-bold rounded-xl text-sm shadow-md shadow-medical-500/25 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 mt-2"
+                className="w-full py-2.5 bg-medical-600 hover:bg-medical-700 active:scale-[0.98] text-white font-medium rounded-xl text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
               >
                 {isLoading ? (
-                  <span>Updating password...</span>
+                  <div className="flex items-center justify-center gap-2">
+                    <InfinityLoop className="w-7 h-3.5 text-white" duration="1.6s" strokeWidth={7} />
+                    <span>Updating password...</span>
+                  </div>
                 ) : (
                   <>
                     <KeyRound className="w-4 h-4" />
@@ -662,12 +668,12 @@ export const ForgotPassword: React.FC = () => {
           {/* ========================================================================= */}
           {step === 'SUCCESS' && (
             <div className="space-y-4 text-center py-2 animate-in fade-in">
-              <div className="w-14 h-14 bg-emerald-500/10 border-2 border-emerald-500/30 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
+              <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
 
               <div className="space-y-1.5">
-                <h3 className="text-base font-bold text-white">Password Reset Successful</h3>
+                <h3 className="text-base font-semibold text-white">Password Reset Successful</h3>
                 <p className="text-xs text-slate-300 leading-relaxed">
                   Your password has been updated securely. You can now login to your doctor portal with your new credentials.
                 </p>
@@ -675,9 +681,9 @@ export const ForgotPassword: React.FC = () => {
 
               <Link
                 to="/login"
-                className="inline-flex items-center justify-center gap-2 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-emerald-600/30 hover:scale-[1.01] active:scale-[0.99]"
+                className="inline-flex items-center justify-center gap-2 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-medium rounded-xl text-xs transition-colors"
               >
-                <span>Go to Login (লগইন করুন)</span>
+                <span>Go to Login</span>
               </Link>
             </div>
           )}

@@ -3,14 +3,23 @@ import { z } from 'zod';
 
 dotenv.config();
 
+const INSECURE_DEFAULT_SECRETS = [
+  'doctor_prescription_super_secret_jwt_key_2026',
+  'cookie_secret_prescription_2026',
+  'docpresc_otp_security_pepper_2026',
+];
+
 const envSchema = z.object({
   PORT: z.coerce.number().default(5000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   MONGODB_URI: z.string().default(''),
+  MONGODB_TEST_URI: z.string().default(''),
   JWT_SECRET: z.string().default('doctor_prescription_super_secret_jwt_key_2026'),
-  JWT_EXPIRES_IN: z.string().default('7d'),
+  JWT_EXPIRES_IN: z.string().default('15m'), // Short-lived access token
+  JWT_REFRESH_SECRET: z.string().default('doctor_prescription_refresh_super_secret_2026'),
+  JWT_REFRESH_EXPIRES_IN: z.string().default('7d'), // Refresh token duration
   COOKIE_SECRET: z.string().default('cookie_secret_prescription_2026'),
-  CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  CORS_ORIGIN: z.string().default('http://localhost:5173,https://doc-presc.vercel.app'),
   EMAIL_PROVIDER: z.string().default('smtp').transform((val) => val.trim().toLowerCase()),
   ENABLE_EMAIL_FALLBACK: z.preprocess((val) => val === 'true' || val === true, z.boolean().default(false)),
   RESEND_API_KEY: z.string().default(''),
@@ -27,6 +36,9 @@ const envSchema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string().default(''),
   CLOUDINARY_API_KEY: z.string().default(''),
   CLOUDINARY_API_SECRET: z.string().default(''),
+  ALLOW_DESTRUCTIVE_RESET: z.preprocess((val) => val === 'true' || val === true, z.boolean().default(false)),
+  ADMIN_EMAIL: z.string().default('admin@prescription.com'),
+  ADMIN_PASSWORD: z.string().default(''),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -34,14 +46,17 @@ if (!parsedEnv.success) {
   console.error('[Config] Invalid environment variables:', parsedEnv.error.flatten().fieldErrors);
 }
 
-export const ENV = parsedEnv.success ? parsedEnv.data : {
+const rawEnv = parsedEnv.success ? parsedEnv.data : {
   PORT: Number(process.env.PORT) || 5000,
-  NODE_ENV: (process.env.NODE_ENV as any) || 'development',
+  NODE_ENV: ((process.env.NODE_ENV as any) || 'development') as 'development' | 'production' | 'test',
   MONGODB_URI: process.env.MONGODB_URI || '',
+  MONGODB_TEST_URI: process.env.MONGODB_TEST_URI || '',
   JWT_SECRET: process.env.JWT_SECRET || 'doctor_prescription_super_secret_jwt_key_2026',
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '15m',
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || 'doctor_prescription_refresh_super_secret_2026',
+  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   COOKIE_SECRET: process.env.COOKIE_SECRET || 'cookie_secret_prescription_2026',
-  CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173,https://doc-presc.vercel.app',
   EMAIL_PROVIDER: (process.env.EMAIL_PROVIDER || 'smtp').trim().toLowerCase(),
   ENABLE_EMAIL_FALLBACK: process.env.ENABLE_EMAIL_FALLBACK === 'true',
   RESEND_API_KEY: process.env.RESEND_API_KEY || '',
@@ -58,5 +73,34 @@ export const ENV = parsedEnv.success ? parsedEnv.data : {
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '',
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
+  ALLOW_DESTRUCTIVE_RESET: process.env.ALLOW_DESTRUCTIVE_RESET === 'true',
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@prescription.com',
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || '',
 };
+
+// Fail-fast security validation in production
+if (rawEnv.NODE_ENV === 'production' && !process.env.CI) {
+  const securityViolations: string[] = [];
+
+  if (!rawEnv.MONGODB_URI) {
+    securityViolations.push('MONGODB_URI is required in production.');
+  }
+
+  if (!rawEnv.JWT_SECRET || INSECURE_DEFAULT_SECRETS.includes(rawEnv.JWT_SECRET) || rawEnv.JWT_SECRET.length < 32) {
+    securityViolations.push('JWT_SECRET must be at least 32 characters and not use known default values.');
+  }
+
+  if (!rawEnv.COOKIE_SECRET || INSECURE_DEFAULT_SECRETS.includes(rawEnv.COOKIE_SECRET) || rawEnv.COOKIE_SECRET.length < 32) {
+    securityViolations.push('COOKIE_SECRET must be at least 32 characters and not use known default values.');
+  }
+
+  if (securityViolations.length > 0) {
+    console.error('[Config] CRITICAL SECURITY STARTUP FAILURE:');
+    securityViolations.forEach((v) => console.error(`  - ${v}`));
+    throw new Error(`Production startup aborted due to critical security violations: ${securityViolations.join('; ')}`);
+  }
+}
+
+export const ENV = rawEnv;
+
 

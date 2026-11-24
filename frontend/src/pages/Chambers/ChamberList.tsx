@@ -109,7 +109,7 @@ export const ChamberList: React.FC = () => {
 
         <button
           onClick={handleOpenCreate}
-          className="flex items-center gap-1.5 px-4 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-xl font-semibold text-xs shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0"
+          className="flex items-center gap-1.5 px-3.5 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-xl font-medium text-xs shadow-xs transition-colors active:scale-[0.98] shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Chamber</span>

@@ -31,6 +31,40 @@
 }
 
 /* ==========================================================
+   @loading-ui/infinity - CONTINUOUS DASH INFINITY LOOP ANIMATION
+   ========================================================== */
+@keyframes infinity-loop {
+  0% {
+    stroke-dashoffset: 280;
+  }
+  50% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -280;
+  }
+}
+
+@keyframes infinity-dash {
+  0% {
+    stroke-dashoffset: 280;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-infinity-loop {
+  animation: infinity-loop var(--duration, 2s) ease-in-out infinite;
+  will-change: stroke-dashoffset;
+}
+
+.animate-infinity-dash {
+  animation: infinity-dash var(--duration, 2s) linear infinite;
+  will-change: stroke-dashoffset;
+}
+
+/* ==========================================================
    COMFORTABLE CLINICAL LOADING ANIMATIONS
    ========================================================== */
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import {
   Printer,
   Copy,
@@ -68,11 +69,16 @@ export const PrescriptionView: React.FC = () => {
     if (!prescription) return;
     const url = `${window.location.origin}/prescription/share/${prescription.shareToken}`;
     navigator.clipboard.writeText(url);
-    showToast.success('Secure public prescription link copied!');
+    showToast.success('Secure public prescription link copied.');
   };
 
   if (isLoading) {
-    return <div className="p-12 text-center text-slate-400">Loading prescription pad...</div>;
+    return (
+      <div className="p-16 flex flex-col items-center justify-center gap-3 text-center">
+        <InfinityLoop className="w-16 h-8 text-medical-600" duration="1.8s" strokeWidth={5.5} />
+        <p className="text-xs text-slate-500 font-medium">Loading prescription pad...</p>
+      </div>
+    );
   }
 
   if (!prescription) {

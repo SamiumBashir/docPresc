@@ -83,6 +83,8 @@ export interface IPrescription extends Document {
   status: 'DRAFT' | 'FINALIZED' | 'CANCELLED';
   finalizedAt?: Date;
   shareToken: string;
+  shareExpiresAt?: Date;
+  isShareRevoked?: boolean;
   version: number;
   parentPrescriptionId?: Types.ObjectId;
   createdAt: Date;
@@ -174,6 +176,8 @@ const PrescriptionSchema: Schema = new Schema(
     status: { type: String, enum: ['DRAFT', 'FINALIZED', 'CANCELLED'], default: 'DRAFT', index: true },
     finalizedAt: { type: Date },
     shareToken: { type: String, required: true, unique: true, index: true },
+    shareExpiresAt: { type: Date },
+    isShareRevoked: { type: Boolean, default: false },
     version: { type: Number, default: 1 },
     parentPrescriptionId: { type: Schema.Types.ObjectId, ref: 'Prescription' },
   },

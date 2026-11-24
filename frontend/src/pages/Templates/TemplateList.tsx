@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bookmark, Plus, Trash2, Edit2, Sparkles, Check } from 'lucide-react';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
 import { ITemplate } from '../../types';
@@ -51,7 +52,10 @@ export const TemplateList: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className="p-12 text-center text-slate-400">Loading templates...</div>
+        <div className="p-16 flex flex-col items-center justify-center gap-3 text-center">
+          <InfinityLoop className="w-16 h-8 text-medical-600" duration="1.8s" strokeWidth={5.5} />
+          <p className="text-xs text-slate-500 font-medium">Loading templates...</p>
+        </div>
       ) : templates.length === 0 ? (
         <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-400 space-y-2">
           <p>No saved prescription templates yet.</p>
@@ -93,7 +97,7 @@ export const TemplateList: React.FC = () => {
 
                 {/* Medicines preview */}
                 <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-1 text-xs">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  <span className="text-xs font-medium text-slate-500 block">
                     {tpl.medicines.length} Medicines Prescribed
                   </span>
                   <div className="space-y-1">

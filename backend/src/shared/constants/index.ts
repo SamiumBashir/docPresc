@@ -1,0 +1,34 @@
+export const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  ACCEPTED: 202,
+  NO_CONTENT: 204,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  GONE: 410,
+  UNPROCESSABLE_ENTITY: 422,
+  TOO_MANY_REQUESTS: 429,
+  INTERNAL_SERVER_ERROR: 500,
+  SERVICE_UNAVAILABLE: 503,
+} as const;
+
+export const USER_ROLES = {
+  DOCTOR: 'doctor',
+  ADMIN: 'admin',
+  STAFF: 'staff',
+} as const;
+
+export const PRESCRIPTION_STATUS = {
+  DRAFT: 'DRAFT',
+  FINALIZED: 'FINALIZED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export const DEFAULT_PAGINATION = {
+  PAGE: 1,
+  LIMIT: 20,
+  MAX_LIMIT: 100,
+} as const;

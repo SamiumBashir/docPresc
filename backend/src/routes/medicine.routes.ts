@@ -32,5 +32,6 @@ router.post('/', authenticate, requireRole(['admin', 'doctor']), asyncHandler(cr
 router.put('/:id', authenticate, requireRole(['admin', 'doctor']), asyncHandler(updateMedicine));
 router.delete('/:id', authenticate, requireRole(['admin']), asyncHandler(deleteMedicine));
 router.post('/import-csv', authenticate, requireRole(['admin']), upload.single('file'), asyncHandler(importMedicinesCsv));
+router.post('/import', authenticate, requireRole(['admin']), upload.single('file'), asyncHandler(importMedicinesCsv));
 
 export default router;

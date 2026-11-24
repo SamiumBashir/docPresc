@@ -47,7 +47,8 @@ const PatientSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-// Compound index for super-fast doctor-scoped search and timeline sorting
+// Compound index for super-fast doctor-scoped search, timeline sorting and uniqueness
+PatientSchema.index({ doctorId: 1, patientId: 1 }, { unique: true });
 PatientSchema.index({ doctorId: 1, phone: 1 });
 PatientSchema.index({ doctorId: 1, name: 'text', patientId: 'text' });
 PatientSchema.index({ doctorId: 1, updatedAt: -1 });

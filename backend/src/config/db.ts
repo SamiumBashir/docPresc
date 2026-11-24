@@ -30,7 +30,10 @@ export const isDatabaseConnected = (): boolean => {
  * - Uses a bounded serverSelectionTimeoutMS so errors fail fast before serverless timeouts.
  */
 export const connectDatabase = async (): Promise<string> => {
-  const uri = ENV.MONGODB_URI || process.env.MONGODB_URI;
+  const isTest = ENV.NODE_ENV === 'test' || process.env.NODE_ENV === 'test';
+  const uri = isTest
+    ? (ENV.MONGODB_TEST_URI || process.env.MONGODB_TEST_URI || '')
+    : (ENV.MONGODB_URI || process.env.MONGODB_URI);
 
   // 1. If connection is already open, reuse immediately
   if (mongoose.connection.readyState === 1) {
@@ -43,8 +46,8 @@ export const connectDatabase = async (): Promise<string> => {
     return uri || 'mongodb://connected';
   }
 
-  // 3. Connect to external MongoDB (Atlas) if URI is provided
-  if (uri) {
+  // 3. Connect to external MongoDB if URI is provided AND NOT in test mode without explicit test URI
+  if (uri && !isTest) {
     if (!cached.promise) {
       const opts: mongoose.ConnectOptions = {
         bufferCommands: false,
@@ -89,15 +92,31 @@ export const connectDatabase = async (): Promise<string> => {
     }
   }
 
-  // 4. In development/testing: Try default local MongoDB
-  try {
-    await mongoose.connect('mongodb://localhost:27017/doctor_prescription', {
-      serverSelectionTimeoutMS: 2000,
-    });
-    console.log('[Database] Connected to local MongoDB at mongodb://localhost:27017/doctor_prescription');
+  // If explicit test URI is provided in test mode, connect to it
+  if (isTest && uri) {
+    const testOpts: mongoose.ConnectOptions = {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 4000,
+    };
+    await mongoose.connect(uri, testOpts);
     cached.conn = mongoose;
-    return 'mongodb://localhost:27017/doctor_prescription';
-  } catch {
+    console.log(`[Database] Connected to designated test database: ${uri}`);
+    return uri;
+  }
+
+  // 4. In development: Try default local MongoDB
+  if (!isTest) {
+    try {
+      await mongoose.connect('mongodb://localhost:27017/doctor_prescription', {
+        serverSelectionTimeoutMS: 2000,
+      });
+      console.log('[Database] Connected to local MongoDB at mongodb://localhost:27017/doctor_prescription');
+      cached.conn = mongoose;
+      return 'mongodb://localhost:27017/doctor_prescription';
+    } catch {
+      // Local not running, continue to in-memory fallback
+    }
+  }
     // 5. Fallback to in-memory MongoDB for local zero-config testing
     let attempts = 0;
     while (attempts < 3) {
@@ -124,7 +143,6 @@ export const connectDatabase = async (): Promise<string> => {
       }
     }
     throw new Error('[Database] Failed to connect to any MongoDB instance.');
-  }
 };
 
 export const closeDatabase = async (): Promise<void> => {

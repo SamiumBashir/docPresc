@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bookmark, Sparkles, Check, Plus, Trash2 } from 'lucide-react';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { Modal } from '../ui/Modal';
 import { api } from '../../api/client';
 import { showToast } from '../ui/Toast';
@@ -77,7 +78,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
       });
 
       if (res.success) {
-        showToast.success('Template saved successfully!');
+        showToast.success('Template saved successfully.');
         setTemplateName('');
         setDescription('');
         onClose();
@@ -185,7 +186,10 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
       ) : (
         <div className="space-y-3">
           {isLoading ? (
-            <div className="py-8 text-center text-slate-400 text-sm">Loading templates...</div>
+            <div className="py-8 flex flex-col items-center justify-center gap-2 text-center text-slate-400 text-sm">
+              <InfinityLoop className="w-10 h-5 text-medical-600" duration="1.6s" />
+              <span className="text-xs text-slate-500">Loading templates...</span>
+            </div>
           ) : templates.length === 0 ? (
             <div className="py-8 text-center text-slate-500 text-sm space-y-2">
               <p>No saved prescription templates found.</p>

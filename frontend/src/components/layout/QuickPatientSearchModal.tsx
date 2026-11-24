@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, User, Phone, Calendar, ArrowRight, UserPlus, History } from 'lucide-react';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { Modal } from '../ui/Modal';
 import { api } from '../../api/client';
 import { IPatient } from '../../types';
@@ -86,7 +87,10 @@ export const QuickPatientSearchModal: React.FC<QuickPatientSearchModalProps> = (
         {/* Results List */}
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {isLoading ? (
-            <div className="py-8 text-center text-slate-400 text-sm">Searching patient database...</div>
+            <div className="py-8 flex flex-col items-center justify-center gap-2 text-center text-slate-400 text-sm">
+              <InfinityLoop className="w-10 h-5 text-medical-600" duration="1.6s" />
+              <span className="text-xs text-slate-500">Searching patient database...</span>
+            </div>
           ) : patients.length === 0 ? (
             <div className="py-8 text-center space-y-3">
               <p className="text-sm text-slate-500">No matching patient records found.</p>

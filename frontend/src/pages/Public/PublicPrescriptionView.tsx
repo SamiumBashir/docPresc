@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Printer, CheckCircle2, ShieldCheck, Stethoscope } from 'lucide-react';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
 import { LivePrescriptionPad } from '../../components/prescription/LivePrescriptionPad';
 import { IPrescription, IChamber } from '../../types';
@@ -53,8 +54,8 @@ export const PublicPrescriptionView: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="text-center space-y-2">
-          <div className="w-8 h-8 border-3 border-medical-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <div className="text-center space-y-3">
+          <InfinityLoop className="w-16 h-8 text-medical-600 mx-auto" duration="1.8s" strokeWidth={5.5} />
           <p className="text-xs text-slate-500 font-medium">Verifying and loading digital prescription...</p>
         </div>
       </div>

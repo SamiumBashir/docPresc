@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Stethoscope, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Stethoscope, Eye, EyeOff } from 'lucide-react';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
 
@@ -64,7 +65,7 @@ export const Register: React.FC = () => {
       });
 
       if (res.success) {
-        showToast.success('Doctor account registered successfully! A welcome email has been dispatched (please check Inbox and Spam).');
+        showToast.success('Doctor account registered. A welcome email has been sent.');
         navigate('/login');
       }
     } catch (err: any) {
@@ -81,11 +82,11 @@ export const Register: React.FC = () => {
       className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
     >
       <div className="sm:mx-auto sm:w-full sm:max-w-lg relative z-10 text-center space-y-2">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-medical-600 to-medical-500 flex items-center justify-center text-white mx-auto shadow-lg shadow-medical-600/30">
+        <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-teal-400 mx-auto shadow-sm">
           <Stethoscope className="w-8 h-8" aria-hidden="true" />
         </div>
-        <h1 className="text-3xl font-black text-white tracking-tight">Doctor Registration</h1>
-        <p className="text-xs text-slate-300">
+        <h1 className="text-2xl font-semibold text-white tracking-tight">Doctor Registration</h1>
+        <p className="text-xs text-slate-400">
           Create your verified doctor profile
         </p>
       </div>
@@ -97,7 +98,7 @@ export const Register: React.FC = () => {
             <div>
               <label
                 htmlFor="reg-name"
-                className="block text-xs font-bold text-slate-200 uppercase mb-1"
+                className="block text-xs font-medium text-slate-300 mb-1"
               >
                 Full Name *
               </label>
@@ -119,7 +120,7 @@ export const Register: React.FC = () => {
               <div>
                 <label
                   htmlFor="reg-email"
-                  className="block text-xs font-bold text-slate-200 uppercase mb-1"
+                  className="block text-xs font-medium text-slate-300 mb-1"
                 >
                   Email Address *
                 </label>
@@ -139,7 +140,7 @@ export const Register: React.FC = () => {
               <div>
                 <label
                   htmlFor="reg-phone"
-                  className="block text-xs font-bold text-slate-200 uppercase mb-1"
+                  className="block text-xs font-medium text-slate-300 mb-1"
                 >
                   Phone Number *
                 </label>
@@ -163,7 +164,7 @@ export const Register: React.FC = () => {
                 <div className="flex items-center justify-between mb-1">
                   <label
                     htmlFor="reg-pwd"
-                    className="block text-xs font-bold text-slate-200 uppercase"
+                    className="block text-xs font-medium text-slate-300"
                   >
                     Password *
                   </label>
@@ -200,7 +201,7 @@ export const Register: React.FC = () => {
                 <div className="flex items-center justify-between mb-1">
                   <label
                     htmlFor="reg-confirm-pwd"
-                    className="block text-xs font-bold text-slate-200 uppercase"
+                    className="block text-xs font-medium text-slate-300"
                   >
                     Confirm Password *
                   </label>
@@ -236,8 +237,8 @@ export const Register: React.FC = () => {
 
             {/* Password Requirements Live Checklist */}
             <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-700/60 space-y-1.5 text-[11px]">
-              <p className="text-slate-400 font-semibold text-[10px] uppercase tracking-wider">
-                Password Requirements:
+              <p className="text-slate-400 font-medium text-xs">
+                Password requirements:
               </p>
               <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
                 <div
@@ -305,7 +306,7 @@ export const Register: React.FC = () => {
               </p>
             )}
 
-            {/* Dynamic Sign In Button (Disabled until all fields are valid) */}
+            {/* Registration Submit Button */}
             <button
               type="submit"
               disabled={!isFormValid || isLoading}
@@ -314,21 +315,21 @@ export const Register: React.FC = () => {
               title={
                 !isFormValid
                   ? 'Please fill in all fields properly according to password requirements to enable'
-                  : 'Click to Sign In'
+                  : 'Click to register'
               }
-              className={`w-full py-2.5 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 ${
+              className={`w-full py-2.5 font-medium rounded-xl text-sm transition-colors active:scale-[0.98] flex items-center justify-center gap-2 ${
                 isFormValid && !isLoading
-                  ? 'bg-medical-600 hover:bg-medical-700 text-white shadow-md shadow-medical-600/25 cursor-pointer hover:scale-[1.01] active:scale-[0.99]'
+                  ? 'bg-medical-600 hover:bg-medical-700 text-white cursor-pointer'
                   : 'bg-slate-700/60 text-slate-400 border border-slate-700/50 cursor-not-allowed opacity-60'
               }`}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin text-white" aria-hidden="true" />
-                  <span>Signing In...</span>
+                  <InfinityLoop className="w-7 h-3.5 text-white" duration="1.6s" strokeWidth={7} />
+                  <span>Creating account...</span>
                 </>
               ) : (
-                <span>Sign In</span>
+                <span>Register</span>
               )}
             </button>
           </form>

@@ -68,7 +68,7 @@ export const MedicineFormModal: React.FC<Props> = ({
         <form onSubmit={onSubmit} className="space-y-4 mt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-xs font-medium text-slate-400 mb-1">
                 Brand Name *
               </label>
               <input
@@ -82,7 +82,7 @@ export const MedicineFormModal: React.FC<Props> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-xs font-medium text-slate-400 mb-1">
                 Generic Name *
               </label>
               <input
@@ -98,7 +98,7 @@ export const MedicineFormModal: React.FC<Props> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-xs font-medium text-slate-400 mb-1">
                 Medicine System
               </label>
               <select
@@ -114,7 +114,7 @@ export const MedicineFormModal: React.FC<Props> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-xs font-medium text-slate-400 mb-1">
                 Dosage Form
               </label>
               <select
@@ -131,7 +131,7 @@ export const MedicineFormModal: React.FC<Props> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-xs font-medium text-slate-400 mb-1">
                 Strength
               </label>
               <input
@@ -145,7 +145,7 @@ export const MedicineFormModal: React.FC<Props> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+            <label className="block text-xs font-medium text-slate-400 mb-1">
               Manufacturer
             </label>
             <input
@@ -167,14 +167,14 @@ export const MedicineFormModal: React.FC<Props> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition-colors"
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isPending}
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/30 transition-all"
+              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors active:scale-[0.98]"
             >
               {isPending ? 'Saving...' : 'Save Medicine'}
             </button>

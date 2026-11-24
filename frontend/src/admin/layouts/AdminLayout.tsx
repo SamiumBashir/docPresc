@@ -23,7 +23,7 @@ export const AdminLayout: React.FC = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    navigate('/admin/login');
   };
 
   const navItems = [
@@ -92,14 +92,14 @@ export const AdminLayout: React.FC = () => {
         </div>
 
         {/* Navigation links */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
-          <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            System Modules
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+          <div className="px-3 pb-2 text-xs font-medium text-slate-400">
+            System modules
           </div>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.exact
-              ? location.pathname === '/admin' || location.pathname === '/admin/'
+              ? location.pathname === '/admin' || location.pathname === '/admin/' || location.pathname === '/admin/dashboard'
               : location.pathname.startsWith(item.to);
 
             return (
@@ -107,22 +107,22 @@ export const AdminLayout: React.FC = () => {
                 key={item.to}
                 to={item.to}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 group ${
+                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-colors duration-150 ${
                   isActive
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                    ? 'bg-indigo-600 text-white'
                     : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon
-                    className={`w-4 h-4 transition-transform group-hover:scale-110 ${
+                    className={`w-4 h-4 ${
                       isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-400'
                     }`}
                   />
                   <span>{item.label}</span>
                 </div>
                 {item.badge && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     {item.badge}
                   </span>
                 )}
@@ -130,12 +130,12 @@ export const AdminLayout: React.FC = () => {
             );
           })}
 
-          <div className="pt-6 px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Clinical Workspace
+          <div className="pt-6 px-3 pb-2 text-xs font-medium text-slate-400">
+            Clinical workspace
           </div>
           <NavLink
             to="/dashboard"
-            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:bg-slate-800/80 hover:text-white transition-all duration-200"
+            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:bg-slate-800/80 hover:text-white transition-colors duration-150"
           >
             <div className="flex items-center gap-3">
               <Stethoscope className="w-4 h-4 text-emerald-400" />
@@ -182,16 +182,22 @@ export const AdminLayout: React.FC = () => {
             <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
               <span>Admin Center</span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-slate-200 capitalize">
-                {location.pathname.replace('/admin', '').replace('/', '') || 'Dashboard'}
+              <span className="text-slate-200">
+                {location.pathname.includes('/doctors')
+                  ? 'Doctors & BMDC Verification'
+                  : location.pathname.includes('/medicines')
+                  ? 'Medicine Database'
+                  : location.pathname.includes('/audit-logs')
+                  ? 'Security & Audit Logs'
+                  : 'Executive Dashboard'}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              System Status: Optimal
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              System status: optimal
             </div>
           </div>
         </header>

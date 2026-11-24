@@ -6,7 +6,9 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import routes from './routes';
+import v1Routes from './routes/v1';
 import { errorHandler } from './middleware/errorHandler';
+import { authenticate, requireRole } from './middleware/auth';
 import { ENV } from './config/env';
 import { connectDatabase, isDatabaseConnected } from './config/db';
 import { testSmtpDiagnostics } from './services/email.service';
@@ -25,16 +27,35 @@ export const createApp = () => {
     })
   );
 
-  // CORS configuration
+  // CORS configuration with strict explicit allowlist
+  const allowedOrigins = (ENV.CORS_ORIGIN || '')
+    .split(',')
+    .map((o) => o.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+
   app.use(
     cors({
       origin: (origin, callback) => {
-        // Reflect incoming origin for full cross-origin compatibility
-        callback(null, true);
+        // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+        if (!origin) {
+          return callback(null, true);
+        }
+        const cleanOrigin = origin.replace(/\/+$/, '');
+        const isAllowed =
+          allowedOrigins.includes(cleanOrigin) ||
+          (ENV.NODE_ENV !== 'production' &&
+            (cleanOrigin.startsWith('http://localhost:') ||
+              cleanOrigin.startsWith('http://127.0.0.1:')));
+
+        if (isAllowed) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Not allowed by CORS: ${origin}`));
+        }
       },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Request-ID'],
     })
   );
 
@@ -65,6 +86,8 @@ export const createApp = () => {
   });
   app.use('/api/auth/login', authLimiter);
   app.use('/api/auth/register', authLimiter);
+  app.use('/api/v1/auth/login', authLimiter);
+  app.use('/api/v1/auth/register', authLimiter);
 
   // Rate Limiting on password recovery endpoints
   const passwordResetLimiter = rateLimit({
@@ -86,11 +109,17 @@ export const createApp = () => {
   app.use('/api/auth/resend-reset-otp', passwordResetLimiter);
   app.use('/api/auth/resend-otp', passwordResetLimiter);
   app.use('/api/auth/reset-password', passwordResetLimiter);
+  app.use('/api/v1/auth/forgot-password', passwordResetLimiter);
+  app.use('/api/v1/auth/verify-reset-otp', passwordResetLimiter);
+  app.use('/api/v1/auth/verify-otp', passwordResetLimiter);
+  app.use('/api/v1/auth/resend-reset-otp', passwordResetLimiter);
+  app.use('/api/v1/auth/resend-otp', passwordResetLimiter);
+  app.use('/api/v1/auth/reset-password', passwordResetLimiter);
 
   // Database connection assurance for serverless and traditional invocations
   app.use(async (req, res, next) => {
     // Health check and root route can respond immediately without blocking
-    if (req.path === '/' || req.path === '/api/health') {
+    if (req.path === '/' || req.path.startsWith('/api/health')) {
       return next();
     }
 
@@ -128,17 +157,63 @@ export const createApp = () => {
     });
   });
 
-  // SMTP Email Health Diagnostic Endpoint
-  app.get('/api/health/email-diagnostic', async (req, res) => {
+  // Liveness Probe (process is responsive)
+  app.get('/api/health/liveness', (_req, res) => {
+    res.json({
+      status: 'ok',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // Readiness Probe (can accept production traffic; database must be healthy)
+  app.get('/api/health/readiness', (_req, res) => {
+    const isDbConnected = isDatabaseConnected();
+    if (!isDbConnected) {
+      return res.status(503).json({
+        status: 'unready',
+        database: 'disconnected',
+        timestamp: new Date().toISOString(),
+      });
+    }
+    res.json({
+      status: 'ready',
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // SMTP Email Health Diagnostic Endpoint - Restricted to authenticated Admin users only
+  app.get('/api/health/email-diagnostic', authenticate, requireRole(['admin']), async (req, res) => {
+    // In production, disable arbitrary 'to' relaying
+    const targetEmail = ENV.NODE_ENV === 'production' ? undefined : ((req.query.to as string) || undefined);
     try {
-      const diagnostics = await testSmtpDiagnostics((req.query.to as string) || undefined);
-      res.json(diagnostics);
+      const diagnostics = await testSmtpDiagnostics(targetEmail);
+      // Redact sensitive password/secrets from output
+      const sanitized = {
+        ...diagnostics,
+        config: diagnostics?.config
+          ? {
+              ...diagnostics.config,
+              auth: diagnostics.config.auth
+                ? { user: diagnostics.config.auth.user, pass: '***REDACTED***' }
+                : undefined,
+            }
+          : undefined,
+      };
+      res.json(sanitized);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
   });
 
-  // Master API routes mounted at canonical /api
+  // API Documentation redirect
+  app.get('/api-docs', (_req, res) => res.redirect('/api/v1/docs'));
+
+  // Versioned API v1 (Modular Monolith)
+  app.use('/api/v1', v1Routes);
+
+  // Master API routes mounted at canonical /api (Backward Compatibility)
   app.use('/api', routes);
 
   // Fallback mount for environments where /api is stripped by an edge rewrite

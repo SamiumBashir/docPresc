@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, ShieldCheck, Phone, Mail, Award, Building, Save, Trash2, AlertTriangle, PenTool, Upload, Check, AlertCircle } from 'lucide-react';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
 import { showToast } from '../../components/ui/Toast';
@@ -607,7 +608,7 @@ export const DoctorProfile: React.FC = () => {
               >
                 {isUploadingSignature ? (
                   <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
-                    <div className="w-4 h-4 border-2 border-medical-600 border-t-transparent rounded-full animate-spin"></div>
+                    <InfinityLoop className="w-7 h-3.5 text-medical-600" duration="1.6s" strokeWidth={7} />
                     <span>Uploading signature to Cloudinary...</span>
                   </div>
                 ) : (
@@ -680,8 +681,8 @@ export const DoctorProfile: React.FC = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-700">
-              Type <span className="font-mono text-rose-600 font-black">DELETE</span> to confirm:
+            <label className="block text-xs font-medium text-slate-700">
+              Type <span className="font-mono text-rose-600 font-semibold">DELETE</span> to confirm:
             </label>
             <input
               type="text"

@@ -1,5 +1,7 @@
-export * as patientController from '../../controllers/patient.controller';
-export { default as patientRoutes } from '../../routes/patient.routes';
+export * from './patient.types';
+export * from './patient.validation';
+export * from './patient.repository';
+export * from './patient.service';
+export * from './patient.controller';
+export { default as patientRoutes } from './patient.routes';
 export { Patient, IPatient } from '../../models/Patient';
-export { patientRepository } from '../../repositories/patient.repository';
-export { PatientSchema } from '../../validators/schemas';

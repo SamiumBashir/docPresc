@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, Pill, Sparkles, Star, Plus, Leaf, X, AlertCircle } from 'lucide-react';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
 import { showToast } from '../ui/Toast';
 import { IMedicine } from '../../types';
@@ -94,7 +95,7 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
       });
 
       if (res.success && res.data) {
-        showToast.success(`Added ${res.data.brandName} to medicine database! 💊`);
+        showToast.success(`Added ${res.data.brandName} to medicine database.`);
         setIsModalOpen(false);
         setQuery('');
         onSelect(res.data);
@@ -248,15 +249,15 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
     <div className="relative space-y-2" ref={dropdownRef}>
       {/* Medicine System Selector Tabs */}
       <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+        <span className="text-xs font-medium text-slate-500 mr-1">
           System:
         </span>
         {[
           { id: 'all', label: 'All Systems (সব)' },
           { id: 'Allopathic', label: 'Allopathic (অ্যালোপ্যাথিক)' },
-          { id: 'Unani', label: '🌿 Unani (ইউনানি)' },
-          { id: 'Ayurvedic', label: '🌱 Ayurvedic (আয়ুর্বেদিক)' },
-          { id: 'Herbal', label: '🍀 Herbal (হারবাল)' },
+          { id: 'Unani', label: 'Unani (ইউনানি)' },
+          { id: 'Ayurvedic', label: 'Ayurvedic (আয়ুর্বেদিক)' },
+          { id: 'Herbal', label: 'Herbal (হারবাল)' },
         ].map((sys) => {
           const isActive = selectedType === sys.id;
           return (
@@ -305,8 +306,8 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
           className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 shadow-xs transition-all"
         />
         {isLoading && (
-          <div className="absolute right-3.5 top-3">
-            <div className="w-4 h-4 border-2 border-medical-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="absolute right-3.5 top-3 flex items-center pointer-events-none">
+            <InfinityLoop className="w-6 h-3 text-medical-600" duration="1.6s" strokeWidth={7} />
           </div>
         )}
       </div>
@@ -343,16 +344,16 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
 
                     {/* Unani / Ayurvedic / Herbal / Allopathic System Badge */}
                     {isUnani ? (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-0.5">
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-0.5">
                         <Leaf className="w-2.5 h-2.5" /> Unani (ইউনানি)
                       </span>
                     ) : isAyurvedic ? (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-0.5">
-                        🌱 Ayurvedic (আয়ুর্বেদিক)
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-0.5">
+                        <Leaf className="w-2.5 h-2.5" /> Ayurvedic (আয়ুর্বেদিক)
                       </span>
                     ) : isHerbal ? (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-teal-100 text-teal-800 border border-teal-200 flex items-center gap-0.5">
-                        🍀 Herbal
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-teal-100 text-teal-800 border border-teal-200 flex items-center gap-0.5">
+                        <Leaf className="w-2.5 h-2.5" /> Herbal
                       </span>
                     ) : (
                       <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-50 text-slate-500 border border-slate-200">
@@ -605,7 +606,10 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
                   className="px-5 py-2 rounded-xl bg-medical-600 hover:bg-medical-700 text-white text-xs font-bold shadow-xs hover:shadow transition-all disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {isSubmitting ? (
-                    'Saving...'
+                    <div className="flex items-center gap-1.5">
+                      <InfinityLoop className="w-6 h-3 text-white" duration="1.6s" strokeWidth={7} />
+                      <span>Saving...</span>
+                    </div>
                   ) : (
                     <>
                       <Plus className="w-3.5 h-3.5" /> Save & Prescribe

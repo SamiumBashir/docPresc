@@ -273,12 +273,15 @@ const LivePrescriptionPadComponent: React.FC<LivePrescriptionPadProps> = ({
                 Chief Complaints (C/C)
               </h4>
               <ul className="list-disc list-inside space-y-0.5 text-slate-800">
-                {chiefComplaints.map((cc, i) => (
-                  <li key={i} className="leading-snug">
-                    <span className="font-medium">{cc.complaint}</span>
-                    {cc.duration && <span className="text-slate-500 text-[10px] ml-1">({cc.duration})</span>}
-                  </li>
-                ))}
+                {chiefComplaints.map((cc, i) => {
+                  const cleanDuration = cc.duration ? cc.duration.replace(/^\((.*)\)$/, '$1').trim() : '';
+                  return (
+                    <li key={i} className="leading-snug">
+                      <span className="font-medium">{cc.complaint}</span>
+                      {cleanDuration && <span className="text-slate-500 text-[10px] ml-1 font-normal">({cleanDuration})</span>}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}

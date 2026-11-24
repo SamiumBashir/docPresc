@@ -1,10 +1,5 @@
-export * as authController from '../../controllers/auth.controller';
-export { default as authRoutes } from '../../routes/auth.routes';
-export {
-  RegisterDoctorSchema,
-  LoginSchema,
-  ForgotPasswordSchema,
-  VerifyOtpSchema,
-  ResendOtpSchema,
-  ResetPasswordSchema,
-} from '../../validators/schemas';
+export * from './auth.types';
+export * from './auth.validation';
+export * from './auth.service';
+export * from './auth.controller';
+export { default as authRoutes } from './auth.routes';

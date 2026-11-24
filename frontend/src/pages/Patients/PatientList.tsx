@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { InfinityLoop } from '@/components/loading-ui/infinity';
 import {
   Users,
   Search,
@@ -174,7 +175,7 @@ export const PatientList: React.FC = () => {
 
         <button
           onClick={handleOpenCreateModal}
-          className="flex items-center gap-1.5 px-4 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-xl font-semibold text-xs shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="flex items-center gap-1.5 px-3.5 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-xl font-medium text-xs shadow-xs transition-colors active:scale-[0.98]"
         >
           <Plus className="w-4 h-4" />
           <span>Register New Patient</span>
@@ -208,7 +209,7 @@ export const PatientList: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse min-w-[680px]">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-medium">
                 <th className="py-3 px-4">Patient ID</th>
                 <th className="py-3 px-4">Patient Name & Demographics</th>
                 <th className="py-3 px-4">Contact Info</th>
@@ -220,7 +221,10 @@ export const PatientList: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-slate-400">
-                    Loading patient records...
+                    <div className="flex flex-col items-center gap-2">
+                      <InfinityLoop className="w-12 h-6 text-medical-600" duration="1.8s" strokeWidth={5.5} />
+                      <span className="text-xs text-slate-500 font-medium">Loading patient records...</span>
+                    </div>
                   </td>
                 </tr>
               ) : patients.length === 0 ? (
