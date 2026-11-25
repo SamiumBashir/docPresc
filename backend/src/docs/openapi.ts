@@ -1,4 +1,4 @@
-export const openApiSpec = {
+export const openApiSpec: Record<string, any> = {
   openapi: '3.0.3',
   info: {
     title: 'docPresc API',

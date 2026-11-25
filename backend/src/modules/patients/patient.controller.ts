@@ -3,6 +3,7 @@ import { patientService, PatientService } from './patient.service';
 import { AuthRequest } from '../../shared/types';
 import { logAuditEvent } from '../../middleware/audit';
 import { PatientSchema } from './patient.validation';
+import { CreatePatientDTO, UpdatePatientDTO } from './patient.types';
 
 export class PatientController {
   constructor(private service: PatientService = patientService) {}
@@ -47,7 +48,7 @@ export class PatientController {
       return;
     }
 
-    const validated = PatientSchema.parse(req.body);
+    const validated = PatientSchema.parse(req.body) as CreatePatientDTO;
     const patient = await this.service.createPatient(validated, doctorId);
 
     await logAuditEvent(req, {
@@ -73,7 +74,7 @@ export class PatientController {
       return;
     }
 
-    const validated = PatientSchema.parse(req.body);
+    const validated = PatientSchema.parse(req.body) as UpdatePatientDTO;
     const patient = await this.service.updatePatient(id, doctorId, validated);
 
     await logAuditEvent(req, {
