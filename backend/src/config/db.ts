@@ -36,14 +36,26 @@ export const connectDatabase = async (): Promise<string> => {
     : (ENV.MONGODB_URI || process.env.MONGODB_URI);
 
   // 1. If connection is already open, reuse immediately
-  if (mongoose.connection.readyState === 1) {
+  if (isDatabaseConnected()) {
     cached.conn = mongoose;
     return uri || 'mongodb://connected';
   }
 
-  // 2. If a connection is in-flight, await the existing promise
+  // Clear stale cached handle if underlying socket disconnected
   if (cached.conn) {
-    return uri || 'mongodb://connected';
+    cached.conn = null;
+  }
+
+  // 2. If a connection attempt is already in-flight, await the existing promise
+  if (cached.promise) {
+    try {
+      cached.conn = await cached.promise;
+      if (isDatabaseConnected()) {
+        return uri || 'mongodb://connected';
+      }
+    } catch {
+      cached.promise = null;
+    }
   }
 
   // 3. Connect to external MongoDB if URI is provided AND NOT in test mode without explicit test URI

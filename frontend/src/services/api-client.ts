@@ -47,12 +47,16 @@ export const clearAuthTokens = (): void => {
 export const getApiUrl = (endpoint: string): string => {
   let base = (
     import.meta.env.VITE_API_BASE_URL ||
-    (import.meta.env.PROD ? 'https://presc-backend.vercel.app/api' : '/api')
+    (import.meta.env.PROD ? 'https://doc-presc-x1o8.vercel.app/api' : '/api')
   ).replace(/\/+$/, '');
 
   // Self-healing migration safeguard: route to active Vercel serverless backend
-  if (base.includes('docpresc.onrender.com') || base.includes('presc-backend.onrender.com')) {
-    base = 'https://presc-backend.vercel.app/api';
+  if (
+    base.includes('docpresc.onrender.com') ||
+    base.includes('presc-backend.onrender.com') ||
+    base.includes('presc-backend.vercel.app')
+  ) {
+    base = 'https://doc-presc-x1o8.vercel.app/api';
   }
   const path = endpoint.replace(/^\/+/, '');
   return `${base}/${path}`;

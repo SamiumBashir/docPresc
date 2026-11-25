@@ -147,11 +147,36 @@ export const createApp = () => {
     });
   });
 
-  app.get('/api/health', (req, res) => {
-    const isDbConnected = isDatabaseConnected();
+  // Helper to verify/warm DB connection for health & readiness probes without exposing secrets
+  const checkDatabaseHealth = async (): Promise<{ connected: boolean; errorHint?: string }> => {
+    if (isDatabaseConnected()) {
+      return { connected: true };
+    }
+    try {
+      await connectDatabase();
+      return { connected: isDatabaseConnected() };
+    } catch (err: any) {
+      const msg = String(err?.message || '');
+      let errorHint = 'Connection unavailable';
+      if (msg.includes('bad auth') || msg.includes('Authentication failed')) {
+        errorHint = 'Authentication failed (verify MONGODB_URI credentials)';
+      } else if (msg.includes('ENOTFOUND') || msg.includes('querySrv')) {
+        errorHint = 'DNS or host resolution failed (verify MONGODB_URI host)';
+      } else if (msg.includes('timed out') || msg.includes('Server selection timed out')) {
+        errorHint = 'Connection timed out (verify MongoDB Atlas Network Access allows 0.0.0.0/0)';
+      } else if (ENV.NODE_ENV !== 'production' && msg) {
+        errorHint = msg;
+      }
+      return { connected: false, errorHint };
+    }
+  };
+
+  app.get('/api/health', async (_req, res) => {
+    const { connected, errorHint } = await checkDatabaseHealth();
     res.json({
       status: 'ok',
-      database: isDbConnected ? 'connected' : 'disconnected',
+      database: connected ? 'connected' : 'disconnected',
+      ...(errorHint && !connected ? { databaseError: errorHint } : {}),
       serverless: Boolean(process.env.VERCEL),
       timestamp: new Date().toISOString(),
     });
@@ -167,14 +192,16 @@ export const createApp = () => {
   });
 
   // Readiness Probe (can accept production traffic; database must be healthy)
-  app.get('/api/health/readiness', (_req, res) => {
-    const isDbConnected = isDatabaseConnected();
-    if (!isDbConnected) {
-      return res.status(503).json({
+  app.get('/api/health/readiness', async (_req, res) => {
+    const { connected, errorHint } = await checkDatabaseHealth();
+    if (!connected) {
+      res.status(503).json({
         status: 'unready',
         database: 'disconnected',
+        ...(errorHint ? { databaseError: errorHint } : {}),
         timestamp: new Date().toISOString(),
       });
+      return;
     }
     res.json({
       status: 'ready',
