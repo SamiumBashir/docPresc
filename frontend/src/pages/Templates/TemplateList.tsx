@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Bookmark, Plus, Trash2, Edit2, Sparkles, Check } from 'lucide-react';
 import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 import { ITemplate } from '../../types';
 
 export const TemplateList: React.FC = () => {
@@ -17,7 +16,7 @@ export const TemplateList: React.FC = () => {
         setTemplates(res.data);
       }
     } catch {
-      showToast.error('Failed to load templates.');
+      setTemplates([]);
     } finally {
       setIsLoading(false);
     }
@@ -33,10 +32,7 @@ export const TemplateList: React.FC = () => {
     try {
       await api(`/templates/${id}`, { method: 'DELETE' });
       setTemplates(templates.filter((t) => t._id !== id));
-      showToast.success('Template deleted.');
-    } catch {
-      showToast.error('Failed to delete template.');
-    }
+    } catch { }
   };
 
   return (

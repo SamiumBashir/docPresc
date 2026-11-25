@@ -1,9 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Stethoscope, Eye, EyeOff } from 'lucide-react';
+import { Stethoscope, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 
 export const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -16,6 +15,7 @@ export const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const isSubmittingRef = useRef(false);
   const navigate = useNavigate();
 
@@ -51,6 +51,7 @@ export const Register: React.FC = () => {
       return;
     }
 
+    setErrorMessage(null);
     isSubmittingRef.current = true;
     setIsLoading(true);
     try {
@@ -65,11 +66,10 @@ export const Register: React.FC = () => {
       });
 
       if (res.success) {
-        showToast.success('Doctor account registered. A welcome email has been sent.');
         navigate('/login');
       }
     } catch (err: any) {
-      showToast.error(err.message || 'Registration failed. Please check your details.');
+      setErrorMessage(err.message || 'Registration failed. Please check your details.');
     } finally {
       setIsLoading(false);
       isSubmittingRef.current = false;
@@ -94,6 +94,15 @@ export const Register: React.FC = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg relative z-10">
         <div className="bg-slate-800/90 backdrop-blur-xl py-8 px-6 shadow-2xl rounded-3xl border border-slate-700/60 sm:px-10 space-y-5">
           <form onSubmit={handleSubmit} role="form" aria-label="Doctor Registration Form" className="space-y-4">
+            {errorMessage && (
+              <div
+                role="alert"
+                className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg flex items-center gap-2 text-rose-300 text-xs"
+              >
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" aria-hidden="true" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
             {/* Full Name */}
             <div>
               <label

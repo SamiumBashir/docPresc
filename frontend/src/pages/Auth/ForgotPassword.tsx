@@ -15,9 +15,9 @@ import {
   Check,
   X,
   AlertTriangle,
+  AlertCircle,
 } from 'lucide-react';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 
 type WizardStep = 'EMAIL' | 'OTP' | 'PASSWORD' | 'SUCCESS';
 
@@ -44,6 +44,7 @@ export const ForgotPassword: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [resendTimer, setResendTimer] = useState(60);
   const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
 
@@ -68,9 +69,10 @@ export const ForgotPassword: React.FC = () => {
     if (e) e.preventDefault();
     if (isLoading || isSubmittingRef.current) return;
 
+    setErrorMessage(null);
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail) {
-      showToast.error('Please enter your registered email address');
+      setErrorMessage('Please enter your registered email address');
       return;
     }
 
@@ -90,14 +92,13 @@ export const ForgotPassword: React.FC = () => {
         setResendTimer(60);
         setAttemptsRemaining(5);
         setOtp(['', '', '', '', '', '']);
-        showToast.success('Verification code sent to your email');
 
         setTimeout(() => {
           otpInputRefs.current[0]?.focus();
         }, 100);
       }
     } catch (err: any) {
-      showToast.error(err.message || 'Unable to send verification code');
+      setErrorMessage(err.message || 'Unable to send verification code');
     } finally {
       setIsLoading(false);
       isSubmittingRef.current = false;
@@ -156,9 +157,10 @@ export const ForgotPassword: React.FC = () => {
     e.preventDefault();
     if (isLoading || isSubmittingRef.current) return;
 
+    setErrorMessage(null);
     const otpCode = otp.join('');
     if (otpCode.length !== 6) {
-      showToast.error('Enter all 6 verification digits');
+      setErrorMessage('Enter all 6 verification digits');
       return;
     }
 
@@ -179,10 +181,9 @@ export const ForgotPassword: React.FC = () => {
       if (res.success && token) {
         setResetToken(token);
         setStep('PASSWORD');
-        showToast.success('Code verified. Create your new password');
       }
     } catch (err: any) {
-      showToast.error(err.message || 'Invalid or expired code');
+      setErrorMessage(err.message || 'Invalid or expired code');
       if (err.message && err.message.includes('attempts remaining')) {
         const match = err.message.match(/(\d+)\s+attempt/);
         if (match) setAttemptsRemaining(parseInt(match[1], 10));
@@ -197,6 +198,7 @@ export const ForgotPassword: React.FC = () => {
   const handleResendOtp = async () => {
     if (resendTimer > 0 || isLoading || isSubmittingRef.current) return;
 
+    setErrorMessage(null);
     isSubmittingRef.current = true;
     setIsLoading(true);
     try {
@@ -212,14 +214,13 @@ export const ForgotPassword: React.FC = () => {
         setResendTimer(60);
         setAttemptsRemaining(5);
         setOtp(['', '', '', '', '', '']);
-        showToast.success('New verification code sent to your email');
 
         setTimeout(() => {
           otpInputRefs.current[0]?.focus();
         }, 100);
       }
     } catch (err: any) {
-      showToast.error(err.message || 'Unable to resend verification code');
+      setErrorMessage(err.message || 'Unable to resend verification code');
     } finally {
       setIsLoading(false);
       isSubmittingRef.current = false;
@@ -231,28 +232,29 @@ export const ForgotPassword: React.FC = () => {
     e.preventDefault();
     if (isLoading || isSubmittingRef.current) return;
 
+    setErrorMessage(null);
     if (!newPassword || newPassword.length < 8) {
-      showToast.error('Password must be at least 8 characters');
+      setErrorMessage('Password must be at least 8 characters');
       return;
     }
 
     if (!/[A-Z]/.test(newPassword)) {
-      showToast.error('Include at least one uppercase letter (A-Z)');
+      setErrorMessage('Include at least one uppercase letter (A-Z)');
       return;
     }
 
     if (!/[a-z]/.test(newPassword)) {
-      showToast.error('Include at least one lowercase letter (a-z)');
+      setErrorMessage('Include at least one lowercase letter (a-z)');
       return;
     }
 
     if (!/[^A-Za-z0-9]/.test(newPassword)) {
-      showToast.error('Include at least one special character');
+      setErrorMessage('Include at least one special character');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      showToast.error('Passwords do not match');
+      setErrorMessage('Passwords do not match');
       return;
     }
 
@@ -277,10 +279,9 @@ export const ForgotPassword: React.FC = () => {
         setResetToken('');
         setNewPassword('');
         setConfirmPassword('');
-        showToast.success('Password updated. Sign in with your new credentials');
       }
     } catch (err: any) {
-      showToast.error(err.message || 'Unable to update password');
+      setErrorMessage(err.message || 'Unable to update password');
     } finally {
       setIsLoading(false);
       isSubmittingRef.current = false;
@@ -375,6 +376,15 @@ export const ForgotPassword: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-slate-800 py-8 px-6 shadow-lg rounded-2xl border border-slate-700/80 sm:px-8 space-y-6">
+          {errorMessage && step !== 'SUCCESS' && (
+            <div
+              role="alert"
+              className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg flex items-center gap-2 text-rose-300 text-xs"
+            >
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" aria-hidden="true" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
           {/* ========================================================================= */}
           {/* STEP 1: EMAIL INPUT                                                        */}
           {/* ========================================================================= */}

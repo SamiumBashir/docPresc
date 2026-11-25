@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Stethoscope, ShieldCheck, Check, X, Search, ChevronRight } from 'lucide-react';
 import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 import { IDoctor } from '../../types';
 
 export const AdminDoctors: React.FC = () => {
@@ -17,7 +16,7 @@ export const AdminDoctors: React.FC = () => {
         setDoctors(res.data);
       }
     } catch {
-      showToast.error('Failed to load doctors list.');
+      setDoctors([]);
     } finally {
       setIsLoading(false);
     }
@@ -34,12 +33,9 @@ export const AdminDoctors: React.FC = () => {
         body: JSON.stringify({ status }),
       });
       if (res.success) {
-        showToast.success(`Doctor account status set to ${status}.`);
         fetchDoctors();
       }
-    } catch (err: any) {
-      showToast.error(err.message || 'Failed to update status.');
-    }
+    } catch { }
   };
 
   return (

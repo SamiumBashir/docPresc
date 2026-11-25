@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Stethoscope, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle, X } from 'lucide-react';
 import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { useAuth } from '../../context/AuthContext';
-import { showToast } from '../../components/ui/Toast';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState(() => localStorage.getItem('docrx_saved_email') || '');
@@ -44,7 +43,6 @@ export const Login: React.FC = () => {
     if (!cleanEmail || !cleanPassword) {
       const msg = 'Please enter both email address and password. (অনুগ্রহ করে ইমেইল ও পাসওয়ার্ড লিখুন)';
       setErrorMessage(msg);
-      showToast.error(msg);
       return;
     }
 
@@ -52,14 +50,12 @@ export const Login: React.FC = () => {
     if (!emailRegex.test(cleanEmail)) {
       const msg = 'Please enter a valid email address. (সঠিক ইমেইল ঠিকানা দিন)';
       setErrorMessage(msg);
-      showToast.error(msg);
       return;
     }
 
     if (cleanPassword.length < 1) {
       const msg = 'Please enter your password. (পাসওয়ার্ড লিখুন)';
       setErrorMessage(msg);
-      showToast.error(msg);
       return;
     }
 
@@ -80,7 +76,6 @@ export const Login: React.FC = () => {
       await login(cleanEmail, cleanPassword, rememberMe);
 
       // 4. Access granted only after server successfully verifies credentials
-      showToast.success('Credentials verified');
       const storedUser = JSON.parse(localStorage.getItem('docrx_user') || '{}');
       if (storedUser.role === 'admin') {
         navigate('/admin', { replace: true });
@@ -99,7 +94,6 @@ export const Login: React.FC = () => {
         friendlyError = err.message;
       }
       setErrorMessage(friendlyError);
-      showToast.error(friendlyError, 'Authentication Failed');
     } finally {
       setIsLoading(false);
       isSubmittingRef.current = false;

@@ -18,7 +18,6 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 import { IPatient, IPrescription } from '../../types';
 
 interface PatientHistoryData {
@@ -51,8 +50,8 @@ export const PatientDetails: React.FC = () => {
         if (res.success && res.data) {
           setData(res.data);
         }
-      } catch (err: any) {
-        showToast.error('Failed to load patient history.');
+      } catch {
+        setData(null);
       } finally {
         setIsLoading(false);
       }

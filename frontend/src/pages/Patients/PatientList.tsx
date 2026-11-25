@@ -15,7 +15,6 @@ import {
   Filter,
 } from 'lucide-react';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 import { Modal } from '../../components/ui/Modal';
 import { IPatient } from '../../types';
 
@@ -30,6 +29,7 @@ export const PatientList: React.FC = () => {
   // Modal State for New/Edit Patient
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<IPatient | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -62,8 +62,8 @@ export const PatientList: React.FC = () => {
         setTotalPages(res.data.pagination.totalPages);
         setTotalCount(res.data.pagination.total);
       }
-    } catch (err: any) {
-      showToast.error('Failed to load patients.');
+    } catch {
+      setPatients([]);
     } finally {
       setIsLoading(false);
     }
@@ -117,8 +117,9 @@ export const PatientList: React.FC = () => {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     if (!formData.name || !formData.phone || !formData.age) {
-      showToast.error('Name, Phone, and Age are required.');
+      setFormError('Name, Phone, and Age are required.');
       return;
     }
 
@@ -146,19 +147,17 @@ export const PatientList: React.FC = () => {
           method: 'PUT',
           body: JSON.stringify(payload),
         });
-        showToast.success('Patient record updated.');
       } else {
         await api('/patients', {
           method: 'POST',
           body: JSON.stringify(payload),
         });
-        showToast.success('New patient registered successfully.');
       }
 
       setIsModalOpen(false);
       fetchPatients(search, page);
     } catch (err: any) {
-      showToast.error(err.message || 'Failed to save patient.');
+      setFormError(err.message || 'Failed to save patient.');
     }
   };
 
@@ -349,12 +348,20 @@ export const PatientList: React.FC = () => {
       {/* Create / Edit Patient Modal */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setFormError(null);
+        }}
         title={editingPatient ? 'Edit Patient Details' : 'Register New Patient'}
         subtitle="Only Name, Phone, and Age are mandatory for fast prescription writing"
         maxWidth="max-w-xl"
       >
         <form onSubmit={handleFormSubmit} className="space-y-4">
+          {formError && (
+            <div role="alert" className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700">
+              {formError}
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">

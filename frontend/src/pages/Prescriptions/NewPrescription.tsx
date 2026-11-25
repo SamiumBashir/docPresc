@@ -16,11 +16,11 @@ import {
   RotateCcw,
   FileEdit,
   Eye,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 import { Modal } from '../../components/ui/Modal';
 import { LivePrescriptionPad } from '../../components/prescription/LivePrescriptionPad';
 import { MedicineAutocomplete } from '../../components/prescription/MedicineAutocomplete';
@@ -91,6 +91,8 @@ export const NewPrescription: React.FC = () => {
   // UI / Action State
   const [paperSize, setPaperSize] = useState<'A4' | 'Letter' | 'A5'>('A4');
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [quickPatientError, setQuickPatientError] = useState<string | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
   const [prescriptionId, setPrescriptionId] = useState('RX-NEW-DRAFT');
   const [shareToken, setShareToken] = useState('draft_token');
@@ -138,7 +140,6 @@ export const NewPrescription: React.FC = () => {
             setInvestigations(rx.investigations || []);
             setAdvice(rx.advice || []);
             if (rx.followUp) setFollowUp(rx.followUp);
-            showToast.info('Cloned previous prescription contents ready for editing.');
           }
         })
         .catch(() => { });
@@ -225,7 +226,6 @@ export const NewPrescription: React.FC = () => {
         if (data.investigations) setInvestigations(data.investigations);
         if (data.advice) setAdvice(data.advice);
         if (data.followUp) setFollowUp(data.followUp);
-        showToast.success('Unfinished draft restored successfully.');
       } catch { }
     }
     setHasAutosaveDraft(false);
@@ -267,7 +267,7 @@ export const NewPrescription: React.FC = () => {
 
     setMedicines([...medicines, newMed]);
     setActiveMedicine(null);
-    showToast.success(`Added ${newMed.brandName} to prescription.`);
+    setSaveError(null);
   };
 
   const handleUpdateMedicine = (index: number, updated: Partial<IPrescriptionMedicine>) => {
@@ -299,8 +299,9 @@ export const NewPrescription: React.FC = () => {
   // Quick Add Patient
   const handleCreateQuickPatient = async (e: React.FormEvent) => {
     e.preventDefault();
+    setQuickPatientError(null);
     if (!newPatientForm.name || !newPatientForm.age) {
-      showToast.error('Name and Age are required.');
+      setQuickPatientError('Name and Age are required.');
       return;
     }
 
@@ -320,11 +321,12 @@ export const NewPrescription: React.FC = () => {
       if (res.success && res.data) {
         setSelectedPatient(res.data);
         setShowNewPatientModal(false);
+        setQuickPatientError(null);
+        setSaveError(null);
         setNewPatientForm({ name: '', phone: '', address: '', age: '', gender: 'Male', bloodGroup: 'Unknown' });
-        showToast.success(`Patient ${res.data.name} created successfully.`);
       }
     } catch (err: any) {
-      showToast.error(err.message || 'Failed to create patient.');
+      setQuickPatientError(err.message || 'Failed to create patient.');
     }
   };
 
@@ -348,18 +350,21 @@ export const NewPrescription: React.FC = () => {
     if (template.followUpDuration) {
       setFollowUp({ duration: template.followUpDuration });
     }
-    showToast.success(`Applied template: "${template.name}"`);
+    setSaveError(null);
   };
 
   // Save Prescription (DRAFT or FINALIZED)
   const handleSavePrescription = async (saveStatus: 'DRAFT' | 'FINALIZED') => {
+    setSaveError(null);
     if (!selectedPatient) {
-      showToast.error('Please select or register a patient first.');
+      setFinalizeConfirmOpen(false);
+      setSaveError('Please select or register a patient first.');
       return;
     }
 
     if (medicines.length === 0 && advice.length === 0 && investigations.length === 0) {
-      showToast.error('Please add at least one medicine, investigation, or advice.');
+      setFinalizeConfirmOpen(false);
+      setSaveError('Please add at least one medicine, investigation, or advice.');
       return;
     }
 
@@ -405,16 +410,11 @@ export const NewPrescription: React.FC = () => {
 
         if (saveStatus === 'FINALIZED') {
           setFinalizeConfirmOpen(false);
-          import('canvas-confetti').then(({ default: confetti }) => {
-            confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
-          });
-          showToast.success(`Prescription ${res.data.prescriptionId} finalized successfully.`);
-        } else {
-          showToast.success('Prescription draft saved.');
         }
       }
     } catch (err: any) {
-      showToast.error(err.message || 'Failed to save prescription.');
+      setFinalizeConfirmOpen(false);
+      setSaveError(err.message || 'Failed to save prescription.');
     } finally {
       setIsSaving(false);
     }
@@ -453,8 +453,8 @@ export const NewPrescription: React.FC = () => {
     setPrescriptionId('RX-NEW-DRAFT');
     setShareToken('draft_token');
     localStorage.removeItem('docrx_autosave_draft');
+    setSaveError(null);
     navigate('/prescriptions/new', { replace: true });
-    showToast.success('Workspace reset for a new prescription.');
   };
 
   return (
@@ -624,6 +624,24 @@ export const NewPrescription: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Inline Save Validation Error */}
+      {saveError && (
+        <div
+          role="alert"
+          className="no-print bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5 flex items-center justify-between text-xs text-rose-800"
+        >
+          <span>{saveError}</span>
+          <button
+            type="button"
+            onClick={() => setSaveError(null)}
+            aria-label="Dismiss error"
+            className="text-rose-500 hover:text-rose-700 p-1 rounded"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Mobile/Tablet Workspace View Switcher Tab Bar (< xl) */}
       <div className="no-print xl:hidden bg-slate-200/80 p-1 rounded-xl flex items-center gap-1 shadow-2xs">
@@ -901,12 +919,20 @@ export const NewPrescription: React.FC = () => {
       {/* Quick New Patient Modal */}
       <Modal
         isOpen={showNewPatientModal}
-        onClose={() => setShowNewPatientModal(false)}
+        onClose={() => {
+          setShowNewPatientModal(false);
+          setQuickPatientError(null);
+        }}
         title="Register New Patient"
         subtitle="Quickly register patient to write prescription"
         maxWidth="max-w-md"
       >
         <form onSubmit={handleCreateQuickPatient} className="space-y-3">
+          {quickPatientError && (
+            <div role="alert" className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700">
+              {quickPatientError}
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Patient Name *</label>

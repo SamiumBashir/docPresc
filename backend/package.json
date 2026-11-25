@@ -1,6 +1,6 @@
 {
   "name": "prescription-backend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Doctor Digital Prescription Management System - API",
   "main": "dist/server.js",
   "scripts": {

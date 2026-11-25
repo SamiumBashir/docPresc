@@ -19,7 +19,6 @@ import { api } from '../../services/api-client';
 import { IMedicine } from '../../types';
 import { MANUFACTURER_NAMES } from '../../data/manufacturers';
 import { DOSAGE_FORM_NAMES } from '../../data/dosageForms';
-import { showToast } from '../../components/ui/Toast';
 
 export const MedicineManagement: React.FC = () => {
   const queryClient = useQueryClient();
@@ -75,7 +74,6 @@ export const MedicineManagement: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
       setIsModalOpen(false);
       resetForm();
-      showToast.success(editingMedicine ? 'Medicine updated successfully' : 'New medicine added to database');
     },
     onError: (err: any) => {
       setFormError(err.message || 'Operation failed. Please verify medicine details.');
@@ -89,10 +87,6 @@ export const MedicineManagement: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-medicines'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-      showToast.success('Medicine removed from database');
-    },
-    onError: (err: any) => {
-      showToast.error(err.message || 'Failed to delete medicine');
     },
   });
 
@@ -168,11 +162,11 @@ export const MedicineManagement: React.FC = () => {
         method: 'POST',
         body: formData,
       });
-      showToast.success(res.message || `Imported ${res.count || 0} medicines successfully.`);
-      queryClient.invalidateQueries({ queryKey: ['admin-medicines'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-    } catch (err: any) {
-      showToast.error(err.message || 'Failed to import CSV dataset');
+      if (res.success) {
+        queryClient.invalidateQueries({ queryKey: ['admin-medicines'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      }
+    } catch {
     } finally {
       setIsImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

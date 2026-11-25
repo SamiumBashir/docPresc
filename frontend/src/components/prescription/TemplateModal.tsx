@@ -3,7 +3,6 @@ import { Bookmark, Sparkles, Check, Plus, Trash2 } from 'lucide-react';
 import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { Modal } from '../ui/Modal';
 import { api } from '../../api/client';
-import { showToast } from '../ui/Toast';
 import { ITemplate, IPrescriptionMedicine, IPrescriptionChiefComplaint, IPrescriptionDiagnosis } from '../../types';
 
 interface TemplateModalProps {
@@ -33,6 +32,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
   const [templateName, setTemplateName] = useState('');
   const [category, setCategory] = useState('General');
   const [description, setDescription] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -56,8 +56,9 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
 
   const handleSaveTemplate = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     if (!templateName.trim()) {
-      showToast.error('Please enter a template name.');
+      setFormError('Please enter a template name.');
       return;
     }
 
@@ -78,13 +79,12 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
       });
 
       if (res.success) {
-        showToast.success('Template saved successfully.');
         setTemplateName('');
         setDescription('');
         onClose();
       }
     } catch (err: any) {
-      showToast.error(err.message || 'Failed to save template.');
+      setFormError(err.message || 'Failed to save template.');
     }
   };
 
@@ -95,10 +95,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
     try {
       await api(`/templates/${id}`, { method: 'DELETE' });
       setTemplates(templates.filter((t) => t._id !== id));
-      showToast.success('Template deleted.');
-    } catch (err: any) {
-      showToast.error(err.message || 'Failed to delete.');
-    }
+    } catch { }
   };
 
   return (
@@ -115,6 +112,11 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
     >
       {mode === 'save' ? (
         <form onSubmit={handleSaveTemplate} className="space-y-4">
+          {formError && (
+            <div role="alert" className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700">
+              {formError}
+            </div>
+          )}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
               Template Name *

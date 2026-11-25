@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Settings, Sliders, Save, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { showToast } from '../../components/ui/Toast';
 
 export const DoctorSettings: React.FC = () => {
   const { doctor, updateDoctorSettings } = useAuth();
@@ -16,15 +15,17 @@ export const DoctorSettings: React.FC = () => {
     showQrCode: doctor?.settings?.showQrCode ?? true,
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [saveState, setSaveState] = useState<'saved' | 'error' | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setSaveState(null);
     try {
       await updateDoctorSettings(settings as any);
-      showToast.success('Prescription print and layout settings updated.');
+      setSaveState('saved');
     } catch {
-      showToast.error('Failed to update settings.');
+      setSaveState('error');
     } finally {
       setIsSaving(false);
     }
@@ -145,7 +146,15 @@ export const DoctorSettings: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex justify-end pt-4 border-t border-slate-100">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          {saveState === 'saved' && (
+            <span className="text-xs font-medium text-emerald-700 flex items-center gap-1">
+              <Check className="w-3.5 h-3.5" /> Saved
+            </span>
+          )}
+          {saveState === 'error' && (
+            <span className="text-xs font-medium text-rose-600">Failed to update settings.</span>
+          )}
           <button
             type="submit"
             disabled={isSaving}

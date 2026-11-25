@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { api } from '../../services/api-client';
 import { format } from 'date-fns';
-import { showToast } from '../../components/ui/Toast';
 
 export const DoctorManagement: React.FC = () => {
   const queryClient = useQueryClient();
@@ -39,10 +38,6 @@ export const DoctorManagement: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-doctors'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-      showToast.success('Doctor status updated successfully.');
-    },
-    onError: (err: any) => {
-      showToast.error(err.message || 'Failed to update doctor status.');
     },
   });
 

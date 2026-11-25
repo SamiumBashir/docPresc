@@ -3,7 +3,6 @@ import { User, ShieldCheck, Phone, Mail, Award, Building, Save, Trash2, AlertTri
 import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 import { Modal } from '../../components/ui/Modal';
 
 const HEALTHCARE_INSTITUTIONS = [
@@ -107,10 +106,13 @@ export const DoctorProfile: React.FC = () => {
 
   const [formData, setFormData] = useState(getInitialState);
   const [isSaving, setIsSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [isUploadingSignature, setIsUploadingSignature] = useState(false);
   const signatureInputRef = useRef<HTMLInputElement>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [confirmDeleteText, setConfirmDeleteText] = useState('');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -195,13 +197,16 @@ export const DoctorProfile: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setFormError(null);
+    setSaveSuccess(false);
+
     if (!file.type.startsWith('image/')) {
-      showToast.error('Please upload an image file (PNG, JPG, WEBP).');
+      setFormError('Please upload an image file (PNG, JPG, WEBP).');
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      showToast.error('Signature file size must be less than 5MB.');
+      setFormError('Signature file size must be less than 5MB.');
       return;
     }
 
@@ -217,12 +222,11 @@ export const DoctorProfile: React.FC = () => {
 
       if (res.success && res.data?.url) {
         setFormData((prev) => ({ ...prev, signature: res.data.url }));
-        showToast.success('Signature uploaded. Click "Save Profile Details" to save changes.');
       } else {
         throw new Error(res.message || 'Failed to upload signature.');
       }
     } catch (err: any) {
-      showToast.error(err.message || 'Error uploading signature.');
+      setFormError(err.message || 'Error uploading signature.');
     } finally {
       setIsUploadingSignature(false);
       if (signatureInputRef.current) {
@@ -236,15 +240,17 @@ export const DoctorProfile: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+    setSaveSuccess(false);
 
     if (!formData.selectedAuthority) {
-      showToast.error('Please select a Healthcare Institution or Authority.');
+      setFormError('Please select a Healthcare Institution or Authority.');
       return;
     }
 
     const trimmedRegNum = formData.registrationNumber?.trim() || '';
     if (!trimmedRegNum) {
-      showToast.error(`Please enter your registration number for ${formData.selectedAuthority}.`);
+      setFormError(`Please enter your registration number for ${formData.selectedAuthority}.`);
       return;
     }
 
@@ -280,19 +286,20 @@ export const DoctorProfile: React.FC = () => {
         body: JSON.stringify(payload),
       });
       if (res.success) {
-        showToast.success('Doctor profile credentials updated.');
+        setSaveSuccess(true);
         await refreshProfile();
       }
     } catch (err: any) {
-      showToast.error(err.message || 'Failed to update profile.');
+      setFormError(err.message || 'Failed to update profile.');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDeleteAccount = async () => {
+    setDeleteError(null);
     if (confirmDeleteText !== 'DELETE') {
-      showToast.error('Please type DELETE to confirm.');
+      setDeleteError('Please type DELETE to confirm.');
       return;
     }
 
@@ -303,13 +310,12 @@ export const DoctorProfile: React.FC = () => {
       });
 
       if (res.success) {
-        showToast.success('Account deleted successfully.');
         localStorage.clear();
         await logout();
         window.location.href = '/login';
       }
     } catch (err: any) {
-      showToast.error(err.message || 'Failed to delete account.');
+      setDeleteError(err.message || 'Failed to delete account.');
       setIsDeleting(false);
     }
   };
@@ -625,7 +631,17 @@ export const DoctorProfile: React.FC = () => {
           )}
         </div>
 
-        <div className="flex justify-end pt-4 border-t border-slate-100">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          {formError && (
+            <span role="alert" className="text-xs font-medium text-rose-600 mr-auto">
+              {formError}
+            </span>
+          )}
+          {saveSuccess && !formError && (
+            <span className="text-xs font-medium text-emerald-700 flex items-center gap-1">
+              <Check className="w-3.5 h-3.5" /> Saved
+            </span>
+          )}
           <button
             type="submit"
             disabled={isSaving}
@@ -691,6 +707,9 @@ export const DoctorProfile: React.FC = () => {
               placeholder="DELETE"
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl font-mono focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
             />
+            {deleteError && (
+              <p role="alert" className="text-xs text-rose-600 font-medium">{deleteError}</p>
+            )}
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">

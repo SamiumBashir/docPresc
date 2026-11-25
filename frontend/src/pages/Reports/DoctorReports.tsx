@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, Users, FilePlus, Calendar, Pill, BookmarkCheck } from 'lucide-react';
 import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 
 export const DoctorReports: React.FC = () => {
   const [data, setData] = useState<{
@@ -26,7 +25,7 @@ export const DoctorReports: React.FC = () => {
           setData(res.data);
         }
       } catch {
-        showToast.error('Failed to load reports.');
+        setData(null);
       } finally {
         setIsLoading(false);
       }

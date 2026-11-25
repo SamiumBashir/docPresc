@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Search, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
 import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 import { IAuditLog } from '../../types';
 
 export const AdminAuditLogs: React.FC = () => {
@@ -29,7 +28,7 @@ export const AdminAuditLogs: React.FC = () => {
         setTotalCount(res.data.pagination.total);
       }
     } catch {
-      showToast.error('Failed to load audit logs.');
+      setLogs([]);
     } finally {
       setIsLoading(false);
     }

@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Lock, CheckCircle2, ArrowRight, ShieldCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 
 export const ResetPassword: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -13,37 +12,39 @@ export const ResetPassword: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     if (!password || !confirmPassword) {
-      showToast.error('Please fill in both password fields.');
+      setErrorMessage('Please fill in both password fields.');
       return;
     }
 
     if (password.length < 8) {
-      showToast.error('Password must be at least 8 characters long.');
+      setErrorMessage('Password must be at least 8 characters long.');
       return;
     }
 
     if (!/[A-Z]/.test(password)) {
-      showToast.error('Password must contain at least one uppercase letter (A-Z).');
+      setErrorMessage('Password must contain at least one uppercase letter (A-Z).');
       return;
     }
 
     if (!/[a-z]/.test(password)) {
-      showToast.error('Password must contain at least one lowercase letter (a-z).');
+      setErrorMessage('Password must contain at least one lowercase letter (a-z).');
       return;
     }
 
     if (!/[^A-Za-z0-9]/.test(password)) {
-      showToast.error('Password must contain at least one special character (!@#$%^&* etc.).');
+      setErrorMessage('Password must contain at least one special character (!@#$%^&* etc.).');
       return;
     }
 
     if (password !== confirmPassword) {
-      showToast.error('Passwords do not match.');
+      setErrorMessage('Passwords do not match.');
       return;
     }
 
@@ -59,13 +60,12 @@ export const ResetPassword: React.FC = () => {
 
       if (res.success) {
         setIsSuccess(true);
-        showToast.success('Password reset successfully. You can now sign in.');
         setTimeout(() => {
           navigate('/login');
         }, 2500);
       }
     } catch (err: any) {
-      showToast.error(err.message || 'Password reset failed or link has expired.');
+      setErrorMessage(err.message || 'Password reset failed or link has expired.');
     } finally {
       setIsLoading(false);
     }
@@ -102,6 +102,15 @@ export const ResetPassword: React.FC = () => {
         <div className="bg-slate-800 py-8 px-6 rounded-2xl border border-slate-700 sm:px-10 space-y-6">
           {!isSuccess ? (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {errorMessage && (
+                <div
+                  role="alert"
+                  className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg flex items-center gap-2 text-rose-300 text-xs"
+                >
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" aria-hidden="true" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-medium text-slate-300">

@@ -9,9 +9,9 @@ import {
   FileCheck2,
   Building2,
   Calendar,
+  Check,
 } from 'lucide-react';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 import { LivePrescriptionPad } from '../../components/prescription/LivePrescriptionPad';
 import { IPrescription, IDoctor, IChamber } from '../../types';
 
@@ -23,6 +23,7 @@ export const PrescriptionView: React.FC = () => {
   const [paperSize, setPaperSize] = useState<'A4' | 'Letter' | 'A5'>('A4');
   const [isLoading, setIsLoading] = useState(true);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [copiedShare, setCopiedShare] = useState(false);
 
   useEffect(() => {
     const fetchPrescription = async () => {
@@ -41,8 +42,8 @@ export const PrescriptionView: React.FC = () => {
             setPaperSize(meRes.data.doctor.settings.paperSize as 'A4' | 'Letter' | 'A5');
           }
         }
-      } catch (err: any) {
-        showToast.error('Failed to load prescription.');
+      } catch {
+        setPrescription(null);
       } finally {
         setIsLoading(false);
       }
@@ -69,7 +70,8 @@ export const PrescriptionView: React.FC = () => {
     if (!prescription) return;
     const url = `${window.location.origin}/prescription/share/${prescription.shareToken}`;
     navigator.clipboard.writeText(url);
-    showToast.success('Secure public prescription link copied.');
+    setCopiedShare(true);
+    setTimeout(() => setCopiedShare(false), 2000);
   };
 
   if (isLoading) {
@@ -162,7 +164,8 @@ export const PrescriptionView: React.FC = () => {
             onClick={handleCopyShare}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors"
           >
-            <Share2 className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Share</span>
+            {copiedShare ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
+            <span className="hidden xs:inline">{copiedShare ? 'Copied' : 'Share'}</span>
           </button>
 
           <Link

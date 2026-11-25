@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Pill, Plus, Upload, Trash2, Edit2, Search, FileSpreadsheet, Leaf } from 'lucide-react';
 import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 import { Modal } from '../../components/ui/Modal';
 import { IMedicine } from '../../types';
 
@@ -53,7 +52,7 @@ export const AdminMedicines: React.FC = () => {
         setTotalCount(res.data.pagination.total);
       }
     } catch {
-      showToast.error('Failed to load medicines.');
+      setMedicines([]);
     } finally {
       setIsLoading(false);
     }
@@ -100,7 +99,6 @@ export const AdminMedicines: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.brandName || !formData.genericName || !formData.strength || !formData.manufacturer) {
-      showToast.error('Please fill all mandatory fields.');
       return;
     }
 
@@ -110,31 +108,24 @@ export const AdminMedicines: React.FC = () => {
           method: 'PUT',
           body: JSON.stringify(formData),
         });
-        showToast.success('Medicine updated.');
       } else {
         await api('/medicines', {
           method: 'POST',
           body: JSON.stringify(formData),
         });
-        showToast.success('Medicine added to database.');
       }
 
       setIsModalOpen(false);
       fetchMedicines(page);
-    } catch (err: any) {
-      showToast.error(err.message || 'Failed to save medicine.');
-    }
+    } catch { }
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this medicine?')) return;
     try {
       await api(`/medicines/${id}`, { method: 'DELETE' });
-      showToast.success('Medicine removed.');
       fetchMedicines(page);
-    } catch (err: any) {
-      showToast.error(err.message || 'Failed to delete medicine.');
-    }
+    } catch { }
   };
 
   const handleCsvFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,7 +136,6 @@ export const AdminMedicines: React.FC = () => {
     data.append('file', file);
 
     setIsImporting(true);
-    showToast.info('Parsing CSV file and importing drugs...');
 
     try {
       const res = await api<{ success: boolean; message: string; data: { importedCount: number } }>(
@@ -157,11 +147,9 @@ export const AdminMedicines: React.FC = () => {
       );
 
       if (res.success) {
-        showToast.success(res.message);
         fetchMedicines(1);
       }
-    } catch (err: any) {
-      showToast.error(err.message || 'CSV Import failed.');
+    } catch {
     } finally {
       setIsImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

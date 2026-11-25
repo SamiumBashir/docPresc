@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { Pill, Search, Star, Filter, Plus, ChevronLeft, ChevronRight, Leaf, X, AlertCircle } from 'lucide-react';
 import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 import { IMedicine } from '../../types';
 import { MANUFACTURER_NAMES } from '../../data/manufacturers';
 import { DOSAGE_FORM_NAMES } from '../../data/dosageForms';
@@ -75,7 +74,6 @@ export const MedicineCatalog: React.FC = () => {
       });
 
       if (res.success) {
-        showToast.success('New medicine added successfully.');
         setIsModalOpen(false);
         fetchMedicines(1);
       }
@@ -116,7 +114,7 @@ export const MedicineCatalog: React.FC = () => {
         setTotalCount(res.data.pagination.total);
       }
     } catch {
-      showToast.error('Failed to load medicines.');
+      setMedicines([]);
     } finally {
       setIsLoading(false);
     }
@@ -154,15 +152,11 @@ export const MedicineCatalog: React.FC = () => {
       if (res.success) {
         if (res.data.isFavorite) {
           setFavorites([...favorites, medicineId]);
-          showToast.success('Added to favorite medicines ⭐');
         } else {
           setFavorites(favorites.filter((id) => id !== medicineId));
-          showToast.info('Removed from favorites.');
         }
       }
-    } catch {
-      showToast.error('Failed to update favorite.');
-    }
+    } catch { }
   };
 
   return (

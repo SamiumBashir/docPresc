@@ -14,9 +14,9 @@ import {
   FilePlus,
   Share2,
   CheckCircle2,
+  Check,
 } from 'lucide-react';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 import { IPrescription } from '../../types';
 
 export const PrescriptionHistory: React.FC = () => {
@@ -63,7 +63,7 @@ export const PrescriptionHistory: React.FC = () => {
         setTotalCount(res.data.pagination.total);
       }
     } catch {
-      showToast.error('Failed to load prescription history.');
+      setPrescriptions([]);
     } finally {
       setIsLoading(false);
     }
@@ -72,6 +72,8 @@ export const PrescriptionHistory: React.FC = () => {
   useEffect(() => {
     fetchPrescriptions(page);
   }, [page, statusFilter, dateFilter]);
+
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +84,8 @@ export const PrescriptionHistory: React.FC = () => {
   const handleCopyShareLink = (token: string) => {
     const url = `${window.location.origin}/prescription/share/${token}`;
     navigator.clipboard.writeText(url);
-    showToast.success('Secure public prescription link copied to clipboard.');
+    setCopiedToken(token);
+    setTimeout(() => setCopiedToken((prev) => (prev === token ? null : prev)), 2000);
   };
 
   return (
@@ -262,9 +265,13 @@ export const PrescriptionHistory: React.FC = () => {
                         <button
                           onClick={() => handleCopyShareLink(rx.shareToken)}
                           className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                          title="Copy Public Share Link"
+                          title={copiedToken === rx.shareToken ? 'Copied' : 'Copy Public Share Link'}
                         >
-                          <Share2 className="w-3.5 h-3.5" />
+                          {copiedToken === rx.shareToken ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          ) : (
+                            <Share2 className="w-3.5 h-3.5" />
+                          )}
                         </button>
                       </div>
                     </td>

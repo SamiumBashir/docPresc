@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { Search, Pill, Sparkles, Star, Plus, Leaf, X, AlertCircle } from 'lucide-react';
 import { InfinityLoop } from '@/components/loading-ui/infinity';
 import { api } from '../../api/client';
-import { showToast } from '../ui/Toast';
 import { IMedicine } from '../../types';
 
 interface MedicineAutocompleteProps {
@@ -95,7 +94,6 @@ export const MedicineAutocomplete: React.FC<MedicineAutocompleteProps> = ({
       });
 
       if (res.success && res.data) {
-        showToast.success(`Added ${res.data.brandName} to medicine database.`);
         setIsModalOpen(false);
         setQuery('');
         onSelect(res.data);

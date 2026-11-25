@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Plus, Phone, Calendar, Clock, Check, Edit2, Trash2, Globe } from 'lucide-react';
 import { api } from '../../api/client';
-import { showToast } from '../../components/ui/Toast';
 import { Modal } from '../../components/ui/Modal';
 import { useAuth } from '../../context/AuthContext';
 import { IChamber } from '../../types';
@@ -10,6 +9,7 @@ export const ChamberList: React.FC = () => {
   const { chambers, setActiveChamber, activeChamber, refreshProfile } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingChamber, setEditingChamber] = useState<IChamber | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -58,8 +58,9 @@ export const ChamberList: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     if (!formData.name || !formData.address) {
-      showToast.error('Chamber name and address are required.');
+      setFormError('Chamber name and address are required.');
       return;
     }
 
@@ -69,19 +70,17 @@ export const ChamberList: React.FC = () => {
           method: 'PUT',
           body: JSON.stringify(formData),
         });
-        showToast.success('Chamber updated.');
       } else {
         await api('/chambers', {
           method: 'POST',
           body: JSON.stringify(formData),
         });
-        showToast.success('New chamber added.');
       }
 
       setIsModalOpen(false);
       await refreshProfile();
     } catch (err: any) {
-      showToast.error(err.message || 'Failed to save chamber.');
+      setFormError(err.message || 'Failed to save chamber.');
     }
   };
 
@@ -89,11 +88,8 @@ export const ChamberList: React.FC = () => {
     if (!window.confirm('Are you sure you want to deactivate this chamber?')) return;
     try {
       await api(`/chambers/${id}`, { method: 'DELETE' });
-      showToast.success('Chamber removed.');
       await refreshProfile();
-    } catch (err: any) {
-      showToast.error('Failed to remove chamber.');
-    }
+    } catch { }
   };
 
   return (
@@ -242,12 +238,20 @@ export const ChamberList: React.FC = () => {
       {/* Add / Edit Chamber Modal */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setFormError(null);
+        }}
         title={editingChamber ? 'Edit Chamber' : 'Add Consultation Chamber'}
         subtitle="This information will appear on the prescription header"
         maxWidth="max-w-lg"
       >
         <form onSubmit={handleSubmit} className="space-y-3">
+          {formError && (
+            <div role="alert" className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700">
+              {formError}
+            </div>
+          )}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
               Chamber Name *
