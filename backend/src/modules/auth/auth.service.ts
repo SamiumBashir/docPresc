@@ -276,7 +276,7 @@ export class AuthService {
     await Session.updateMany({ userId }, { isValid: false });
   }
 
-  async forgotPassword(email: string): Promise<{ success: boolean; message: string; devOtp?: string }> {
+  async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
     const cleanEmail = email.toLowerCase().trim();
     const user = await User.findOne({ email: cleanEmail });
 
@@ -330,7 +330,6 @@ export class AuthService {
     return {
       success: true,
       message: 'Verification code has been sent to your email.',
-      ...(ENV.NODE_ENV !== 'production' || process.env.ALLOW_DEV_OTP === 'true' ? { devOtp: otp } : {}),
     };
   }
 

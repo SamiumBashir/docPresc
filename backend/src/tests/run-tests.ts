@@ -13,6 +13,7 @@ import { Prescription } from '../models/Prescription';
 import { Session } from '../models/Session';
 import { seedDatabase } from '../seeds/seed';
 import { authService } from '../modules/auth/auth.service';
+import { setMockTransporter } from '../services/email.service';
 import { generateNextPatientId, generateNextPrescriptionId } from '../shared/utils/idGenerator';
 import { patientService } from '../modules/patients/patient.service';
 import { prescriptionService } from '../modules/prescriptions/prescription.service';
@@ -277,6 +278,26 @@ const runAllTests = async () => {
     assert(suspendedDoc !== null, 'Admin can suspend doctor status via doctor ID');
     const reactivatedDoc = await adminService.updateDoctorStatus(doctorA.userId.toString(), 'active');
     assert(reactivatedDoc !== null, 'Admin can activate doctor status via user ID fallback');
+
+    // ----------------------------------------------------
+    // TEST SUITE 9: Forgot Password OTP Email Privacy
+    // ----------------------------------------------------
+    console.log('\n🔹 Suite 9: Forgot Password OTP Privacy (Never Expose OTP in HTTP Response)');
+    let sentOtpEmailHtml = '';
+    setMockTransporter({
+      sendMail: async (opts: any) => {
+        sentOtpEmailHtml = opts?.html || '';
+        return { messageId: '<suite9-otp-test@docpresc.test>' };
+      },
+    } as any);
+
+    const forgotRes: any = await authService.forgotPassword('doctor@prescription.com');
+    setMockTransporter(null);
+
+    assert(forgotRes.success === true, 'forgotPassword returns success when email dispatches');
+    assert(forgotRes.devOtp === undefined, 'CRITICAL SECURITY TEST: forgotPassword NEVER returns devOtp in response payload');
+    assert(!('otp' in forgotRes), 'CRITICAL SECURITY TEST: forgotPassword NEVER exposes otp key in response payload');
+    assert(/\d{6}/.test(sentOtpEmailHtml), '6-digit verification code was delivered exclusively to email payload');
 
     console.log(`\n=========================================`);
     console.log(`📊 Test Results: ${passed} Passed, ${failed} Failed`);

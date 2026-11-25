@@ -20,7 +20,7 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'), // Refresh token duration
   COOKIE_SECRET: z.string().default('cookie_secret_prescription_2026'),
   CORS_ORIGIN: z.string().default('http://localhost:5173,https://doc-presc.vercel.app'),
-  EMAIL_PROVIDER: z.string().default('smtp').transform((val) => val.trim().toLowerCase()),
+  EMAIL_PROVIDER: z.string().default('auto').transform((val) => val.trim().toLowerCase()),
   ENABLE_EMAIL_FALLBACK: z.preprocess((val) => val === 'true' || val === true, z.boolean().default(false)),
   RESEND_API_KEY: z.string().default(''),
   BREVO_API_KEY: z.string().default(''),
@@ -57,7 +57,7 @@ const rawEnv = parsedEnv.success ? parsedEnv.data : {
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   COOKIE_SECRET: process.env.COOKIE_SECRET || 'cookie_secret_prescription_2026',
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173,https://doc-presc.vercel.app',
-  EMAIL_PROVIDER: (process.env.EMAIL_PROVIDER || 'smtp').trim().toLowerCase(),
+  EMAIL_PROVIDER: (process.env.EMAIL_PROVIDER || 'auto').trim().toLowerCase(),
   ENABLE_EMAIL_FALLBACK: process.env.ENABLE_EMAIL_FALLBACK === 'true',
   RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   BREVO_API_KEY: process.env.BREVO_API_KEY || '',

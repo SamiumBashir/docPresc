@@ -211,9 +211,9 @@ export const getPrimaryTransporter = (): Transporter | null => {
     secure: isSecure,
     requireTLS: !isSecure,
     auth: { user: cleanUser, pass: cleanPass },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
+    connectionTimeout: isServerless ? 6000 : 10000,
+    greetingTimeout: isServerless ? 6000 : 10000,
+    socketTimeout: isServerless ? 10000 : 15000,
     pool: !isServerless,
     ...(!isServerless ? { maxConnections: 5, maxMessages: 100 } : {}),
   });
@@ -237,6 +237,7 @@ export const getFallbackTlsTransporter = (): Transporter | null => {
   const fallbackPort = primaryPort === 465 ? 587 : 465;
   const isSecure = fallbackPort === 465;
   const host = isGmail ? 'smtp.gmail.com' : (ENV.SMTP_HOST || process.env.SMTP_HOST || 'smtp.gmail.com');
+  const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NODE_ENV === 'production');
 
   cachedFallbackTransporter = nodemailer.createTransport({
     host,
@@ -244,9 +245,9 @@ export const getFallbackTlsTransporter = (): Transporter | null => {
     secure: isSecure,
     requireTLS: !isSecure,
     auth: { user: cleanUser, pass: cleanPass },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
+    connectionTimeout: isServerless ? 6000 : 10000,
+    greetingTimeout: isServerless ? 6000 : 10000,
+    socketTimeout: isServerless ? 10000 : 15000,
   });
 
   return cachedFallbackTransporter;
@@ -352,22 +353,20 @@ const sendViaSmtp = async ({
 
   console.log(`[Email Service] [${contextTag}] Provider: SMTP (port ${port}) | Recipient: ${maskEmail(to)} | Stage: Connecting...`);
 
-  try {
-    const mailHeaders = {
-      'Auto-Submitted': 'auto-generated',
+  const mailOptions = {
+    from: fromAddress,
+    to,
+    replyTo: fromAddress,
+    subject,
+    html,
+    text,
+    headers: {
       'X-Mailer': 'DocPresc Clinical Mailer',
-      'Precedence': 'bulk',
-    };
+    },
+  };
 
-    const info = await primaryTransporter.sendMail({
-      from: fromAddress,
-      to,
-      replyTo: fromAddress,
-      subject,
-      html,
-      text,
-      headers: mailHeaders,
-    });
+  try {
+    const info = await primaryTransporter.sendMail(mailOptions);
 
     console.log(`[Email Service] ✅ [${contextTag}] Sent successfully via Primary SMTP (port ${port}) to ${maskEmail(to)} (Message ID: ${info.messageId})`);
     return { success: true, messageId: info.messageId, provider: 'smtp' };
@@ -381,19 +380,7 @@ const sendViaSmtp = async ({
       const fallbackTransporter = getFallbackTlsTransporter();
       if (fallbackTransporter) {
         try {
-          const fallbackInfo = await fallbackTransporter.sendMail({
-            from: fromAddress,
-            to,
-            replyTo: fromAddress,
-            subject,
-            html,
-            text,
-            headers: {
-              'Auto-Submitted': 'auto-generated',
-              'X-Mailer': 'DocPresc Clinical Mailer',
-              'Precedence': 'bulk',
-            },
-          });
+          const fallbackInfo = await fallbackTransporter.sendMail(mailOptions);
 
           console.log(`[Email Service] ✅ [${contextTag}] Sent successfully via Fallback SMTP (port 587) to ${maskEmail(to)} (Message ID: ${fallbackInfo.messageId})`);
           return { success: true, messageId: fallbackInfo.messageId, provider: 'smtp_fallback' };
