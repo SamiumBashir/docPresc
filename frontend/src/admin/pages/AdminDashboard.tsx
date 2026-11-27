@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Clock,
   ShieldCheck,
+  ArrowRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api-client';
@@ -29,7 +30,9 @@ export const AdminDashboard: React.FC = () => {
   const { data: stats, isLoading, refetch, isFetching } = useQuery<AdminStats>({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const res = await api<{ success: boolean; data: { stats: AdminStats; recentLogs: any[] } }>('/admin/stats');
+      const res = await api<{ success: boolean; data: { stats: AdminStats; recentLogs: any[] } }>(
+        '/admin/stats'
+      );
       if (res.data?.stats) {
         return {
           ...res.data.stats,
@@ -42,10 +45,10 @@ export const AdminDashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[360px]">
         <div className="flex flex-col items-center gap-3">
-          <InfinityLoop className="w-16 h-8 text-indigo-400" duration="1.6s" />
-          <p className="text-sm text-slate-400">Loading enterprise analytics...</p>
+          <InfinityLoop className="w-14 h-7 text-[#2ab0c7]" duration="1.6s" />
+          <p className="text-xs text-[#a3a9b8]">Loading system metrics...</p>
         </div>
       </div>
     );
@@ -53,92 +56,86 @@ export const AdminDashboard: React.FC = () => {
 
   const statCards = [
     {
-      title: 'Total Doctors',
+      title: 'Registered doctors',
       value: stats?.totalDoctors || 0,
-      subtext: `${stats?.pendingDoctors || 0} Pending Approvals`,
+      subtext: `${stats?.pendingDoctors || 0} pending approvals`,
       icon: Users,
-      color: 'from-blue-500 to-indigo-600',
       to: '/admin/doctors',
     },
     {
-      title: 'Prescriptions Issued',
+      title: 'Prescriptions issued',
       value: stats?.totalPrescriptions || 0,
-      subtext: 'Across all clinical chambers',
+      subtext: 'Across all chambers',
       icon: FileText,
-      color: 'from-emerald-500 to-teal-600',
     },
     {
-      title: 'Medicine Catalog',
+      title: 'Medicine catalog',
       value: stats?.totalMedicines || 0,
       subtext: 'Allopathic, Unani & Ayurvedic',
       icon: Pill,
-      color: 'from-purple-500 to-pink-600',
       to: '/admin/medicines',
     },
     {
-      title: 'Active Chambers',
+      title: 'Active chambers',
       value: stats?.totalChambers || 0,
-      subtext: 'Registered clinical facilities',
+      subtext: 'Verified practice locations',
       icon: Building2,
-      color: 'from-amber-500 to-orange-600',
     },
   ];
 
   return (
-    <div className="space-y-8">
-      {/* Top Banner */}
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-white tracking-tight">
-            Executive Overview
+          <h1 className="text-xl sm:text-2xl font-medium text-[#eef0f5] tracking-[-0.01em]">
+            Clinical Operations Overview
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Real-time digital prescription ecosystem monitoring & master management.
+          <p className="text-xs text-[#a3a9b8] mt-1">
+            Platform registry counts, verification queues, and recent governance events
           </p>
         </div>
         <button
+          type="button"
           onClick={() => refetch()}
           disabled={isFetching}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors w-fit"
+          className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-[#1b2232] hover:bg-[#232c40] text-[#eef0f5] text-xs font-medium border border-white/[0.1] transition-colors w-fit disabled:opacity-50"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            className={`w-4 h-4 text-[#757d90] ${isFetching ? 'animate-spin' : ''}`}
+            strokeWidth={1.5}
+          />
           <span>Refresh metrics</span>
         </button>
       </div>
 
-      {/* Metric Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      {/* Stat Cards Grid (Quiet Dark Ramp — Numbers Only, No Rainbow Gradients) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card, idx) => {
           const Icon = card.icon;
           return (
             <div
               key={idx}
-              className="relative overflow-hidden rounded-xl bg-slate-900 border border-slate-800 p-5 hover:border-slate-700 transition-colors"
+              className="rounded-xl bg-[#131924] border border-white/[0.08] p-5 flex flex-col justify-between transition-colors hover:border-white/[0.14]"
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-slate-400">
-                    {card.title}
-                  </p>
-                  <p className="text-2xl font-semibold text-white mt-1.5 tabular-nums">
-                    {card.value.toLocaleString()}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">{card.subtext}</p>
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-[#a3a9b8]">{card.title}</p>
+                  <Icon className="w-4 h-4 text-[#757d90] shrink-0" strokeWidth={1.5} />
                 </div>
-                <div
-                  className={`w-10 h-10 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center text-white`}
-                >
-                  <Icon className="w-5 h-5" />
-                </div>
+                <p className="text-2xl font-medium text-[#eef0f5] mt-2 tabular-nums">
+                  {card.value.toLocaleString()}
+                </p>
+                <p className="text-xs text-[#757d90] mt-1 tabular-nums">{card.subtext}</p>
               </div>
 
               {card.to && (
                 <Link
                   to={card.to}
-                  className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+                  className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs font-medium text-[#2ab0c7] hover:text-[#4bc5da] transition-colors"
                 >
-                  <span>Manage records</span>
-                  <span>&rarr;</span>
+                  <span>Open registry</span>
+                  <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
                 </Link>
               )}
             </div>
@@ -146,48 +143,53 @@ export const AdminDashboard: React.FC = () => {
         })}
       </div>
 
-      {/* Recent Activity Section */}
-      <div className="rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <ShieldCheck className="w-4 h-4 text-indigo-400" />
-            <h2 className="text-sm font-semibold text-white">Recent activity</h2>
+      {/* Recent Activity */}
+      <div className="rounded-xl bg-[#131924] border border-white/[0.08] overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-white/[0.08] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-[#757d90]" strokeWidth={1.5} />
+            <h2 className="text-sm font-medium text-[#eef0f5]">Recent audit activity</h2>
           </div>
           <Link
             to="/admin/audit-logs"
-            className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-medium text-[#2ab0c7] hover:text-[#4bc5da] transition-colors"
           >
-            View all logs &rarr;
+            <span>View all logs</span>
+            <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
           </Link>
         </div>
 
-        <div className="divide-y divide-slate-800/60">
+        <div className="divide-y divide-white/[0.06]">
           {stats?.recentAuditLogs && stats.recentAuditLogs.length > 0 ? (
-            stats.recentAuditLogs.slice(0, 5).map((log: any, idx: number) => (
-              <div key={idx} className="p-4 sm:px-6 flex items-center justify-between hover:bg-slate-800/30 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-bold">
-                    <Clock className="w-4 h-4" />
+            stats.recentAuditLogs.slice(0, 6).map((log: any, idx: number) => (
+              <div
+                key={idx}
+                className="px-5 py-3.5 flex items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-[#1b2232] border border-white/[0.08] text-[#757d90] flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4" strokeWidth={1.5} />
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-white">
-                      {log.action} <span className="text-xs font-normal text-slate-400">on {log.resource}</span>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium text-[#eef0f5] truncate">
+                      {log.action}{' '}
+                      <span className="font-normal text-[#a3a9b8]">on {log.resource}</span>
                     </p>
-                    <p className="text-xs text-slate-400">
-                      Operator: {log.userName || (typeof log.userId === 'object' ? log.userId?.name : 'System')}
+                    <p className="text-xs text-[#757d90] truncate">
+                      Operator:{' '}
+                      {log.userName ||
+                        (typeof log.userId === 'object' ? log.userId?.name : 'System')}
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs text-slate-400 font-mono">
-                    {log.createdAt ? format(new Date(log.createdAt), 'MMM d, HH:mm') : 'Recent'}
-                  </span>
-                </div>
+                <span className="text-xs text-[#757d90] font-mono tabular-nums shrink-0">
+                  {log.createdAt ? format(new Date(log.createdAt), 'MMM d, HH:mm') : 'Recent'}
+                </span>
               </div>
             ))
           ) : (
-            <div className="p-8 text-center text-slate-400 text-sm">
-              No recent audit logs recorded.
+            <div className="p-8 text-center text-[#757d90] text-xs">
+              No recent audit events recorded.
             </div>
           )}
         </div>

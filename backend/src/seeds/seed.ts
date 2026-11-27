@@ -11,6 +11,8 @@ import { Medicine } from '../models/Medicine';
 import { Template } from '../models/Template';
 import { Prescription } from '../models/Prescription';
 import { AuditLog } from '../models/AuditLog';
+import { ensureFoodCatalogSeeded } from './foodCatalog';
+import { ensureTherapyCatalogSeeded } from './therapyCatalog';
 import { connectDatabase, closeDatabase } from '../config/db';
 import { ENV } from '../config/env';
 
@@ -303,6 +305,12 @@ export const seedDatabase = async (force: boolean = false) => {
     } else {
       console.log(`[Seed] Herbal/Traditional medicines already loaded (${existingHerbalCount} records).`);
     }
+
+    // Always ensure the 30-item Bengali hospital FoodCatalogItem reference catalog is seeded idempotently
+    await ensureFoodCatalogSeeded(true);
+
+    // Always ensure the 32-item hospital Therapy reference catalog is seeded idempotently (PENDING_CLINICAL_REVIEW)
+    await ensureTherapyCatalogSeeded(true);
 
     // Check if demo users already exist
     const existingUsersCount = await User.countDocuments();

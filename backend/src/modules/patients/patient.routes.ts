@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { patientController } from './patient.controller';
+import { foodChartController } from '../food-charts';
+import { therapyController } from '../therapies';
 import { authenticate, requireDoctor } from '../../middleware/auth';
 import { asyncHandler } from '../../shared/utils/asyncHandler';
 
@@ -13,5 +15,8 @@ router.get('/:id', asyncHandler(patientController.getPatientById));
 router.put('/:id', asyncHandler(patientController.updatePatient));
 router.get('/:id/history', asyncHandler(patientController.getPatientMedicalHistory));
 router.get('/:id/timeline', asyncHandler(patientController.getPatientMedicalHistory));
+router.get('/:patientId/food-charts', asyncHandler(foodChartController.getPatientFoodCharts));
+router.get('/:patientId/treatment-plans', asyncHandler(therapyController.getPatientTreatmentPlans));
+router.get('/:patientId/treatment-history', asyncHandler(therapyController.getPatientTreatmentHistory));
 
 export default router;

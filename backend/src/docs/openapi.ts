@@ -80,6 +80,7 @@ export const openApiSpec: Record<string, any> = {
           prescriptionId: { type: 'string', example: 'RX-1001' },
           doctorId: { type: 'string' },
           patientId: { type: 'string' },
+          attachedFoodChartId: { type: 'string', nullable: true },
           status: { type: 'string', enum: ['DRAFT', 'FINALIZED'] },
           chiefComplaints: { type: 'array', items: { type: 'object' } },
           diagnosis: { type: 'array', items: { type: 'object' } },
@@ -88,6 +89,22 @@ export const openApiSpec: Record<string, any> = {
           advice: { type: 'array', items: { type: 'string' } },
           shareToken: { type: 'string' },
           shareExpiresAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      FoodChart: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          chartNumber: { type: 'string', example: 'FC-2026-000001' },
+          doctorId: { type: 'string' },
+          patientId: { type: 'string' },
+          status: { type: 'string', enum: ['DRAFT', 'FINALIZED'] },
+          version: { type: 'integer', example: 1 },
+          allowedFoods: { type: 'array', items: { type: 'object' } },
+          avoidedFoods: { type: 'array', items: { type: 'object' } },
+          supplements: { type: 'array', items: { type: 'object' } },
+          dietaryInstructions: { type: 'string' },
+          additionalNotes: { type: 'string' },
         },
       },
       Medicine: {
@@ -319,6 +336,214 @@ export const openApiSpec: Record<string, any> = {
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
         responses: { 200: { description: 'Admin statistics' } },
+      },
+    },
+    '/food-charts/catalog': {
+      get: {
+        summary: 'List seeded Bengali allowed and avoided food catalog items',
+        tags: ['FoodCharts'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Food catalog items' } },
+      },
+    },
+    '/food-charts': {
+      get: {
+        summary: 'List doctor-scoped patient food charts with search, status, and pagination',
+        tags: ['FoodCharts'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Paginated food charts' } },
+      },
+      post: {
+        summary: 'Create a new patient food chart (draft or finalized)',
+        tags: ['FoodCharts'],
+        security: [{ bearerAuth: [] }],
+        responses: { 201: { description: 'Food chart created' } },
+      },
+    },
+    '/food-charts/{id}/finalize': {
+      post: {
+        summary: 'Finalize and lock food chart',
+        tags: ['FoodCharts'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Food chart finalized' } },
+      },
+    },
+    '/food-charts/{id}/revise': {
+      post: {
+        summary: 'Create a numbered draft revision (v2, v3...) from a finalized chart',
+        tags: ['FoodCharts'],
+        security: [{ bearerAuth: [] }],
+        responses: { 201: { description: 'New draft revision created' } },
+      },
+    },
+    '/food-charts/{id}/pdf': {
+      get: {
+        summary: 'Generate selectable-text A4 portrait PDF for food chart',
+        tags: ['FoodCharts'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Binary A4 PDF' } },
+      },
+    },
+    '/patients/{patientId}/food-charts': {
+      get: {
+        summary: 'List food charts belonging to a specific patient under the authenticated doctor',
+        tags: ['FoodCharts'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Patient food charts' } },
+      },
+    },
+    '/therapies/overview': {
+      get: {
+        summary: 'Get role-scoped therapy overview metrics and queues',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Therapy overview metrics' } },
+      },
+    },
+    '/therapies/categories': {
+      get: {
+        summary: 'List therapy service categories including Main & ED Treatments',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Categories list' } },
+      },
+      post: {
+        summary: 'Create a custom therapy category (Admin only)',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 201: { description: 'Category created' }, 403: { description: 'Admin role required' } },
+      },
+    },
+    '/therapies/catalog': {
+      get: {
+        summary: 'Search and filter therapy services catalog',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Paginated therapies catalog' } },
+      },
+      post: {
+        summary: 'Add therapy service to catalog (Admin only, starts unapproved)',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 201: { description: 'Therapy created' }, 403: { description: 'Admin role required' } },
+      },
+    },
+    '/therapies/catalog/{id}': {
+      get: {
+        summary: 'Get therapy catalog entry details',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Therapy detail' } },
+      },
+      put: {
+        summary: 'Update therapy catalog metadata (Admin only)',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Therapy updated' } },
+      },
+    },
+    '/therapies/catalog/{id}/status': {
+      patch: {
+        summary: 'Enable or disable therapy service (Admin only)',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Status updated' } },
+      },
+    },
+    '/therapies/catalog/{id}/verify': {
+      post: {
+        summary: 'Approve, reject, or flag therapy clinical/terminology verification (Admin only)',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Verification status updated' } },
+      },
+    },
+    '/therapies/practitioners': {
+      get: {
+        summary: 'List active authorized therapy practitioners',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Practitioners list' } },
+      },
+      post: {
+        summary: 'Create authorized staff therapy practitioner account (Admin only)',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 201: { description: 'Practitioner created' } },
+      },
+    },
+    '/therapies/plans': {
+      get: {
+        summary: 'List role-scoped treatment plans',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Treatment plans list' } },
+      },
+      post: {
+        summary: 'Create patient treatment plan for verified active therapy (Doctor only)',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 201: { description: 'Treatment plan created' } },
+      },
+    },
+    '/therapies/plans/{id}': {
+      get: {
+        summary: 'Get treatment plan detail and scheduled sessions (Owning doctor or assigned practitioner)',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Treatment plan detail' } },
+      },
+      put: {
+        summary: 'Update treatment plan details or status (Doctor only)',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Treatment plan updated' } },
+      },
+    },
+    '/therapies/plans/{id}/finalize': {
+      post: {
+        summary: 'Finalize treatment plan after clinician approval & required consent (Doctor only)',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Treatment plan finalized' } },
+      },
+    },
+    '/therapies/plans/{id}/pdf': {
+      get: {
+        summary: 'Download selectable-text A4 Patient Treatment Plan PDF',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'PDF binary stream' } },
+      },
+    },
+    '/therapies/plans/{planId}/sessions': {
+      post: {
+        summary: 'Schedule therapy sessions for treatment plan (Doctor only)',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 201: { description: 'Sessions scheduled' } },
+      },
+    },
+    '/therapies/sessions': {
+      get: {
+        summary: 'List role-scoped therapy sessions',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Sessions list' } },
+      },
+    },
+    '/therapies/sessions/{id}': {
+      patch: {
+        summary: 'Update therapy session status/notes with optimistic concurrency version lock',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Session updated' }, 409: { description: 'Concurrent version conflict' } },
+      },
+      delete: {
+        summary: 'Delete a non-completed therapy session (Doctor only)',
+        tags: ['Therapies'],
+        security: [{ bearerAuth: [] }],
+        responses: { 200: { description: 'Session deleted' } },
       },
     },
   },

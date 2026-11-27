@@ -271,3 +271,68 @@ export const api = async <T = any>(
 };
 
 export const apiClient = api;
+
+export const downloadApiFile = async (
+  endpoint: string,
+  fallbackFilename: string
+): Promise<void> => {
+  const url = getApiUrl(endpoint);
+
+  const performDownload = async (tokenOverride?: string | null, retried = false): Promise<Response> => {
+    const token = tokenOverride !== undefined ? tokenOverride : getAccessToken();
+    const res = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (res.status === 401 && !retried) {
+      const refreshRes = await fetch(getApiUrl('/auth/refresh'), {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (refreshRes.ok) {
+        const refreshData = await refreshRes.json().catch(() => ({}));
+        const newToken = refreshData.data?.accessToken || refreshData.token;
+        if (newToken) {
+          setAccessToken(newToken);
+          return performDownload(newToken, true);
+        }
+      }
+    }
+
+    return res;
+  };
+
+  const response = await performDownload();
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new ApiError(
+      data.message || `Download failed with status ${response.status}`,
+      data.errors,
+      response.status,
+      data.code || 'DOWNLOAD_ERROR'
+    );
+  }
+
+  const disposition = response.headers.get('content-disposition') || '';
+  const match = /filename\*?=(?:UTF-8'')?"?([^";\n]+)"?/i.exec(disposition);
+  const filename = match?.[1]?.trim() || fallbackFilename;
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  }
+};

@@ -10,10 +10,12 @@ import {
   Building2,
   Calendar,
   Check,
+  Utensils,
+  Download,
 } from 'lucide-react';
-import { api } from '../../api/client';
+import { api, downloadApiFile } from '../../api/client';
 import { LivePrescriptionPad } from '../../components/prescription/LivePrescriptionPad';
-import { IPrescription, IDoctor, IChamber } from '../../types';
+import { IPrescription, IDoctor, IChamber, IFoodChart } from '../../types';
 
 export const PrescriptionView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +26,8 @@ export const PrescriptionView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isPrinting, setIsPrinting] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
+  const [isDownloadingFoodChart, setIsDownloadingFoodChart] = useState(false);
+  const [foodChartError, setFoodChartError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPrescription = async () => {
@@ -96,6 +100,29 @@ export const PrescriptionView: React.FC = () => {
         phone: prescription.doctorSnapshot?.phone,
       }
   ) as IChamber | null;
+
+  const attachedFoodChart =
+    prescription.attachedFoodChartId && typeof prescription.attachedFoodChartId === 'object'
+      ? (prescription.attachedFoodChartId as IFoodChart)
+      : null;
+
+  const handleDownloadAttachedFoodChart = async () => {
+    if (!attachedFoodChart) return;
+    setFoodChartError(null);
+    setIsDownloadingFoodChart(true);
+    try {
+      const datePart =
+        (attachedFoodChart.finalizedAt || attachedFoodChart.createdAt || '').slice(0, 10) || 'chart';
+      await downloadApiFile(
+        `/food-charts/${attachedFoodChart._id}/pdf`,
+        `Food-Chart-${prescription.patientSnapshot.patientId || attachedFoodChart.chartNumber}-${datePart}.pdf`
+      );
+    } catch (err: any) {
+      setFoodChartError(err?.message || 'Unable to download attached food chart PDF.');
+    } finally {
+      setIsDownloadingFoodChart(false);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
@@ -186,6 +213,55 @@ export const PrescriptionView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Linked Finalized Food Chart (Separate Private Clinical Attachment) */}
+      {attachedFoodChart && (
+        <div className="no-print bg-white px-4 py-3 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-lg bg-[#f0f9fa] border border-[#aee2e8] flex items-center justify-center shrink-0">
+              <Utensils className="w-4 h-4 text-[#007086]" strokeWidth={1.5} />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-slate-900">
+                  Attached Patient Food Chart
+                </span>
+                <span className="text-xs font-mono font-semibold text-[#007086] tabular-nums">
+                  {attachedFoodChart.chartNumber} (v{attachedFoodChart.version})
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 tabular-nums">
+                {attachedFoodChart.allowedFoods?.length || 0} allowed •{' '}
+                {attachedFoodChart.avoidedFoods?.length || 0} avoided
+                {attachedFoodChart.supplements?.length
+                  ? ` • ${attachedFoodChart.supplements.length} supplements`
+                  : ''}
+              </p>
+              {foodChartError && (
+                <p className="text-xs text-rose-700 mt-1">{foodChartError}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              to={`/food-charts/${attachedFoodChart._id}`}
+              className="px-3 py-1.5 text-xs font-medium border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 rounded-lg"
+            >
+              View Food Chart
+            </Link>
+            <button
+              type="button"
+              disabled={isDownloadingFoodChart}
+              onClick={handleDownloadAttachedFoodChart}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[#007086] hover:bg-[#065b6d] text-white rounded-lg disabled:opacity-50"
+            >
+              <Download className="w-4 h-4" strokeWidth={1.5} />
+              <span>{isDownloadingFoodChart ? 'PDF...' : 'Download PDF'}</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Render Prescription Pad */}
       <div className="prescription-print-parent bg-slate-100/60 p-2 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border border-slate-200 flex flex-col items-center overflow-x-auto print:bg-transparent print:border-none print:p-0 print:m-0 print:!block print:!w-full">

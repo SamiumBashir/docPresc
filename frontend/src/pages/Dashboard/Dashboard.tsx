@@ -37,6 +37,11 @@ export const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (user?.role === 'staff') {
+      navigate('/therapies', { replace: true });
+      return;
+    }
+
     const fetchDashboardData = async () => {
       try {
         const [reportsRes, patientsRes, prescriptionsRes] = await Promise.all([
@@ -62,7 +67,7 @@ export const Dashboard: React.FC = () => {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [user?.role, navigate]);
 
   const getGreetingName = () => {
     const rawName = doctor?.name || user?.name || '';

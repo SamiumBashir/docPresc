@@ -6,6 +6,7 @@ import {
   FilePlus,
   History,
   Pill,
+  Utensils,
   Bookmark,
   Building2,
   BarChart3,
@@ -14,6 +15,8 @@ import {
   ShieldAlert,
   Stethoscope,
   Sparkles,
+  Activity,
+  CalendarClock,
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -46,6 +49,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
     { to: '/prescriptions/new', label: t('nav_new_prescription'), icon: FilePlus, highlight: true },
     { to: '/patients', label: t('nav_patients'), icon: Users },
     { to: '/prescriptions', label: t('nav_prescriptions'), icon: History },
+    { to: '/food-charts', label: t('nav_food_charts'), icon: Utensils },
+    { to: '/therapies', label: t('nav_therapies'), icon: Activity },
     { to: '/medicines', label: t('nav_medicines'), icon: Pill },
     { to: '/templates', label: t('nav_templates'), icon: Bookmark },
     { to: '/chambers', label: t('nav_chambers'), icon: Building2 },
@@ -61,7 +66,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
     { to: '/admin/audit-logs', label: 'System Audit Logs', icon: ShieldAlert },
   ];
 
-  const navItems = user?.role === 'admin' ? adminNavItems : doctorNavItems;
+  const staffNavItems: NavItem[] = [
+    { to: '/therapies', label: 'Therapy Plans', icon: Activity },
+    { to: '/therapies/sessions', label: 'Session Tracker', icon: CalendarClock },
+    { to: '/therapies/catalog', label: 'Service Catalog', icon: Stethoscope },
+  ];
+
+  const navItems =
+    user?.role === 'admin'
+      ? adminNavItems
+      : user?.role === 'staff'
+      ? staffNavItems
+      : doctorNavItems;
 
   return (
     <>

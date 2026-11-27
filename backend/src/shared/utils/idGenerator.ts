@@ -1,6 +1,8 @@
 import { Counter } from '../../models/Counter';
 import { Patient } from '../../models/Patient';
 import { Prescription } from '../../models/Prescription';
+import { FoodChart } from '../../models/FoodChart';
+import { TreatmentPlan } from '../../models/TreatmentPlan';
 
 /**
  * Concurrency-safe atomic ID generator using MongoDB findOneAndUpdate with $inc.
@@ -42,6 +44,44 @@ export const generateNextPrescriptionId = async (): Promise<string> => {
     const exists = await Prescription.exists({ prescriptionId });
     if (!exists) {
       return prescriptionId;
+    }
+  }
+};
+
+export const generateNextFoodChartNumber = async (): Promise<string> => {
+  const currentYear = new Date().getFullYear();
+  const counterId = `food_chart_${currentYear}`;
+
+  while (true) {
+    const counter = await Counter.findByIdAndUpdate(
+      counterId,
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+
+    const chartNumber = `FC-${currentYear}-${counter.seq.toString().padStart(6, '0')}`;
+    const exists = await FoodChart.exists({ chartNumber });
+    if (!exists) {
+      return chartNumber;
+    }
+  }
+};
+
+export const generateNextTreatmentPlanNumber = async (): Promise<string> => {
+  const currentYear = new Date().getFullYear();
+  const counterId = `treatment_plan_${currentYear}`;
+
+  while (true) {
+    const counter = await Counter.findByIdAndUpdate(
+      counterId,
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+
+    const chartNumber = `TP-${currentYear}-${counter.seq.toString().padStart(6, '0')}`;
+    const exists = await TreatmentPlan.exists({ chartNumber });
+    if (!exists) {
+      return chartNumber;
     }
   }
 };

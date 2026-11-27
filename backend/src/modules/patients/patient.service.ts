@@ -2,6 +2,7 @@ import mongoose, { Types } from 'mongoose';
 import { patientRepository, PatientRepository } from './patient.repository';
 import { IPatient } from '../../models/Patient';
 import { Prescription } from '../../models/Prescription';
+import { TreatmentPlan } from '../../models/TreatmentPlan';
 import { generateNextPatientId } from '../../shared/utils/idGenerator';
 import { NotFoundError, ForbiddenError } from '../../shared/errors';
 import { CreatePatientDTO, UpdatePatientDTO, PatientFilterOptions, PatientListResult } from './patient.types';
@@ -133,9 +134,17 @@ export class PatientService {
       });
     });
 
+    const treatmentPlans = await TreatmentPlan.find({ patientId: id, doctorId })
+      .sort({ createdAt: -1 })
+      .select(
+        'chartNumber status isEdPlan therapySnapshot practitionerSnapshot startDate plannedSessions finalizedAt createdAt'
+      )
+      .lean();
+
     return {
       patient,
       prescriptions,
+      treatmentPlans,
       timeline: prescriptions.map((rx) => ({
         id: rx._id,
         prescriptionId: rx.prescriptionId,

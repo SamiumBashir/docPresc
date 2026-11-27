@@ -12,7 +12,11 @@
     "prestart": "npm run build",
     "start": "node dist/server.js",
     "seed": "tsx src/seeds/seed.ts",
+    "seed:food-catalog": "tsx src/seeds/foodCatalog.ts",
+    "seed:therapy-catalog": "tsx src/seeds/therapyCatalog.ts",
     "test": "tsx src/tests/run-tests.ts",
+    "test:food-charts": "tsx src/tests/test-food-charts.ts",
+    "test:therapies": "tsx src/tests/test-therapies.ts",
     "test:email": "tsx src/tests/test-email-delivery-suite.ts",
     "test:otp": "tsx src/tests/test-otp-flow.ts",
     "test:reset": "tsx src/tests/test-password-reset-complete.ts",
@@ -31,6 +35,8 @@
     "pipeline:herbal": "tsx scripts/medex/scrape-medex-herbal.ts && tsx scripts/medex/clean-medex-herbal.ts"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/noto-sans-bengali": "^5.3.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.7",
@@ -58,11 +64,13 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^10.1.0",
+    "playwright-core": "^1.65.1",
     "resend": "^6.32.1",
     "typescript": "^5.5.4",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "pdfjs-dist": "^6.5.438",
     "tsx": "^4.16.5"
   }
 }

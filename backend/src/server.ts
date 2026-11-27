@@ -23,6 +23,12 @@ const startServer = async () => {
     });
 
     server.on('error', (err: any) => {
+      if (err?.code === 'EADDRINUSE') {
+        console.error(
+          `[DocRx Backend] Port ${port} is already in use by an existing process. Stop the old server on port ${port} before restarting.`
+        );
+        process.exit(1);
+      }
       console.error(`[DocRx Backend] Server error:`, err.message);
     });
 

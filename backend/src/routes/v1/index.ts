@@ -7,6 +7,8 @@ import { chamberRoutes } from '../../modules/chambers';
 import { templateRoutes } from '../../modules/templates';
 import { adminRoutes } from '../../modules/admin';
 import { uploadRoutes } from '../../modules/uploads';
+import { foodChartRoutes } from '../../modules/food-charts';
+import { therapyRoutes } from '../../modules/therapies';
 import publicRoutes from '../public.routes';
 import { openApiSpec } from '../../docs/openapi';
 
@@ -16,6 +18,8 @@ const router = Router();
 router.use('/auth', authRoutes);
 router.use('/patients', patientRoutes);
 router.use('/prescriptions', prescriptionRoutes);
+router.use('/food-charts', foodChartRoutes);
+router.use('/therapies', therapyRoutes);
 router.use('/medicines', medicineRoutes);
 router.use('/chambers', chamberRoutes);
 router.use('/templates', templateRoutes);

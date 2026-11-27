@@ -25,8 +25,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'Hind Siliguri', 'system-ui', 'sans-serif'],
-        bengali: ['Hind Siliguri', 'SolaimanLipi', 'sans-serif'],
+        sans: ['Inter', 'Noto Sans Bengali', 'Hind Siliguri', 'system-ui', 'sans-serif'],
+        bengali: ['Noto Sans Bengali', 'Hind Siliguri', 'SolaimanLipi', 'sans-serif'],
       },
       boxShadow: {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.03)',

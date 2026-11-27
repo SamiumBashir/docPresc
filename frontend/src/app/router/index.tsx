@@ -22,6 +22,10 @@ const PatientDetails = lazy(() => import('../../pages/Patients/PatientDetails').
 const NewPrescription = lazy(() => import('../../pages/Prescriptions/NewPrescription').then((m) => ({ default: m.NewPrescription })));
 const PrescriptionHistory = lazy(() => import('../../pages/Prescriptions/PrescriptionHistory').then((m) => ({ default: m.PrescriptionHistory })));
 const PrescriptionView = lazy(() => import('../../pages/Prescriptions/PrescriptionView').then((m) => ({ default: m.PrescriptionView })));
+const FoodChartDirectory = lazy(() => import('../../pages/FoodCharts/FoodChartDirectory').then((m) => ({ default: m.FoodChartDirectory })));
+const FoodChartStudio = lazy(() => import('../../pages/FoodCharts/FoodChartStudio').then((m) => ({ default: m.FoodChartStudio })));
+const TherapyWorkspace = lazy(() => import('../../pages/Therapies/TherapyWorkspace').then((m) => ({ default: m.TherapyWorkspace })));
+const TreatmentPlanStudio = lazy(() => import('../../pages/Therapies/TreatmentPlanStudio').then((m) => ({ default: m.TreatmentPlanStudio })));
 const MedicineCatalog = lazy(() => import('../../pages/Medicines/MedicineCatalog').then((m) => ({ default: m.MedicineCatalog })));
 const TemplateList = lazy(() => import('../../pages/Templates/TemplateList').then((m) => ({ default: m.TemplateList })));
 const ChamberList = lazy(() => import('../../pages/Chambers/ChamberList').then((m) => ({ default: m.ChamberList })));
@@ -33,6 +37,7 @@ const DoctorSettings = lazy(() => import('../../pages/Settings/DoctorSettings').
 const AdminDashboard = lazy(() => import('../../admin/pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard })));
 const DoctorManagement = lazy(() => import('../../admin/pages/DoctorManagement').then((m) => ({ default: m.DoctorManagement })));
 const MedicineManagement = lazy(() => import('../../admin/pages/MedicineManagement').then((m) => ({ default: m.MedicineManagement })));
+const AdminTherapyCatalog = lazy(() => import('../../admin/pages/AdminTherapyCatalog').then((m) => ({ default: m.AdminTherapyCatalog })));
 const AuditLogs = lazy(() => import('../../admin/pages/AuditLogs').then((m) => ({ default: m.AuditLogs })));
 const AdminLogin = lazy(() => import('../../admin/pages/AdminLogin').then((m) => ({ default: m.AdminLogin })));
 
@@ -70,9 +75,19 @@ export const AppRouter: React.FC = () => {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="patients" element={<PatientList />} />
           <Route path="patients/:id" element={<PatientDetails />} />
+          <Route path="patients/:patientId/food-chart" element={<FoodChartStudio />} />
+          <Route path="patients/:patientId/therapy-plan" element={<TreatmentPlanStudio />} />
           <Route path="prescriptions/new" element={<NewPrescription />} />
           <Route path="prescriptions" element={<PrescriptionHistory />} />
           <Route path="prescriptions/:id" element={<PrescriptionView />} />
+          <Route path="food-charts" element={<FoodChartDirectory />} />
+          <Route path="food-charts/new" element={<FoodChartStudio />} />
+          <Route path="food-charts/:id" element={<FoodChartStudio />} />
+          <Route path="therapies" element={<TherapyWorkspace initialTab="plans" />} />
+          <Route path="therapies/sessions" element={<TherapyWorkspace initialTab="sessions" />} />
+          <Route path="therapies/catalog" element={<TherapyWorkspace initialTab="catalog" />} />
+          <Route path="therapies/plans/new" element={<TreatmentPlanStudio />} />
+          <Route path="therapies/plans/:id" element={<TreatmentPlanStudio />} />
           <Route path="medicines" element={<MedicineCatalog />} />
           <Route path="templates" element={<TemplateList />} />
           <Route path="chambers" element={<ChamberList />} />
@@ -94,6 +109,7 @@ export const AppRouter: React.FC = () => {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="doctors" element={<DoctorManagement />} />
           <Route path="medicines" element={<MedicineManagement />} />
+          <Route path="therapies" element={<AdminTherapyCatalog />} />
           <Route path="audit-logs" element={<AuditLogs />} />
         </Route>
 

@@ -18,6 +18,7 @@ export interface CreatePrescriptionDTO {
     notes?: string | null;
   } | null;
   notes?: string | null;
+  attachedFoodChartId?: string | null;
   status?: 'DRAFT' | 'FINALIZED';
 }
 

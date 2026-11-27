@@ -17,6 +17,7 @@ import {
   FileEdit,
   Eye,
   X,
+  Utensils,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -42,6 +43,7 @@ import {
   IPrescriptionVitals,
   ITemplate,
   IPrescription,
+  IFoodChart,
 } from '../../types';
 
 export const NewPrescription: React.FC = () => {
@@ -98,6 +100,8 @@ export const NewPrescription: React.FC = () => {
   const [shareToken, setShareToken] = useState('draft_token');
   const [existingPrescriptionId, setExistingPrescriptionId] = useState<string | null>(null);
   const [status, setStatus] = useState<'DRAFT' | 'FINALIZED' | 'CANCELLED'>('DRAFT');
+  const [patientFinalizedCharts, setPatientFinalizedCharts] = useState<IFoodChart[]>([]);
+  const [attachedFoodChartId, setAttachedFoodChartId] = useState<string>('');
 
   useEffect(() => {
     if (doctor?.settings?.paperSize) {
@@ -174,6 +178,37 @@ export const NewPrescription: React.FC = () => {
 
     return () => clearTimeout(timer);
   }, [patientSearch]);
+
+  // Fetch finalized Food Charts scoped to selected patient (optional Rx attachment)
+  useEffect(() => {
+    if (!selectedPatient?._id) {
+      setPatientFinalizedCharts([]);
+      setAttachedFoodChartId('');
+      return;
+    }
+
+    let active = true;
+    api<{ success: boolean; data: IFoodChart[] }>(
+      `/patients/${selectedPatient._id}/food-charts?status=FINALIZED`
+    )
+      .then((res) => {
+        if (!active) return;
+        const list = res.success && Array.isArray(res.data) ? res.data : [];
+        setPatientFinalizedCharts(list);
+        setAttachedFoodChartId((prev) =>
+          prev && list.some((c) => c._id === prev) ? prev : ''
+        );
+      })
+      .catch(() => {
+        if (active) {
+          setPatientFinalizedCharts([]);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [selectedPatient?._id]);
 
   // Autosave to localStorage (Debounced)
   useEffect(() => {
@@ -382,6 +417,7 @@ export const NewPrescription: React.FC = () => {
         investigations,
         advice,
         followUp,
+        attachedFoodChartId: attachedFoodChartId || null,
         status: saveStatus,
       };
 
@@ -876,6 +912,54 @@ export const NewPrescription: React.FC = () => {
 
           {/* 9. Follow-Up */}
           <FollowUpSelector followUp={followUp} onChange={setFollowUp} />
+
+          {/* 10. Optional Finalized Food Chart Attachment */}
+          <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <label
+                htmlFor="attach-food-chart"
+                className="text-xs font-semibold text-slate-700 flex items-center gap-1.5"
+              >
+                <Utensils className="w-4 h-4 text-[#007086]" strokeWidth={1.5} />
+                Attach Finalized Food Chart (Optional)
+              </label>
+              {selectedPatient && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/patients/${selectedPatient._id}/food-chart`)}
+                  className="text-xs font-medium text-[#007086] hover:underline"
+                >
+                  + Create Food Chart
+                </button>
+              )}
+            </div>
+
+            {!selectedPatient ? (
+              <p className="text-xs text-slate-500">
+                Select a patient above to link one of their finalized dietary food charts.
+              </p>
+            ) : patientFinalizedCharts.length === 0 ? (
+              <p className="text-xs text-slate-500">
+                No finalized food charts available for this patient yet. Draft charts must be
+                finalized before attaching.
+              </p>
+            ) : (
+              <select
+                id="attach-food-chart"
+                value={attachedFoodChartId}
+                onChange={(e) => setAttachedFoodChartId(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#007086]"
+              >
+                <option value="">None (Do not attach a food chart)</option>
+                {patientFinalizedCharts.map((chart) => (
+                  <option key={chart._id} value={chart._id}>
+                    {chart.chartNumber} (v{chart.version} • {chart.allowedFoods?.length || 0} allowed /{' '}
+                    {chart.avoidedFoods?.length || 0} avoided)
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
 
         {/* ========================================================= */}

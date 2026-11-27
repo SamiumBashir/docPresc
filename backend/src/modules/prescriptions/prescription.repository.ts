@@ -1,13 +1,20 @@
 import { FilterQuery, Types } from 'mongoose';
 import { Prescription, IPrescription } from '../../models/Prescription';
 
+const ATTACHED_FOOD_CHART_FIELDS =
+  'chartNumber status version finalizedAt createdAt allowedFoods avoidedFoods supplements';
+
 export class PrescriptionRepository {
   async findById(id: string | Types.ObjectId): Promise<IPrescription | null> {
-    return Prescription.findById(id).populate('chamberId');
+    return Prescription.findById(id)
+      .populate('chamberId')
+      .populate('attachedFoodChartId', ATTACHED_FOOD_CHART_FIELDS);
   }
 
   async findScopedById(id: string | Types.ObjectId, doctorId: string | Types.ObjectId): Promise<IPrescription | null> {
-    return Prescription.findOne({ _id: id, doctorId }).populate('chamberId');
+    return Prescription.findOne({ _id: id, doctorId })
+      .populate('chamberId')
+      .populate('attachedFoodChartId', ATTACHED_FOOD_CHART_FIELDS);
   }
 
   async findByShareToken(token: string): Promise<IPrescription | null> {

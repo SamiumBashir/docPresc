@@ -19,6 +19,7 @@ import { api } from '../../services/api-client';
 import { IMedicine } from '../../types';
 import { MANUFACTURER_NAMES } from '../../data/manufacturers';
 import { DOSAGE_FORM_NAMES } from '../../data/dosageForms';
+import { Modal } from '../../components/ui/Modal';
 
 export const MedicineManagement: React.FC = () => {
   const queryClient = useQueryClient();
@@ -26,6 +27,7 @@ export const MedicineManagement: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState<IMedicine | null>(null);
+  const [deletingMedicine, setDeletingMedicine] = useState<IMedicine | null>(null);
   const [formError, setFormError] = useState('');
 
   // CSV import
@@ -85,6 +87,7 @@ export const MedicineManagement: React.FC = () => {
       return api(`/medicines/${id}`, { method: 'DELETE' });
     },
     onSuccess: () => {
+      setDeletingMedicine(null);
       queryClient.invalidateQueries({ queryKey: ['admin-medicines'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
     },
@@ -178,10 +181,10 @@ export const MedicineManagement: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-medium text-[#eef0f5] tracking-[-0.01em]">
             Medicine Database
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[#a3a9b8] mt-1">
             Master formulary management: Allopathic, Unani, Ayurvedic, and Herbal medicines
           </p>
         </div>
@@ -197,17 +200,17 @@ export const MedicineManagement: React.FC = () => {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isImporting}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[#1b2232] hover:bg-[#232c40] text-[#eef0f5] text-xs font-medium border border-white/[0.1] transition-colors"
           >
-            <Upload className="w-3.5 h-3.5 text-slate-400" />
+            <Upload className="w-4 h-4 text-[#a3a9b8]" strokeWidth={1.5} />
             <span>{isImporting ? 'Importing...' : 'Import CSV'}</span>
           </button>
 
           <button
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors active:scale-[0.98]"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#007086] hover:bg-[#088097] text-white text-xs font-medium transition-colors active:scale-[0.98]"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" strokeWidth={1.5} />
             <span>Add medicine</span>
           </button>
         </div>
@@ -216,24 +219,24 @@ export const MedicineManagement: React.FC = () => {
       {/* Filters Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+          <Search className="w-4 h-4 text-[#757d90] absolute left-3.5 top-2.5" strokeWidth={1.5} />
           <input
             type="text"
             placeholder="Search by brand name, generic, or manufacturer..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-800 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="w-full bg-[#131924] border border-white/[0.1] rounded-lg py-2 pl-10 pr-4 text-xs text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#2ab0c7] transition-colors"
           />
         </div>
 
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-400" />
+          <Filter className="w-4 h-4 text-[#757d90]" strokeWidth={1.5} />
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-xl py-2 px-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="bg-[#131924] border border-white/[0.1] rounded-lg py-2 px-3 text-xs text-[#eef0f5] focus:outline-none focus:border-[#2ab0c7] transition-colors"
           >
-            <option value="all">All Systems</option>
+            <option value="all">All systems</option>
             <option value="Allopathic">Allopathic</option>
             <option value="Unani">Unani</option>
             <option value="Ayurvedic">Ayurvedic</option>
@@ -243,32 +246,32 @@ export const MedicineManagement: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
+      <div className="rounded-xl bg-[#131924] border border-white/[0.08] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-950/60 border-b border-slate-800 text-xs font-medium text-slate-400">
+            <thead className="bg-[#18202e] border-b border-white/[0.08] text-xs font-medium text-[#a3a9b8]">
               <tr>
-                <th className="py-3 px-4 sm:px-6">Brand Name</th>
-                <th className="py-3 px-4">Generic / Composition</th>
-                <th className="py-3 px-4">Form & Strength</th>
+                <th className="py-3 px-4 sm:px-6">Brand name</th>
+                <th className="py-3 px-4">Generic / composition</th>
+                <th className="py-3 px-4">Form &amp; strength</th>
                 <th className="py-3 px-4">System</th>
                 <th className="py-3 px-4">Manufacturer</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-white/[0.06]">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                  <td colSpan={6} className="py-12 text-center text-[#a3a9b8]">
                     <div className="flex flex-col items-center gap-2">
-                      <InfinityLoop className="w-12 h-6 text-indigo-400" duration="1.6s" />
+                      <InfinityLoop className="w-12 h-6 text-[#2ab0c7]" duration="1.6s" />
                       <span>Loading formulary...</span>
                     </div>
                   </td>
                 </tr>
               ) : medicines.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                  <td colSpan={6} className="py-12 text-center text-[#a3a9b8]">
                     No medicines match the search criteria.
                   </td>
                 </tr>
@@ -276,45 +279,45 @@ export const MedicineManagement: React.FC = () => {
                 medicines.map((med) => {
                   const isTrad = med.medicineType === 'Unani' || med.medicineType === 'Ayurvedic' || med.medicineType === 'Herbal';
                   return (
-                    <tr key={med._id} className="hover:bg-slate-800/30 transition-colors">
+                    <tr key={med._id} className="hover:bg-[#18202e]/60 transition-colors">
                       <td className="py-3.5 px-4 sm:px-6 font-semibold text-white">
                         <div className="flex items-center gap-2">
                           {isTrad ? (
                             <Leaf className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                           ) : (
-                            <Pill className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                            <Pill className="w-4 h-4 text-[#2ab0c7] flex-shrink-0" strokeWidth={1.5} />
                           )}
                           <span>{med.brandName}</span>
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4 text-slate-300">
+                      <td className="py-3.5 px-4 text-[#a3a9b8]">
                         {med.genericName}
                       </td>
 
                       <td className="py-3.5 px-4">
-                        <span className="font-mono text-xs text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded border border-slate-700">
+                        <span className="font-mono text-xs tabular-nums text-[#a3a9b8] bg-[#18202e] px-2 py-0.5 rounded border border-white/[0.08]">
                           {med.dosageForm} {med.strength ? `(${med.strength})` : ''}
                         </span>
                       </td>
 
                       <td className="py-3.5 px-4">
                         <span
-                          className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block ${
+                          className={`text-[11px] font-medium px-2 py-0.5 rounded inline-block ${
                             med.medicineType === 'Unani'
                               ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                               : med.medicineType === 'Ayurvedic'
-                              ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                              ? 'bg-amber-400/12 text-amber-300 border border-amber-400/25'
                               : med.medicineType === 'Herbal'
                               ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                              : 'bg-[#2ab0c7]/12 text-[#2ab0c7] border border-[#2ab0c7]/25'
                           }`}
                         >
                           {med.medicineType || 'Allopathic'}
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-4 text-slate-400 text-xs">
+                      <td className="py-3.5 px-4 text-[#757d90] text-xs">
                         {med.manufacturer || 'General'}
                       </td>
 
@@ -322,21 +325,17 @@ export const MedicineManagement: React.FC = () => {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openEditModal(med)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                            className="p-1.5 rounded-lg text-[#a3a9b8] hover:text-[#2ab0c7] hover:bg-[#1b2232] transition-colors"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => {
-                              if (window.confirm(`Delete ${med.brandName}?`)) {
-                                deleteMutation.mutate(med._id);
-                              }
-                            }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                            onClick={() => setDeletingMedicine(med)}
+                            className="p-1.5 rounded-lg text-[#a3a9b8] hover:text-[#f08b8e] hover:bg-rose-500/10 transition-colors"
                             title="Delete"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" strokeWidth={1.5} />
                           </button>
                         </div>
                       </td>
@@ -351,15 +350,15 @@ export const MedicineManagement: React.FC = () => {
 
       {/* Modal for Add / Edit */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-              <h2 className="text-lg font-bold text-white">
+        <div className="fixed inset-0 bg-[#05080f]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#131924] border border-white/[0.08] rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8">
+            <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+              <h2 className="text-lg font-medium text-[#eef0f5]">
                 {editingMedicine ? 'Edit Formulary Medicine' : 'Add New Medicine'}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1"
+                className="text-[#a3a9b8] hover:text-[#eef0f5] p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -375,7 +374,7 @@ export const MedicineManagement: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4 mt-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                  <label className="block text-xs font-medium text-[#a3a9b8] mb-1.5">
                     Brand Name *
                   </label>
                   <input
@@ -384,12 +383,12 @@ export const MedicineManagement: React.FC = () => {
                     value={brandName}
                     onChange={(e) => setBrandName(e.target.value)}
                     placeholder="e.g. Napa"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 px-3 text-xs text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#2ab0c7]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                  <label className="block text-xs font-medium text-[#a3a9b8] mb-1.5">
                     Generic Name *
                   </label>
                   <input
@@ -398,20 +397,20 @@ export const MedicineManagement: React.FC = () => {
                     value={genericName}
                     onChange={(e) => setGenericName(e.target.value)}
                     placeholder="e.g. Paracetamol"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 px-3 text-xs text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#2ab0c7]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                  <label className="block text-xs font-medium text-[#a3a9b8] mb-1.5">
                     Medicine System
                   </label>
                   <select
                     value={medicineType}
                     onChange={(e) => setMedicineType(e.target.value as any)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 px-3 text-xs text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#2ab0c7]"
                   >
                     <option value="Allopathic">Allopathic</option>
                     <option value="Unani">Unani</option>
@@ -421,13 +420,13 @@ export const MedicineManagement: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                  <label className="block text-xs font-medium text-[#a3a9b8] mb-1.5">
                     Dosage Form
                   </label>
                   <select
                     value={dosageForm}
                     onChange={(e) => setDosageForm(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 px-3 text-xs text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#2ab0c7]"
                   >
                     {DOSAGE_FORM_NAMES.map((f) => (
                       <option key={f} value={f}>
@@ -438,7 +437,7 @@ export const MedicineManagement: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                  <label className="block text-xs font-medium text-[#a3a9b8] mb-1.5">
                     Strength
                   </label>
                   <input
@@ -446,13 +445,13 @@ export const MedicineManagement: React.FC = () => {
                     value={strength}
                     onChange={(e) => setStrength(e.target.value)}
                     placeholder="e.g. 500 mg"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 px-3 text-xs text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#2ab0c7]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">
+                <label className="block text-xs font-medium text-[#a3a9b8] mb-1.5">
                   Manufacturer
                 </label>
                 <input
@@ -461,7 +460,7 @@ export const MedicineManagement: React.FC = () => {
                   value={manufacturer}
                   onChange={(e) => setManufacturer(e.target.value)}
                   placeholder="e.g. Beximco Pharmaceuticals Ltd."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 px-3 text-xs text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#2ab0c7]"
                 />
                 <datalist id="manufacturers-list">
                   {MANUFACTURER_NAMES.map((m) => (
@@ -470,18 +469,18 @@ export const MedicineManagement: React.FC = () => {
                 </datalist>
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-800">
+              <div className="pt-4 flex justify-end gap-2.5 border-t border-white/[0.08]">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
+                  className="px-4 py-2 rounded-lg bg-[#1b2232] hover:bg-[#232c40] border border-white/[0.1] text-[#a3a9b8] hover:text-[#eef0f5] text-xs font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saveMutation.isPending}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors active:scale-[0.98]"
+                  className="px-4 py-2 rounded-lg bg-[#007086] hover:bg-[#088097] text-white text-xs font-medium transition-colors active:scale-[0.98]"
                 >
                   {saveMutation.isPending ? 'Saving...' : 'Save Medicine'}
                 </button>
@@ -490,6 +489,41 @@ export const MedicineManagement: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        dark
+        isOpen={Boolean(deletingMedicine)}
+        onClose={() => setDeletingMedicine(null)}
+        title="Delete Medicine Record"
+        subtitle={deletingMedicine ? `${deletingMedicine.brandName} (${deletingMedicine.genericName})` : undefined}
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4 text-xs text-[#eef0f5]">
+          <p className="text-[#a3a9b8] leading-relaxed">
+            This permanently removes{' '}
+            <span className="font-medium text-[#eef0f5]">{deletingMedicine?.brandName}</span> from the
+            medicine database. Prescriptions already issued retain their saved snapshot.
+          </p>
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-white/[0.08]">
+            <button
+              type="button"
+              onClick={() => setDeletingMedicine(null)}
+              className="px-4 py-2 rounded-lg bg-[#1b2232] hover:bg-[#232c40] border border-white/[0.1] text-[#a3a9b8] hover:text-[#eef0f5] font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={deleteMutation.isPending}
+              onClick={() => deletingMedicine && deleteMutation.mutate(deletingMedicine._id)}
+              className="px-4 py-2 rounded-lg bg-rose-600/85 hover:bg-rose-600 text-white font-medium transition-colors active:scale-[0.98] disabled:opacity-50"
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete medicine'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

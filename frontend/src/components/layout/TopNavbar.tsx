@@ -64,27 +64,31 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onOpenSearch, onToggleSide
         </button>
 
         {/* Mobile Search Icon Button (< sm) */}
-        <button
-          onClick={onOpenSearch}
-          aria-label="Quick patient search"
-          className="sm:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 transition-colors shrink-0"
-          title="Search Patient (Ctrl + K)"
-        >
-          <Search className="w-5 h-5 text-slate-500" aria-hidden="true" />
-        </button>
+        {user?.role === 'doctor' && (
+          <button
+            onClick={onOpenSearch}
+            aria-label="Quick patient search"
+            className="sm:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 transition-colors shrink-0"
+            title="Search Patient (Ctrl + K)"
+          >
+            <Search className="w-5 h-5 text-slate-500" aria-hidden="true" />
+          </button>
+        )}
 
         {/* Desktop/Tablet Search Input Pill (>= sm) */}
-        <button
-          onClick={onOpenSearch}
-          aria-label="Quick patient search (Ctrl + K)"
-          className="hidden sm:flex items-center gap-2 w-full bg-slate-100/80 hover:bg-slate-100 text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-xl text-xs sm:text-sm transition-all border border-slate-200/60 group truncate"
-        >
-          <Search className="w-4 h-4 text-slate-400 group-hover:text-medical-600 transition-colors shrink-0" aria-hidden="true" />
-          <span className="flex-1 text-left truncate">{t('rx_select_patient')}</span>
-          <kbd className="hidden md:inline-block bg-white text-slate-400 px-2 py-0.5 rounded text-xs border border-slate-200 font-mono shadow-2xs">
-            Ctrl + K
-          </kbd>
-        </button>
+        {user?.role === 'doctor' && (
+          <button
+            onClick={onOpenSearch}
+            aria-label="Quick patient search (Ctrl + K)"
+            className="hidden sm:flex items-center gap-2 w-full bg-slate-100/80 hover:bg-slate-100 text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-xl text-xs sm:text-sm transition-all border border-slate-200/60 group truncate"
+          >
+            <Search className="w-4 h-4 text-slate-400 group-hover:text-medical-600 transition-colors shrink-0" aria-hidden="true" />
+            <span className="flex-1 text-left truncate">{t('rx_select_patient')}</span>
+            <kbd className="hidden md:inline-block bg-white text-slate-400 px-2 py-0.5 rounded text-xs border border-slate-200 font-mono shadow-2xs">
+              Ctrl + K
+            </kbd>
+          </button>
+        )}
       </div>
 
       {/* Right Controls */}

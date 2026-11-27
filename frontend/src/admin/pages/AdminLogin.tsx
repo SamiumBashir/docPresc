@@ -13,7 +13,6 @@ export const AdminLogin: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // If already authenticated as admin, redirect to admin dashboard immediately
   useEffect(() => {
     if (user?.role === 'admin') {
       navigate('/admin', { replace: true });
@@ -39,79 +38,86 @@ export const AdminLogin: React.FC = () => {
       }
       navigate('/admin', { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please verify admin credentials.');
+      setError(err.message || 'Sign in failed. Please verify admin credentials.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center px-4 relative">
-      <div className="w-full max-w-md relative z-10">
-        {/* Brand Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-900 text-indigo-400 border border-slate-800 mb-4 shadow-sm">
-            <Activity className="w-7 h-7" />
+    <div className="min-h-screen bg-[#0d1119] flex flex-col justify-center items-center px-4 text-[#eef0f5] antialiased">
+      <div className="w-full max-w-md space-y-6">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-[#007086] text-white mx-auto">
+            <Activity className="w-5 h-5" strokeWidth={1.5} />
           </div>
-          <h1 className="text-2xl font-semibold text-white tracking-tight">
-            DocRx Enterprise Hub
+          <h1 className="text-xl font-medium text-[#eef0f5] tracking-[-0.01em]">
+            DocRx Clinical Governance
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Administrator security access portal
-          </p>
+          <p className="text-xs text-[#a3a9b8]">Administrator portal sign in</p>
         </div>
 
-        {/* Login Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm">
+        <div className="bg-[#131924] border border-white/[0.08] rounded-xl p-6 sm:p-7">
           {error && (
-            <div className="mb-6 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 text-rose-400 text-xs">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <div
+              role="alert"
+              className="mb-5 p-3 rounded-lg bg-[#e5484d]/10 border border-[#e5484d]/25 flex items-center gap-2.5 text-[#f08b8e] text-xs"
+            >
+              <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={1.5} />
               <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-xs font-medium text-[#a3a9b8] mb-1.5">
                 Administrator email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                <Mail
+                  className="w-4 h-4 text-[#757d90] absolute left-3 top-2.5 pointer-events-none"
+                  strokeWidth={1.5}
+                />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@prescription.com"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                  className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 pl-9 pr-3 text-[13px] text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#007086] focus:ring-1 focus:ring-[#007086] transition-colors"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-medium text-slate-300">
-                  Password
-                </label>
+                <label className="block text-xs font-medium text-[#a3a9b8]">Password</label>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition-colors cursor-pointer select-none"
+                  className="text-xs text-[#757d90] hover:text-[#eef0f5] flex items-center gap-1.5 transition-colors cursor-pointer"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  <span>{showPassword ? 'Hide password' : 'Show password'}</span>
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" strokeWidth={1.5} />
+                  ) : (
+                    <Eye className="w-4 h-4" strokeWidth={1.5} />
+                  )}
+                  <span>{showPassword ? 'Hide' : 'Show'}</span>
                 </button>
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                <Lock
+                  className="w-4 h-4 text-[#757d90] absolute left-3 top-2.5 pointer-events-none"
+                  strokeWidth={1.5}
+                />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter administrator password"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                  placeholder="Enter password"
+                  className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 pl-9 pr-3 text-[13px] text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#007086] focus:ring-1 focus:ring-[#007086] transition-colors"
                 />
               </div>
             </div>
@@ -119,26 +125,26 @@ export const AdminLogin: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-medium text-sm transition-colors disabled:opacity-50 mt-2 flex items-center justify-center gap-2"
+              className="w-full h-10 px-4 rounded-lg bg-[#007086] hover:bg-[#088097] text-white font-medium text-[13px] transition-colors disabled:opacity-50 mt-2 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>
                   <InfinityLoop className="w-7 h-3.5 text-white" duration="1.6s" strokeWidth={7} />
-                  <span>Verifying credentials...</span>
+                  <span>Signing in...</span>
                 </>
               ) : (
                 'Sign in to admin portal'
               )}
             </button>
 
-            <div className="pt-3 border-t border-slate-800/80 text-center">
+            <div className="pt-3 border-t border-white/[0.08] text-center">
               <button
                 type="button"
                 onClick={fillDemoAdmin}
-                className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors inline-flex items-center gap-1.5"
+                className="text-xs text-[#a3a9b8] hover:text-[#eef0f5] font-medium transition-colors inline-flex items-center gap-1.5"
               >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Fill admin demo credentials</span>
+                <ShieldCheck className="w-4 h-4 text-[#2ab0c7]" strokeWidth={1.5} />
+                <span>Fill demo admin credentials</span>
               </button>
             </div>
           </form>

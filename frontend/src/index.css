@@ -408,4 +408,33 @@
     overflow-wrap: break-word !important;
     line-height: 1.35 !important;
   }
+
+  /* Food Chart & Treatment Plan Print Sheets */
+  .food-chart-print-sheet,
+  .treatment-plan-print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .food-chart-print-parent,
+  .treatment-plan-print-parent,
+  div:has(> .food-chart-print-sheet),
+  div:has(> div > .food-chart-print-sheet),
+  div:has(> .treatment-plan-print-sheet),
+  div:has(> div > .treatment-plan-print-sheet) {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: static !important;
+    overflow: visible !important;
+    max-height: none !important;
+  }
 }

@@ -5,8 +5,9 @@ import { IPrescription } from '../../models/Prescription';
 import { Patient } from '../../models/Patient';
 import { Chamber } from '../../models/Chamber';
 import { IDoctor } from '../../models/Doctor';
+import { FoodChart } from '../../models/FoodChart';
 import { generateNextPrescriptionId } from '../../shared/utils/idGenerator';
-import { NotFoundError, ForbiddenError, AppError } from '../../shared/errors';
+import { NotFoundError, ForbiddenError, AppError, BadRequestError } from '../../shared/errors';
 import { CreatePrescriptionDTO, UpdatePrescriptionDTO, PrescriptionFilterOptions, PrescriptionListResult } from './prescription.types';
 
 export class PrescriptionService {
@@ -32,6 +33,44 @@ export class PrescriptionService {
 
   private generateShareToken(): string {
     return crypto.randomBytes(24).toString('hex');
+  }
+
+  private async validateAttachedFoodChart(
+    attachedFoodChartId: string | null | undefined,
+    doctorId: Types.ObjectId | string,
+    patientObjectId: Types.ObjectId | string
+  ): Promise<Types.ObjectId | null | undefined> {
+    if (attachedFoodChartId === undefined) {
+      return undefined;
+    }
+    if (attachedFoodChartId === null || attachedFoodChartId === '') {
+      return null;
+    }
+    if (!mongoose.Types.ObjectId.isValid(attachedFoodChartId)) {
+      throw new BadRequestError('Invalid attached food chart ID.', 'INVALID_FOOD_CHART_ID');
+    }
+
+    const chart = await FoodChart.findById(attachedFoodChartId).exec();
+    if (!chart) {
+      throw new NotFoundError('Attached food chart not found.');
+    }
+    if (chart.doctorId.toString() !== doctorId.toString()) {
+      throw new ForbiddenError('Forbidden: Attached food chart belongs to another doctor.');
+    }
+    if (chart.patientId.toString() !== patientObjectId.toString()) {
+      throw new BadRequestError(
+        'Attached food chart must belong to the same patient.',
+        'FOOD_CHART_PATIENT_MISMATCH'
+      );
+    }
+    if (chart.status !== 'FINALIZED') {
+      throw new BadRequestError(
+        'Only finalized food charts can be attached to a prescription.',
+        'FOOD_CHART_NOT_FINALIZED'
+      );
+    }
+
+    return chart._id as Types.ObjectId;
   }
 
   async listPrescriptions(filters: PrescriptionFilterOptions): Promise<PrescriptionListResult> {
@@ -129,6 +168,11 @@ export class PrescriptionService {
     const prescriptionId = await generateNextPrescriptionId();
     const shareToken = this.generateShareToken();
     const isFinalized = data.status === 'FINALIZED';
+    const validatedFoodChartId = await this.validateAttachedFoodChart(
+      data.attachedFoodChartId,
+      doctor._id,
+      patient._id
+    );
 
     const prescription = await this.repo.create({
       prescriptionId,
@@ -169,6 +213,7 @@ export class PrescriptionService {
       advice: data.advice || [],
       followUp: this.sanitizeFollowUp(data.followUp),
       notes: data.notes || undefined,
+      attachedFoodChartId: validatedFoodChartId ?? null,
       status: isFinalized ? 'FINALIZED' : 'DRAFT',
       finalizedAt: isFinalized ? new Date() : undefined,
       shareToken,
@@ -224,6 +269,14 @@ export class PrescriptionService {
     existing.advice = data.advice as any;
     existing.followUp = this.sanitizeFollowUp(data.followUp) as any;
     existing.notes = data.notes as any;
+    if (data.attachedFoodChartId !== undefined) {
+      const validatedFoodChartId = await this.validateAttachedFoodChart(
+        data.attachedFoodChartId,
+        doctor._id,
+        existing.patientId
+      );
+      existing.attachedFoodChartId = (validatedFoodChartId ?? null) as any;
+    }
 
     if (chamber) {
       existing.chamberId = chamber._id as any;
@@ -329,7 +382,7 @@ export class PrescriptionService {
       throw new AppError('This public prescription link has expired for security and patient privacy.', 410, 'SHARE_LINK_EXPIRED');
     }
 
-    // Return sanitized public verification DTO (PII Redacted)
+    // Return sanitized public verification DTO (PII Redacted; attachedFoodChartId is excluded intentionally)
     return {
       _id: prescription._id,
       prescriptionId: prescription.prescriptionId,

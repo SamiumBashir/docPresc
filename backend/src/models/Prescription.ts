@@ -80,6 +80,7 @@ export interface IPrescription extends Document {
     notes?: string;
   };
   notes?: string;
+  attachedFoodChartId?: Types.ObjectId | null;
   status: 'DRAFT' | 'FINALIZED' | 'CANCELLED';
   finalizedAt?: Date;
   shareToken: string;
@@ -173,6 +174,7 @@ const PrescriptionSchema: Schema = new Schema(
       notes: { type: String },
     },
     notes: { type: String },
+    attachedFoodChartId: { type: Schema.Types.ObjectId, ref: 'FoodChart', default: null },
     status: { type: String, enum: ['DRAFT', 'FINALIZED', 'CANCELLED'], default: 'DRAFT', index: true },
     finalizedAt: { type: Date },
     shareToken: { type: String, required: true, unique: true, index: true },

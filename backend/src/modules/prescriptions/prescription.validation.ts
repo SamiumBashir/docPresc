@@ -62,5 +62,6 @@ export const PrescriptionSchema = z.object({
     .optional()
     .nullable(),
   notes: z.string().optional().nullable(),
+  attachedFoodChartId: z.string().trim().optional().nullable(),
   status: z.enum(['DRAFT', 'FINALIZED']).default('DRAFT'),
 });

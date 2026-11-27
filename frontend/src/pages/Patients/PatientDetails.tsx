@@ -16,9 +16,23 @@ import {
   Pill,
   BookmarkCheck,
   ShieldAlert,
+  Utensils,
+  Download,
+  CalendarClock,
 } from 'lucide-react';
-import { api } from '../../api/client';
-import { IPatient, IPrescription } from '../../types';
+import { api, downloadApiFile } from '../../api/client';
+import { therapyApi } from '../../services/endpoints/therapy.api';
+import {
+  PlanStatusBadge,
+  SessionStatusBadge,
+} from '../../components/therapy/VerificationBadge';
+import {
+  IFoodChart,
+  IPatient,
+  IPatientTreatmentHistory,
+  IPrescription,
+  ITreatmentPlan,
+} from '../../types';
 
 interface PatientHistoryData {
   patient: IPatient;
@@ -38,18 +52,32 @@ interface PatientHistoryData {
 export const PatientDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<PatientHistoryData | null>(null);
+  const [foodCharts, setFoodCharts] = useState<IFoodChart[]>([]);
+  const [therapyHistory, setTherapyHistory] = useState<IPatientTreatmentHistory | null>(null);
+  const [downloadingChartId, setDownloadingChartId] = useState<string | null>(null);
+  const [downloadingPlanId, setDownloadingPlanId] = useState<string | null>(null);
+  const [foodChartError, setFoodChartError] = useState<string | null>(null);
+  const [therapyError, setTherapyError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await api<{ success: boolean; data: PatientHistoryData }>(
-          `/patients/${id}/history`
-        );
+        const [res, chartsRes, txHistory] = await Promise.all([
+          api<{ success: boolean; data: PatientHistoryData }>(`/patients/${id}/history`),
+          api<{ success: boolean; data: IFoodChart[] }>(`/patients/${id}/food-charts`).catch(
+            () => ({ success: false, data: [] as IFoodChart[] })
+          ),
+          id ? therapyApi.getPatientTreatmentHistory(id).catch(() => null) : Promise.resolve(null),
+        ]);
         if (res.success && res.data) {
           setData(res.data);
         }
+        if (chartsRes.success) {
+          setFoodCharts(chartsRes.data || []);
+        }
+        setTherapyHistory(txHistory);
       } catch {
         setData(null);
       } finally {
@@ -59,6 +87,34 @@ export const PatientDetails: React.FC = () => {
 
     fetchHistory();
   }, [id]);
+
+  const handleDownloadTreatmentPlanPdf = async (plan: ITreatmentPlan) => {
+    setTherapyError(null);
+    setDownloadingPlanId(plan._id);
+    try {
+      await therapyApi.downloadTreatmentPlanPdf(plan);
+    } catch (err: any) {
+      setTherapyError(err?.message || 'Unable to download treatment plan PDF.');
+    } finally {
+      setDownloadingPlanId(null);
+    }
+  };
+
+  const handleDownloadFoodChartPdf = async (chart: IFoodChart) => {
+    setFoodChartError(null);
+    setDownloadingChartId(chart._id);
+    try {
+      const datePart = (chart.finalizedAt || chart.createdAt || '').slice(0, 10) || 'chart';
+      await downloadApiFile(
+        `/food-charts/${chart._id}/pdf`,
+        `Food-Chart-${chart.patientSnapshot?.patientId || chart.chartNumber}-${datePart}.pdf`
+      );
+    } catch (err: any) {
+      setFoodChartError(err?.message || 'Unable to download food chart PDF.');
+    } finally {
+      setDownloadingChartId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -86,12 +142,28 @@ export const PatientDetails: React.FC = () => {
           <ArrowLeft className="w-4 h-4" /> Back to Patient List
         </button>
 
-        <Link
-          to={`/prescriptions/new?patientId=${patient._id}`}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-xl text-xs font-medium transition-colors active:scale-[0.98] self-stretch sm:self-auto"
-        >
-          <FilePlus className="w-4 h-4" /> Write New Prescription
-        </Link>
+        <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-auto">
+          <Link
+            to={`/patients/${patient._id}/therapy-plan`}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 rounded-xl text-xs font-medium transition-colors"
+          >
+            <Activity className="w-4 h-4 text-[#007086]" strokeWidth={1.5} /> New Treatment Plan
+          </Link>
+
+          <Link
+            to={`/patients/${patient._id}/food-chart`}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 rounded-xl text-xs font-medium transition-colors"
+          >
+            <Utensils className="w-4 h-4 text-[#007086]" strokeWidth={1.5} /> Create Food Chart
+          </Link>
+
+          <Link
+            to={`/prescriptions/new?patientId=${patient._id}`}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-medical-600 hover:bg-medical-700 text-white rounded-xl text-xs font-medium transition-colors active:scale-[0.98]"
+          >
+            <FilePlus className="w-4 h-4" /> Write New Prescription
+          </Link>
+        </div>
       </div>
 
       {/* Patient Profile Card */}
@@ -228,10 +300,214 @@ export const PatientDetails: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Patient Food Charts */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                <Utensils className="w-4 h-4 text-[#007086]" strokeWidth={1.5} /> Food Charts ({foodCharts.length})
+              </h3>
+              <Link
+                to={`/patients/${patient._id}/food-chart`}
+                className="text-xs font-medium text-[#007086] hover:underline"
+              >
+                + New
+              </Link>
+            </div>
+
+            {foodChartError && (
+              <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2">
+                {foodChartError}
+              </p>
+            )}
+
+            {foodCharts.length === 0 ? (
+              <p className="text-xs text-slate-400 italic">No dietary food charts created yet.</p>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto divide-y divide-slate-100">
+                {foodCharts.map((chart) => (
+                  <div key={chart._id} className="pt-2.5 first:pt-0 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <Link
+                        to={`/food-charts/${chart._id}`}
+                        className="font-mono font-semibold text-slate-900 hover:text-[#007086] tabular-nums"
+                      >
+                        {chart.chartNumber}
+                      </Link>
+                      <span
+                        className={`px-1.5 py-0.5 text-[11px] font-medium rounded border tabular-nums ${
+                          chart.status === 'FINALIZED'
+                            ? 'bg-[#f0f9fa] border-[#aee2e8] text-[#065b6d]'
+                            : 'bg-slate-100 border-slate-200 text-slate-700'
+                        }`}
+                      >
+                        {chart.status} • v{chart.version}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-500 tabular-nums">
+                      {chart.allowedFoods?.length || 0} allowed • {chart.avoidedFoods?.length || 0} avoided
+                    </p>
+
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <Link
+                        to={`/food-charts/${chart._id}`}
+                        className="px-2.5 py-1 text-xs font-medium border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg"
+                      >
+                        Open
+                      </Link>
+                      <button
+                        type="button"
+                        disabled={downloadingChartId === chart._id}
+                        onClick={() => handleDownloadFoodChartPdf(chart)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium border border-slate-200 hover:bg-slate-50 text-slate-800 rounded-lg disabled:opacity-50"
+                      >
+                        <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
+                        <span>{downloadingChartId === chart._id ? 'PDF...' : 'PDF'}</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Right Column: Complete Prescriptions Timeline */}
-        <div className="lg:col-span-8 space-y-4">
+        {/* Right Column: Treatment & Therapy History + Complete Prescriptions Timeline */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Dedicated Treatment & Therapy History Section */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
+                  <CalendarClock className="w-4 h-4 text-[#007086]" strokeWidth={1.5} />
+                  <span>Treatment &amp; Therapy History</span>
+                </h3>
+                {therapyHistory && (
+                  <p className="text-xs text-slate-500 mt-0.5 tabular-nums">
+                    {therapyHistory.summary.activePlansCount} active plans •{' '}
+                    {therapyHistory.summary.completedSessionsCount} completed sessions •{' '}
+                    {therapyHistory.summary.upcomingSessionsCount} upcoming sessions
+                  </p>
+                )}
+              </div>
+              <Link
+                to={`/patients/${patient._id}/therapy-plan`}
+                className="px-3 py-1.5 text-xs font-medium bg-[#007086] hover:bg-[#065b6d] text-white rounded-lg"
+              >
+                + Assign therapy
+              </Link>
+            </div>
+
+            {therapyError && (
+              <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2">
+                {therapyError}
+              </p>
+            )}
+
+            {!therapyHistory || therapyHistory.summary.totalPlans === 0 ? (
+              <p className="text-xs text-slate-500">
+                No therapy treatment plans have been assigned to this patient yet.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {[...therapyHistory.activePlans, ...therapyHistory.previousPlans].map((plan) => (
+                  <div
+                    key={plan._id}
+                    className="p-3.5 border border-slate-200 rounded-xl space-y-2 text-xs"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          to={`/therapies/plans/${plan._id}`}
+                          className="font-mono font-semibold text-slate-900 hover:text-[#007086]"
+                        >
+                          {plan.chartNumber}
+                        </Link>
+                        <PlanStatusBadge status={plan.status} />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          to={`/therapies/plans/${plan._id}`}
+                          className="px-2.5 py-1 text-xs font-medium border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg"
+                        >
+                          Open plan
+                        </Link>
+                        <button
+                          type="button"
+                          disabled={downloadingPlanId === plan._id}
+                          onClick={() => handleDownloadTreatmentPlanPdf(plan)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium border border-slate-200 hover:bg-slate-50 text-slate-800 rounded-lg disabled:opacity-50"
+                        >
+                          <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
+                          <span>{downloadingPlanId === plan._id ? 'PDF...' : 'PDF'}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="text-slate-800 font-medium">
+                      {plan.therapySnapshot?.name}
+                      <span className="text-slate-500 font-normal ml-1.5">
+                        ({plan.therapySnapshot?.categoryName})
+                      </span>
+                    </div>
+
+                    <div className="text-[11px] text-slate-600">
+                      Practitioner: {plan.practitionerSnapshot?.name}
+                      {plan.plannedSessions ? ` • Planned: ${plan.plannedSessions} sessions` : ''}
+                    </div>
+
+                    {plan.precautions && (
+                      <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-700">
+                        <span className="font-semibold text-slate-800">Precautions:</span>{' '}
+                        {plan.precautions}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {therapyHistory.sessions.length > 0 && (
+                  <div className="border-t border-slate-100 pt-3 space-y-2">
+                    <div className="text-xs font-medium text-slate-700">
+                      Recent &amp; Upcoming Therapy Sessions ({therapyHistory.sessions.length})
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {therapyHistory.sessions.slice(0, 6).map((sess) => {
+                        const planObj =
+                          typeof sess.treatmentPlanId === 'object' ? sess.treatmentPlanId : null;
+                        return (
+                          <div
+                            key={sess._id}
+                            className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] space-y-1"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-mono font-semibold text-slate-800 tabular-nums">
+                                #{sess.sessionNumber} • {planObj?.chartNumber || 'Plan'}
+                              </span>
+                              <SessionStatusBadge status={sess.status} />
+                            </div>
+                            <div className="text-slate-600 tabular-nums">
+                              {new Date(sess.scheduledAt).toLocaleString('en-GB', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </div>
+                            {sess.practitionerNotes && (
+                              <div className="text-slate-700 truncate">{sess.practitionerNotes}</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
               <History className="w-4 h-4 text-medical-600" /> Consultation Timeline ({prescriptions.length})

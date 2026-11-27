@@ -21,6 +21,8 @@ export const Login: React.FC = () => {
     if (user && token) {
       if (user.role === 'admin') {
         navigate('/admin', { replace: true });
+      } else if (user.role === 'staff') {
+        navigate('/therapies', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });
       }
@@ -79,6 +81,8 @@ export const Login: React.FC = () => {
       const storedUser = JSON.parse(localStorage.getItem('docrx_user') || '{}');
       if (storedUser.role === 'admin') {
         navigate('/admin', { replace: true });
+      } else if (storedUser.role === 'staff') {
+        navigate('/therapies', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });
       }

@@ -47,10 +47,10 @@ export const MedicineFormModal: React.FC<Props> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-          <h2 className="text-lg font-bold text-white">
+    <div className="fixed inset-0 bg-[#05080f]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-[#131924] border border-white/[0.08] rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8">
+        <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+          <h2 className="text-lg font-medium text-[#eef0f5]">
             {isEditing ? 'Edit Formulary Medicine' : 'Add New Medicine'}
           </h2>
           <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
@@ -77,7 +77,7 @@ export const MedicineFormModal: React.FC<Props> = ({
                 value={brandName}
                 onChange={(e) => setBrandName(e.target.value)}
                 placeholder="e.g. Napa"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 px-3 text-xs text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#2ab0c7]"
               />
             </div>
 
@@ -91,7 +91,7 @@ export const MedicineFormModal: React.FC<Props> = ({
                 value={genericName}
                 onChange={(e) => setGenericName(e.target.value)}
                 placeholder="e.g. Paracetamol"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 px-3 text-xs text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#2ab0c7]"
               />
             </div>
           </div>
@@ -104,7 +104,7 @@ export const MedicineFormModal: React.FC<Props> = ({
               <select
                 value={medicineType}
                 onChange={(e) => setMedicineType(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 px-3 text-xs text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#2ab0c7]"
               >
                 <option value="Allopathic">Allopathic</option>
                 <option value="Unani">Unani</option>
@@ -120,7 +120,7 @@ export const MedicineFormModal: React.FC<Props> = ({
               <select
                 value={dosageForm}
                 onChange={(e) => setDosageForm(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 px-3 text-xs text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#2ab0c7]"
               >
                 {DOSAGE_FORM_NAMES.map((f) => (
                   <option key={f} value={f}>
@@ -139,13 +139,13 @@ export const MedicineFormModal: React.FC<Props> = ({
                 value={strength}
                 onChange={(e) => setStrength(e.target.value)}
                 placeholder="e.g. 500 mg"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 px-3 text-xs text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#2ab0c7]"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">
+            <label className="block text-xs font-medium text-[#a3a9b8] mb-1.5">
               Manufacturer
             </label>
             <input
@@ -154,7 +154,7 @@ export const MedicineFormModal: React.FC<Props> = ({
               value={manufacturer}
               onChange={(e) => setManufacturer(e.target.value)}
               placeholder="e.g. Beximco Pharmaceuticals Ltd."
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[#0d1119] border border-white/[0.1] rounded-lg py-2 px-3 text-xs text-[#eef0f5] placeholder-[#757d90] focus:outline-none focus:border-[#2ab0c7]"
             />
             <datalist id="manufacturers-modal-list">
               {MANUFACTURER_NAMES.map((m) => (
@@ -163,18 +163,18 @@ export const MedicineFormModal: React.FC<Props> = ({
             </datalist>
           </div>
 
-          <div className="pt-4 flex justify-end gap-3 border-t border-slate-800">
+          <div className="pt-4 flex justify-end gap-2.5 border-t border-white/[0.08]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
+              className="px-4 py-2 rounded-lg bg-[#1b2232] hover:bg-[#232c40] border border-white/[0.1] text-[#a3a9b8] hover:text-[#eef0f5] text-xs font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isPending}
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors active:scale-[0.98]"
+              className="px-4 py-2 rounded-lg bg-[#007086] hover:bg-[#088097] text-white text-xs font-medium transition-colors active:scale-[0.98]"
             >
               {isPending ? 'Saving...' : 'Save Medicine'}
             </button>

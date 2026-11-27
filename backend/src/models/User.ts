@@ -7,6 +7,11 @@ export interface IUser extends Document {
   passwordHash: string;
   role: 'doctor' | 'admin' | 'staff';
   status: 'active' | 'pending' | 'suspended';
+  qualification?: string;
+  specialization?: string;
+  designation?: string;
+  registrationNumber?: string;
+  isAuthorizedPractitioner?: boolean;
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
   passwordChangedAt?: Date;
@@ -24,6 +29,11 @@ const UserSchema: Schema = new Schema(
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ['doctor', 'admin', 'staff'], default: 'doctor' },
     status: { type: String, enum: ['active', 'pending', 'suspended'], default: 'active' },
+    qualification: { type: String, trim: true },
+    specialization: { type: String, trim: true },
+    designation: { type: String, trim: true },
+    registrationNumber: { type: String, trim: true },
+    isAuthorizedPractitioner: { type: Boolean, default: true },
     resetPasswordToken: { type: String },
     resetPasswordExpire: { type: Date },
     passwordChangedAt: { type: Date },

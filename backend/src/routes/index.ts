@@ -8,6 +8,8 @@ import templateRoutes from './template.routes';
 import adminRoutes from './admin.routes';
 import publicRoutes from './public.routes';
 import uploadRoutes from './upload.routes';
+import { foodChartRoutes } from '../modules/food-charts';
+import { therapyRoutes } from '../modules/therapies';
 
 const router = Router();
 
@@ -15,6 +17,8 @@ router.use('/auth', authRoutes);
 router.use('/patients', patientRoutes);
 router.use('/medicines', medicineRoutes);
 router.use('/prescriptions', prescriptionRoutes);
+router.use('/food-charts', foodChartRoutes);
+router.use('/therapies', therapyRoutes);
 router.use('/chambers', chamberRoutes);
 router.use('/templates', templateRoutes);
 router.use('/admin', adminRoutes);

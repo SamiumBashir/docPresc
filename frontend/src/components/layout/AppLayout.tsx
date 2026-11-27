@@ -3,8 +3,11 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopNavbar } from './TopNavbar';
 import { QuickPatientSearchModal } from './QuickPatientSearchModal';
+import { useAuth } from '../../context/AuthContext';
 
 export const AppLayout: React.FC = () => {
+  const { user } = useAuth();
+  const isDoctor = user?.role === 'doctor';
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const navigate = useNavigate();
@@ -12,6 +15,7 @@ export const AppLayout: React.FC = () => {
   const isRxWorkspace = location.pathname.startsWith('/prescriptions/new');
 
   useEffect(() => {
+    if (!isDoctor) return;
     const handleGlobalShortcuts = (e: KeyboardEvent) => {
       // Ctrl + K -> Open Quick Patient Search
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -27,7 +31,7 @@ export const AppLayout: React.FC = () => {
 
     window.addEventListener('keydown', handleGlobalShortcuts);
     return () => window.removeEventListener('keydown', handleGlobalShortcuts);
-  }, [navigate]);
+  }, [navigate, isDoctor]);
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
@@ -56,10 +60,12 @@ export const AppLayout: React.FC = () => {
       </div>
 
       {/* Global Quick Patient Search Modal (Ctrl+K) */}
-      <QuickPatientSearchModal
-        isOpen={isSearchModalOpen}
-        onClose={() => setIsSearchModalOpen(false)}
-      />
+      {isDoctor && (
+        <QuickPatientSearchModal
+          isOpen={isSearchModalOpen}
+          onClose={() => setIsSearchModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

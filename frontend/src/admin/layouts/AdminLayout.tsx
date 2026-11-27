@@ -29,9 +29,8 @@ export const AdminLayout: React.FC = () => {
   const navItems = [
     {
       to: '/admin',
-      label: 'Executive Dashboard',
+      label: 'Overview',
       icon: LayoutDashboard,
-      badge: 'Live',
       exact: true,
     },
     {
@@ -41,65 +40,83 @@ export const AdminLayout: React.FC = () => {
     },
     {
       to: '/admin/medicines',
-      label: 'Medicine Database',
+      label: 'Medicine catalog',
       icon: Pill,
     },
     {
+      to: '/admin/therapies',
+      label: 'Therapy governance',
+      icon: Activity,
+    },
+    {
       to: '/admin/audit-logs',
-      label: 'Security & Audit Logs',
+      label: 'Audit logs',
       icon: ShieldAlert,
     },
   ];
 
+  const currentSectionTitle = location.pathname.includes('/doctors')
+    ? 'Doctors & BMDC'
+    : location.pathname.includes('/medicines')
+    ? 'Medicine catalog'
+    : location.pathname.includes('/therapies')
+    ? 'Therapy governance'
+    : location.pathname.includes('/audit-logs')
+    ? 'Audit logs'
+    : 'Overview';
+
   return (
-    <div className="min-h-screen flex bg-slate-950 text-slate-100 font-sans">
-      {/* Mobile backdrop */}
+    <div className="h-screen supports-[height:100dvh]:h-dvh overflow-hidden flex bg-[#0d1119] text-[#eef0f5] font-sans antialiased">
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/70 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static top-0 bottom-0 left-0 z-50 w-72 bg-slate-900 border-r border-slate-800/80 flex flex-col transition-transform duration-300 ${
+        className={`fixed inset-y-0 left-0 lg:static lg:h-full z-50 w-64 shrink-0 bg-[#080b11] border-r border-white/[0.08] flex flex-col transition-transform duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        {/* Brand */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800/80 bg-slate-900/50">
+        {/* Flat Clinical Brand Header */}
+        <div className="h-16 shrink-0 flex items-center justify-between px-5 border-b border-white/[0.08]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white font-bold">
-              <Activity className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-[#007086] flex items-center justify-center text-white shrink-0">
+              <Activity className="w-4 h-4" strokeWidth={1.5} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base tracking-tight text-white">DocRx</span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                  Super Admin
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-semibold text-base tracking-[-0.01em] text-[#eef0f5]">
+                  DocRx
                 </span>
+                <span className="text-[11px] font-mono text-[#757d90]">Admin</span>
               </div>
-              <p className="text-[11px] text-slate-400">Enterprise Control Hub</p>
+              <p className="text-xs text-[#757d90] leading-none mt-0.5">Clinical governance</p>
             </div>
           </div>
+
           <button
+            type="button"
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-slate-400 hover:text-white p-1"
+            aria-label="Close sidebar"
+            className="lg:hidden text-[#757d90] hover:text-[#eef0f5] p-1 rounded-lg"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
 
-        {/* Navigation links */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
-          <div className="px-3 pb-2 text-xs font-medium text-slate-400">
-            System modules
-          </div>
+        {/* Navigation Links */}
+        <div className="flex-1 overflow-y-auto px-3 py-5 space-y-1">
+          <div className="px-3 pb-2 text-xs font-medium text-[#757d90]">Administration</div>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.exact
-              ? location.pathname === '/admin' || location.pathname === '/admin/' || location.pathname === '/admin/dashboard'
+              ? location.pathname === '/admin' ||
+                location.pathname === '/admin/' ||
+                location.pathname === '/admin/dashboard'
               : location.pathname.startsWith(item.to);
 
             return (
@@ -107,104 +124,95 @@ export const AdminLayout: React.FC = () => {
                 key={item.to}
                 to={item.to}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-colors duration-150 ${
+                className={`flex items-center gap-2.5 h-9 px-3 rounded-lg text-[13px] font-medium transition-colors duration-150 ${
                   isActive
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                    ? 'bg-[#1b2232] text-[#eef0f5] border border-white/[0.1] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                    : 'text-[#a3a9b8] border border-transparent hover:bg-white/[0.04] hover:text-[#eef0f5]'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <Icon
-                    className={`w-4 h-4 ${
-                      isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-400'
-                    }`}
-                  />
-                  <span>{item.label}</span>
-                </div>
-                {item.badge && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    {item.badge}
-                  </span>
-                )}
+                <Icon
+                  className={`w-4 h-4 shrink-0 ${
+                    isActive ? 'text-[#2ab0c7]' : 'text-[#757d90]'
+                  }`}
+                  strokeWidth={1.5}
+                />
+                <span className="truncate">{item.label}</span>
               </NavLink>
             );
           })}
 
-          <div className="pt-6 px-3 pb-2 text-xs font-medium text-slate-400">
+          <div className="pt-6 px-3 pb-2 text-xs font-medium text-[#757d90]">
             Clinical workspace
           </div>
           <NavLink
             to="/dashboard"
-            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm text-slate-400 hover:bg-slate-800/80 hover:text-white transition-colors duration-150"
+            className="flex items-center justify-between h-9 px-3 rounded-lg text-[13px] font-medium text-[#a3a9b8] border border-transparent hover:bg-white/[0.04] hover:text-[#eef0f5] transition-colors duration-150"
           >
-            <div className="flex items-center gap-3">
-              <Stethoscope className="w-4 h-4 text-emerald-400" />
-              <span>Doctor Portal</span>
+            <div className="flex items-center gap-2.5">
+              <Stethoscope className="w-4 h-4 text-[#757d90] shrink-0" strokeWidth={1.5} />
+              <span>Doctor portal</span>
             </div>
-            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+            <ExternalLink className="w-4 h-4 text-[#757d90] shrink-0" strokeWidth={1.5} />
           </NavLink>
         </div>
 
-        {/* User profile & Logout */}
-        <div className="p-4 border-t border-slate-800/80 bg-slate-900/40">
-          <div className="flex items-center justify-between p-2 rounded-xl bg-slate-800/50 border border-slate-700/60">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center font-bold text-sm">
+        {/* User Footer */}
+        <div className="shrink-0 p-3 border-t border-white/[0.08]">
+          <div className="flex items-center justify-between p-2 rounded-lg bg-[#131924] border border-white/[0.08]">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-md bg-[#1b2232] border border-white/[0.08] text-[#eef0f5] flex items-center justify-center font-medium text-xs shrink-0">
                 {user?.name ? user.name[0].toUpperCase() : 'A'}
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-white truncate">{user?.name || 'Administrator'}</p>
-                <p className="text-[10px] text-slate-400 truncate">{user?.email || 'admin@prescription.com'}</p>
+                <p className="text-xs font-medium text-[#eef0f5] truncate">
+                  {user?.name || 'Administrator'}
+                </p>
+                <p className="text-[11px] text-[#757d90] truncate">
+                  {user?.email || 'admin@prescription.com'}
+                </p>
               </div>
             </div>
             <button
+              type="button"
               onClick={handleLogout}
               title="Sign out"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+              aria-label="Sign out"
+              className="p-1.5 rounded-md text-[#757d90] hover:text-[#e5484d] hover:bg-white/[0.04] transition-colors shrink-0"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4" strokeWidth={1.5} />
             </button>
           </div>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Header */}
-        <header className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30">
+      {/* Main Viewport */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        <header className="h-16 shrink-0 border-b border-white/[0.08] bg-[#0d1119] px-4 sm:px-8 flex items-center justify-between z-30">
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              aria-label="Open navigation menu"
+              className="lg:hidden p-1.5 rounded-lg text-[#a3a9b8] hover:text-[#eef0f5] hover:bg-white/[0.06]"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-4 h-4" strokeWidth={1.5} />
             </button>
-            <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-              <span>Admin Center</span>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-slate-200">
-                {location.pathname.includes('/doctors')
-                  ? 'Doctors & BMDC Verification'
-                  : location.pathname.includes('/medicines')
-                  ? 'Medicine Database'
-                  : location.pathname.includes('/audit-logs')
-                  ? 'Security & Audit Logs'
-                  : 'Executive Dashboard'}
-              </span>
+            <div className="flex items-center gap-2 text-xs text-[#757d90]">
+              <span>Admin</span>
+              <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+              <span className="text-[#eef0f5] font-medium">{currentSectionTitle}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              System status: optimal
-            </div>
-          </div>
+          <span className="hidden sm:inline-block text-xs font-mono text-[#757d90]">
+            v1 API • Registry active
+          </span>
         </header>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-950">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto p-4 sm:p-8 bg-[#0d1119]">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
