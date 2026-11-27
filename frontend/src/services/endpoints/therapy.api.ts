@@ -91,7 +91,8 @@ export interface SessionListResponse {
 export interface CreateTreatmentPlanPayload {
   patientId: string;
   chamberId?: string | null;
-  therapyId: string;
+  therapyId?: string;
+  therapyIds?: string[];
   assignedPractitionerId: string;
   treatmentObjective?: string;
   clinicalIndication?: string;
@@ -116,6 +117,8 @@ export interface CreateTreatmentPlanPayload {
 
 export interface UpdateTreatmentPlanPayload {
   chamberId?: string | null;
+  therapyId?: string;
+  therapyIds?: string[];
   assignedPractitionerId?: string;
   treatmentObjective?: string;
   clinicalIndication?: string;

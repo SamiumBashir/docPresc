@@ -122,7 +122,11 @@ export const CreateTreatmentPlanSchema = z
   .object({
     patientId: z.string().trim().regex(objectIdRegex, 'Valid patient ID is required'),
     chamberId: z.string().trim().optional().nullable(),
-    therapyId: z.string().trim().regex(objectIdRegex, 'Valid therapy ID is required'),
+    therapyId: z.string().trim().regex(objectIdRegex, 'Valid therapy ID is required').optional(),
+    therapyIds: z
+      .array(z.string().trim().regex(objectIdRegex, 'Valid therapy ID is required'))
+      .max(30)
+      .optional(),
     assignedPractitionerId: z
       .string()
       .trim()
@@ -144,6 +148,10 @@ export const CreateTreatmentPlanSchema = z
     initialSessions: z.array(InitialSessionInputSchema).max(50).optional().default([]),
   })
   .refine(
+    (data) => Boolean(data.therapyId || (data.therapyIds && data.therapyIds.length > 0)),
+    { message: 'At least one therapy ID is required', path: ['therapyIds'] }
+  )
+  .refine(
     (data) => {
       if (data.startDate && data.endDate) {
         return new Date(data.endDate).getTime() >= new Date(data.startDate).getTime();
@@ -156,6 +164,12 @@ export const CreateTreatmentPlanSchema = z
 export const UpdateTreatmentPlanSchema = z
   .object({
     chamberId: z.string().trim().optional().nullable(),
+    therapyId: z.string().trim().regex(objectIdRegex, 'Valid therapy ID is required').optional(),
+    therapyIds: z
+      .array(z.string().trim().regex(objectIdRegex, 'Valid therapy ID is required'))
+      .min(1, 'At least one therapy is required')
+      .max(30)
+      .optional(),
     assignedPractitionerId: z
       .string()
       .trim()

@@ -525,15 +525,30 @@ export const TherapyWorkspace: React.FC<TherapyWorkspaceProps> = ({ initialTab =
                           </p>
                         </td>
                         <td className="py-3 px-4">
-                          <p className="font-medium text-slate-900">{plan.therapySnapshot?.name}</p>
-                          <p className="text-slate-500 flex items-center gap-1.5">
-                            <span>{plan.therapySnapshot?.categoryName}</span>
-                            {plan.isEdPlan && (
-                              <span className="inline-flex items-center gap-0.5 text-[11px] text-slate-600">
-                                <Lock className="w-3 h-3" strokeWidth={1.5} /> ED group
-                              </span>
-                            )}
-                          </p>
+                          {(() => {
+                            const list =
+                              plan.therapySnapshots && plan.therapySnapshots.length > 0
+                                ? plan.therapySnapshots
+                                : [plan.therapySnapshot];
+                            const cats = Array.from(
+                              new Set(list.map((t) => t?.categoryName).filter(Boolean))
+                            );
+                            return (
+                              <>
+                                <p className="font-medium text-slate-900">
+                                  {list.map((t) => t?.name).filter(Boolean).join(', ')}
+                                </p>
+                                <p className="text-slate-500 flex items-center gap-1.5">
+                                  <span>{cats.join(', ')}</span>
+                                  {plan.isEdPlan && (
+                                    <span className="inline-flex items-center gap-1 text-[11px] text-slate-600">
+                                      <Lock className="w-3.5 h-3.5" strokeWidth={1.5} /> ED group
+                                    </span>
+                                  )}
+                                </p>
+                              </>
+                            );
+                          })()}
                         </td>
                         <td className="py-3 px-4 space-y-1">
                           <p className="text-slate-700">{plan.practitionerSnapshot?.name}</p>
@@ -589,7 +604,10 @@ export const TherapyWorkspace: React.FC<TherapyWorkspaceProps> = ({ initialTab =
                       <PlanStatusBadge status={plan.status} />
                     </div>
                     <p className="text-xs text-slate-700 font-medium">
-                      {plan.therapySnapshot?.name} • {plan.practitionerSnapshot?.name}
+                      {(plan.therapySnapshots && plan.therapySnapshots.length > 0
+                        ? plan.therapySnapshots.map((t) => t?.name).filter(Boolean).join(', ')
+                        : plan.therapySnapshot?.name) || 'Therapy'}{' '}
+                      • {plan.practitionerSnapshot?.name}
                     </p>
                     <div className="flex items-center gap-2 pt-1">
                       <Link
@@ -702,7 +720,9 @@ export const TherapyWorkspace: React.FC<TherapyWorkspaceProps> = ({ initialTab =
                               {planObj?.patientSnapshot?.name || 'Patient'}
                             </p>
                             <p className="text-[11px] text-slate-500">
-                              {planObj?.therapySnapshot?.name || 'Therapy'}
+                              {(planObj?.therapySnapshots && planObj.therapySnapshots.length > 0
+                                ? planObj.therapySnapshots.map((t) => t?.name).filter(Boolean).join(', ')
+                                : planObj?.therapySnapshot?.name) || 'Therapy'}
                             </p>
                           </td>
                           <td className="py-3 px-4 text-slate-700">

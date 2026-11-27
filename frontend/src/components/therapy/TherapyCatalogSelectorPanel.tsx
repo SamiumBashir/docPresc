@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Check, Lock, Search } from 'lucide-react';
+import { Check, CheckSquare, Search } from 'lucide-react';
 import { ITherapy } from '../../types';
 import {
   DEFAULT_MAIN_THERAPIES_FALLBACK,
@@ -8,16 +8,18 @@ import {
 
 interface TherapyCatalogSelectorPanelProps {
   therapies: ITherapy[];
-  selectedTherapyId: string;
+  selectedTherapyIds: string[];
   disabled?: boolean;
-  onSelectTherapy: (therapy: ITherapy) => void;
+  onToggleTherapy: (therapy: ITherapy) => void;
+  onClearSelection?: () => void;
 }
 
 export const TherapyCatalogSelectorPanel: React.FC<TherapyCatalogSelectorPanelProps> = ({
   therapies,
-  selectedTherapyId,
+  selectedTherapyIds,
   disabled = false,
-  onSelectTherapy,
+  onToggleTherapy,
+  onClearSelection,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sectionFilter, setSectionFilter] = useState<'all' | 'main' | 'ed'>('all');
@@ -81,9 +83,43 @@ export const TherapyCatalogSelectorPanel: React.FC<TherapyCatalogSelectorPanelPr
     });
   }, [displayList, sectionFilter, approvedOnly, normalizedSearch]);
 
-  const selectedTherapy = useMemo(
-    () => therapies.find((t) => t._id === selectedTherapyId) || null,
-    [therapies, selectedTherapyId]
+  const selectedIdSet = useMemo(() => new Set(selectedTherapyIds), [selectedTherapyIds]);
+
+  const selectedTherapies = useMemo(
+    () =>
+      selectedTherapyIds
+        .map((id) => therapies.find((t) => t._id === id))
+        .filter((t): t is ITherapy => Boolean(t)),
+    [therapies, selectedTherapyIds]
+  );
+
+  const selectedQuals = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          selectedTherapies
+            .map((t) => t.requiredProviderQualifications?.trim())
+            .filter((v): v is string => Boolean(v))
+        )
+      ),
+    [selectedTherapies]
+  );
+
+  const selectedNotices = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          selectedTherapies
+            .map((t) => t.governanceNotice?.trim())
+            .filter((v): v is string => Boolean(v))
+        )
+      ),
+    [selectedTherapies]
+  );
+
+  const anySelectedRequiresConsent = useMemo(
+    () => selectedTherapies.some((t) => Boolean(t.consentRequired)),
+    [selectedTherapies]
   );
 
   const approvedCount = useMemo(
@@ -101,18 +137,29 @@ export const TherapyCatalogSelectorPanel: React.FC<TherapyCatalogSelectorPanelPr
     >
       {/* Header matching FoodSectionPanel */}
       <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-200">
-        <div className="flex items-baseline gap-2 min-w-0">
-          <span className="text-sm font-semibold text-[#007086]" aria-hidden="true">
-            ✓
-          </span>
-          <h3 className="text-sm font-semibold text-slate-900 truncate">Therapy List</h3>
+        <div className="flex items-center gap-2 min-w-0">
+          <CheckSquare className="w-4 h-4 text-[#007086] shrink-0" strokeWidth={1.5} />
+          <h3 className="text-sm font-medium text-slate-900 truncate">Therapy List</h3>
           <span className="font-bengali text-sm font-medium text-slate-600 truncate">
             থেরাপি তালিকা
           </span>
         </div>
-        <span className="text-xs font-medium text-slate-600 tabular-nums shrink-0">
-          {selectedTherapy ? '1 selected' : `${approvedCount} approved / ${displayList.length} listed`}
-        </span>
+        <div className="flex items-center gap-2.5 shrink-0">
+          <span className="text-xs font-medium text-slate-600 tabular-nums">
+            {selectedTherapies.length > 0
+              ? `${selectedTherapies.length} selected`
+              : `${approvedCount} approved / ${displayList.length} listed`}
+          </span>
+          {selectedTherapies.length > 0 && onClearSelection && !disabled && (
+            <button
+              type="button"
+              onClick={onClearSelection}
+              className="text-xs font-medium text-[#007086] hover:text-[#065b6d] transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Search & Filter Bar */}
@@ -174,7 +221,7 @@ export const TherapyCatalogSelectorPanel: React.FC<TherapyCatalogSelectorPanelPr
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-0.5">
           {filteredTherapies.map((item) => {
-            const isChecked = item._id === selectedTherapyId;
+            const isChecked = selectedIdSet.has(item._id);
             const isAssignable =
               !item._isFallback &&
               item.isActive &&
@@ -185,7 +232,7 @@ export const TherapyCatalogSelectorPanel: React.FC<TherapyCatalogSelectorPanelPr
               <button
                 key={item._id}
                 type="button"
-                role="radio"
+                role="checkbox"
                 aria-checked={isChecked}
                 disabled={disabled}
                 onClick={() => {
@@ -196,7 +243,7 @@ export const TherapyCatalogSelectorPanel: React.FC<TherapyCatalogSelectorPanelPr
                     return;
                   }
                   setUnapprovedHint(null);
-                  onSelectTherapy(item);
+                  onToggleTherapy(item);
                 }}
                 className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-left transition-colors ${
                   isChecked
@@ -227,12 +274,12 @@ export const TherapyCatalogSelectorPanel: React.FC<TherapyCatalogSelectorPanelPr
                   <div className="text-[11px] text-slate-500 mt-0.5 flex items-center justify-between gap-1.5">
                     <span className="truncate">{item.categoryName}</span>
                     {!isAssignable ? (
-                      <span className="text-[10px] text-amber-700 shrink-0">
+                      <span className="text-[11px] text-amber-700 shrink-0">
                         {item.verificationStatus === 'REJECTED' ? 'Rejected' : 'Pending review'}
                       </span>
                     ) : item.isEdTreatment ? (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] text-slate-600 shrink-0">
-                        <Lock className="w-2.5 h-2.5" strokeWidth={1.5} /> ED group
+                      <span className="text-[11px] text-[#065b6d] font-medium shrink-0">
+                        ED group
                       </span>
                     ) : null}
                   </div>
@@ -244,16 +291,30 @@ export const TherapyCatalogSelectorPanel: React.FC<TherapyCatalogSelectorPanelPr
       )}
 
       {/* Selected Governance & Qualification Summary */}
-      {selectedTherapy && (
-        <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-700 space-y-1">
-          {selectedTherapy.requiredProviderQualifications && (
-            <div>
-              <span className="font-semibold text-slate-900">Required qualification:</span>{' '}
-              {selectedTherapy.requiredProviderQualifications}
+      {selectedTherapies.length > 0 && (
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-700 space-y-1.5">
+          {selectedTherapies.length > 1 && (
+            <div className="flex flex-wrap gap-1.5 pb-1">
+              {selectedTherapies.map((item) => (
+                <span
+                  key={item._id}
+                  className="inline-flex items-center px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-800 font-medium"
+                >
+                  {item.name}
+                </span>
+              ))}
             </div>
           )}
-          {selectedTherapy.governanceNotice && <div>{selectedTherapy.governanceNotice}</div>}
-          {selectedTherapy.consentRequired && (
+          {selectedQuals.length > 0 && (
+            <div>
+              <span className="font-semibold text-slate-900">Required qualification:</span>{' '}
+              {selectedQuals.join(' • ')}
+            </div>
+          )}
+          {selectedNotices.map((msg) => (
+            <div key={msg}>{msg}</div>
+          ))}
+          {anySelectedRequiresConsent && (
             <div className="text-[#065b6d] font-medium">
               Patient informed consent must be set to Obtained prior to plan finalization.
             </div>

@@ -402,6 +402,19 @@ export interface IPractitioner {
   isAuthorizedPractitioner: boolean;
 }
 
+export interface ITherapySnapshotItem {
+  key: string;
+  name: string;
+  englishName: string;
+  bengaliName?: string;
+  categoryName: string;
+  isEdTreatment: boolean;
+  verificationStatus: string;
+  verificationNotes?: string;
+  requiredProviderQualifications?: string;
+  requiredEquipment?: string;
+}
+
 export interface ITreatmentPlan {
   _id: string;
   chartNumber: string;
@@ -409,18 +422,9 @@ export interface ITreatmentPlan {
   patientId: string;
   chamberId?: IChamber | string | null;
   therapyId: string;
-  therapySnapshot: {
-    key: string;
-    name: string;
-    englishName: string;
-    bengaliName?: string;
-    categoryName: string;
-    isEdTreatment: boolean;
-    verificationStatus: string;
-    verificationNotes?: string;
-    requiredProviderQualifications?: string;
-    requiredEquipment?: string;
-  };
+  therapySnapshot: ITherapySnapshotItem;
+  therapyIds?: string[];
+  therapySnapshots?: ITherapySnapshotItem[];
   assignedPractitionerId: string;
   practitionerSnapshot: {
     userId: string;
@@ -467,6 +471,8 @@ export interface ITherapySession {
         isEdPlan: boolean;
         consentStatus: ConsentStatus;
         therapySnapshot: ITreatmentPlan['therapySnapshot'];
+        therapySnapshots?: ITreatmentPlan['therapySnapshots'];
+        therapyIds?: string[];
         patientSnapshot: IFoodChartPatientSnapshot;
         practitionerSnapshot: ITreatmentPlan['practitionerSnapshot'];
       };

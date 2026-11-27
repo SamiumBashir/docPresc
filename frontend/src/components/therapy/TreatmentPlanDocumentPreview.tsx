@@ -24,6 +24,11 @@ interface TreatmentPlanDocumentPreviewProps {
   therapyName: string;
   therapyNameBn?: string;
   categoryName: string;
+  therapiesList?: Array<{
+    name: string;
+    bengaliName?: string;
+    categoryName: string;
+  }>;
   practitionerSummary: string;
   treatmentObjective?: string;
   clinicalIndication?: string;
@@ -76,6 +81,7 @@ export const TreatmentPlanDocumentPreview: React.FC<TreatmentPlanDocumentPreview
   therapyName,
   therapyNameBn,
   categoryName,
+  therapiesList,
   practitionerSummary,
   treatmentObjective,
   clinicalIndication,
@@ -112,12 +118,39 @@ export const TreatmentPlanDocumentPreview: React.FC<TreatmentPlanDocumentPreview
   const logoSrc = doctorSnapshot?.logo || doctor?.logo || '';
   const signatureSrc = chamber?.signature || doctorSnapshot?.signature || doctor?.signature || '';
 
+  const effectiveTherapies =
+    therapiesList && therapiesList.length > 0
+      ? therapiesList
+      : therapyName
+        ? [{ name: therapyName, bengaliName: therapyNameBn, categoryName }]
+        : [];
+
+  const uniqueCategories = Array.from(
+    new Set(effectiveTherapies.map((t) => t.categoryName).filter(Boolean))
+  );
+
   const rows: Array<{ label: string; value: string }> = [
     {
-      label: 'Prescribed Therapy',
-      value: therapyNameBn ? `${therapyName} (${therapyNameBn})` : therapyName || 'Not selected',
+      label:
+        effectiveTherapies.length > 1
+          ? `Prescribed Therapies (${effectiveTherapies.length})`
+          : 'Prescribed Therapy',
+      value:
+        effectiveTherapies.length > 1
+          ? effectiveTherapies
+            .map((t, i) => {
+              const nameText = t.bengaliName ? `${t.name} (${t.bengaliName})` : t.name;
+              return `${i + 1}. ${nameText}`;
+            })
+            .join('\n')
+          : effectiveTherapies[0]?.bengaliName
+            ? `${effectiveTherapies[0].name} (${effectiveTherapies[0].bengaliName})`
+            : effectiveTherapies[0]?.name || 'Not selected',
     },
-    { label: 'Therapy Category', value: categoryName || '—' },
+    {
+      label: uniqueCategories.length > 1 ? 'Therapy Categories' : 'Therapy Category',
+      value: uniqueCategories.join(', ') || '—',
+    },
     { label: 'Assigned Practitioner', value: practitionerSummary || 'Not assigned' },
   ];
 
@@ -142,9 +175,8 @@ export const TreatmentPlanDocumentPreview: React.FC<TreatmentPlanDocumentPreview
   if (startDate || endDate) {
     rows.push({
       label: 'Treatment Period',
-      value: `${startDate ? formatShortDate(startDate) : 'TBD'} to ${
-        endDate ? formatShortDate(endDate) : 'Ongoing'
-      }`,
+      value: `${startDate ? formatShortDate(startDate) : 'TBD'} to ${endDate ? formatShortDate(endDate) : 'Ongoing'
+        }`,
     });
   }
   if (consentStatus !== 'NOT_REQUIRED') {
@@ -269,9 +301,8 @@ export const TreatmentPlanDocumentPreview: React.FC<TreatmentPlanDocumentPreview
       {/* Precautions & Instructions */}
       {(precautions?.trim() || patientInstructions?.trim()) && (
         <div
-          className={`grid gap-3 mb-4 ${
-            precautions?.trim() && patientInstructions?.trim() ? 'sm:grid-cols-2' : 'grid-cols-1'
-          }`}
+          className={`grid gap-3 mb-4 ${precautions?.trim() && patientInstructions?.trim() ? 'sm:grid-cols-2' : 'grid-cols-1'
+            }`}
         >
           {precautions?.trim() && (
             <div className="border border-slate-300 rounded p-2.5">

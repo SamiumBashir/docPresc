@@ -229,8 +229,8 @@ const runTherapiesTests = async () => {
     const edNames = edItems.map((t: any) => t.name);
     assert(
       edNames.length === 5 &&
-        EXPECTED_ED_THERAPIES.every((lbl) => edNames.includes(lbl)) &&
-        edItems.every((t: any) => t.isEdTreatment === true),
+      EXPECTED_ED_THERAPIES.every((lbl) => edNames.includes(lbl)) &&
+      edItems.every((t: any) => t.isEdTreatment === true),
       'ED Treatments preserves all 5 exact labels in dedicated ED category'
     );
 
@@ -462,8 +462,8 @@ const runTherapiesTests = async () => {
     const pracsList = pracsRes.data?.data || [];
     assert(
       pracsRes.status === 200 &&
-        pracsList.some((p: any) => p._id === prac1Id) &&
-        pracsList.every((p: any) => !('passwordHash' in p)),
+      pracsList.some((p: any) => p._id === prac1Id) &&
+      pracsList.every((p: any) => !('passwordHash' in p)),
       'Practitioners directory excludes passwordHash and returns active clinicians/staff'
     );
 
@@ -559,9 +559,9 @@ const runTherapiesTests = async () => {
     });
     assert(
       validPlanRes.status === 201 &&
-        /^TP-\d{4}-\d{6}$/.test(validPlanRes.data?.data?.plan?.chartNumber || '') &&
-        validPlanRes.data?.data?.plan?.frequency === '' &&
-        validPlanRes.data?.data?.sessions?.length === 1,
+      /^TP-\d{4}-\d{6}$/.test(validPlanRes.data?.data?.plan?.chartNumber || '') &&
+      validPlanRes.data?.data?.plan?.frequency === '' &&
+      validPlanRes.data?.data?.sessions?.length === 1,
       'Doctor A creates valid Treatment Plan with atomic TP chartNumber, initial session, and zero invented frequency'
     );
 
@@ -585,6 +585,97 @@ const runTherapiesTests = async () => {
     assert(
       edPlanRes.status === 201 && edPlanRes.data?.data?.plan?.isEdPlan === true,
       'ED Treatment Plan created cleanly when consent is OBTAINED'
+    );
+
+    // Reject multi-therapy selection if any therapy in the list is unapproved
+    const mixedUnapproved = await apiJson(baseUrl, '/api/v1/therapies/plans', {
+      method: 'POST',
+      token: tokenDocA,
+      body: {
+        patientId: patientA1._id.toString(),
+        therapyIds: [manualPhysio._id.toString(), ozone._id.toString()],
+        assignedPractitionerId: prac1Id,
+        clinicianApprovalConfirmed: true,
+        status: 'ACTIVE',
+      },
+    });
+    assert(
+      mixedUnapproved.status === 400 && mixedUnapproved.data?.code === 'THERAPY_NOT_APPROVED',
+      'Reject multi-therapy plan if any selected therapy is awaiting approval'
+    );
+
+    // Doctor A creates a multi-therapy DRAFT plan, updates therapies cleanly, then finalizes
+    const multiDraftRes = await apiJson(baseUrl, '/api/v1/therapies/plans', {
+      method: 'POST',
+      token: tokenDocA,
+      body: {
+        patientId: patientA1._id.toString(),
+        therapyIds: [manualPhysio._id.toString()],
+        assignedPractitionerId: prac1Id,
+        clinicianApprovalConfirmed: false,
+        status: 'DRAFT',
+      },
+    });
+    assert(
+      multiDraftRes.status === 201 &&
+      multiDraftRes.data?.data?.plan?.therapySnapshots?.length === 1,
+      'Doctor A creates single-therapy draft plan cleanly'
+    );
+    const multiPlanId = multiDraftRes.data.data.plan._id;
+
+    const approveCvft = await apiJson(baseUrl, `/api/v1/therapies/catalog/${cvft._id}/verify`, {
+      method: 'POST',
+      token: tokenAdmin,
+      body: {
+        verificationStatus: 'APPROVED',
+        terminologyConfirmed: true,
+        governanceReviewed: true,
+      },
+    });
+    assert(approveCvft.status === 200, 'Admin verifies CVFT with explicit terminology confirmation');
+
+    const multiNeedsConsentRes = await apiJson(baseUrl, `/api/v1/therapies/plans/${multiPlanId}`, {
+      method: 'PUT',
+      token: tokenDocA,
+      body: {
+        therapyIds: [manualPhysio._id.toString(), cvft._id.toString()],
+        clinicianApprovalConfirmed: true,
+        status: 'FINALIZED',
+      },
+    });
+    assert(
+      multiNeedsConsentRes.status === 400 && multiNeedsConsentRes.data?.code === 'PATIENT_CONSENT_REQUIRED',
+      'Expanding draft plan with consent-required therapy enforces informed consent before finalizing'
+    );
+
+    const multiUpdateRes = await apiJson(baseUrl, `/api/v1/therapies/plans/${multiPlanId}`, {
+      method: 'PUT',
+      token: tokenDocA,
+      body: {
+        therapyIds: [manualPhysio._id.toString(), cvft._id.toString()],
+        clinicianApprovalConfirmed: true,
+        consentStatus: 'OBTAINED',
+        status: 'FINALIZED',
+      },
+    });
+    assert(
+      multiUpdateRes.status === 200 &&
+      multiUpdateRes.data?.data?.therapySnapshots?.length === 2 &&
+      multiUpdateRes.data?.data?.therapySnapshots?.[1]?.name === cvft.name &&
+      multiUpdateRes.data?.data?.status === 'FINALIZED',
+      'Doctor A expands draft plan to multiple therapies and finalizes cleanly'
+    );
+
+    const lockedUpdateRes = await apiJson(baseUrl, `/api/v1/therapies/plans/${multiPlanId}`, {
+      method: 'PUT',
+      token: tokenDocA,
+      body: {
+        therapyIds: [manualPhysio._id.toString()],
+      },
+    });
+    assert(
+      lockedUpdateRes.status === 400 && lockedUpdateRes.data?.code === 'PLAN_THERAPIES_LOCKED',
+      'Prevent silent modification of assigned therapies after plan finalization'
     );
 
     // Cross-doctor & cross-staff access restrictions
@@ -665,9 +756,9 @@ const runTherapiesTests = async () => {
     );
     assert(
       completeSess1.status === 200 &&
-        completeSess1.data?.data?.status === 'Completed' &&
-        completeSess1.data?.data?.version === 2 &&
-        Boolean(completeSess1.data?.data?.completedAt),
+      completeSess1.data?.data?.status === 'Completed' &&
+      completeSess1.data?.data?.version === 2 &&
+      Boolean(completeSess1.data?.data?.completedAt),
       'Assigned Staff 1 completes session 1, increments version to 2, and records completedAt'
     );
 
@@ -739,10 +830,11 @@ const runTherapiesTests = async () => {
     );
     assert(
       historyRes.status === 200 &&
-        historyRes.data?.data?.summary?.totalPlans === 2 &&
-        historyRes.data?.data?.summary?.completedSessionsCount === 1 &&
-        historyRes.data?.data?.summary?.upcomingSessionsCount === 1,
-      'Patient treatment history returns accurate plans and session counts'
+      historyRes.data?.data?.summary?.totalPlans === 3 &&
+      historyRes.data?.data?.activePlans?.some((p: any) => p.therapySnapshots?.length === 2) &&
+      historyRes.data?.data?.summary?.completedSessionsCount === 1 &&
+      historyRes.data?.data?.summary?.upcomingSessionsCount === 1,
+      'Patient treatment history returns accurate plans (including multi-therapy) and session counts'
     );
 
     const docBHistory = await apiJson(
@@ -784,10 +876,10 @@ const runTherapiesTests = async () => {
 
     assert(
       pdfRes.status === 200 &&
-        (pdfRes.headers.get('content-type') || '').includes('application/pdf') &&
-        cacheCtrl.includes('private') &&
-        cacheCtrl.includes('no-store') &&
-        contentDisp.includes(`Treatment-Plan-${patientA1.patientId}`),
+      (pdfRes.headers.get('content-type') || '').includes('application/pdf') &&
+      cacheCtrl.includes('private') &&
+      cacheCtrl.includes('no-store') &&
+      contentDisp.includes(`Treatment-Plan-${patientA1.patientId}`),
       'Authorized PDF streams with private no-store cache headers and patient-code filename'
     );
 
@@ -797,15 +889,15 @@ const runTherapiesTests = async () => {
 
     assert(
       extracted.numPages >= 1 &&
-        fullText.includes('PATIENT TREATMENT PLAN') &&
-        fullText.includes(plan1.chartNumber) &&
-        fullText.includes(patientA1.name) &&
-        fullText.includes('Manual Physiotherapy') &&
-        fullText.includes('Tasnim Akter (Physiotherapist)') &&
-        compactText.includes('হালকাগরম') &&
-        compactText.includes('ওজনবহন') &&
-        /Page\s+1\s+of\s+\d+/i.test(fullText) &&
-        !fullText.includes('Frequency'),
+      fullText.includes('PATIENT TREATMENT PLAN') &&
+      fullText.includes(plan1.chartNumber) &&
+      fullText.includes(patientA1.name) &&
+      fullText.includes('Manual Physiotherapy') &&
+      fullText.includes('Tasnim Akter (Physiotherapist)') &&
+      compactText.includes('হালকাগরম') &&
+      compactText.includes('ওজনবহন') &&
+      /Page\s+1\s+of\s+\d+/i.test(fullText) &&
+      !fullText.includes('Frequency'),
       'PDF renders selectable bilingual Unicode text, session log, footer, and omits unentered Frequency row'
     );
 
@@ -816,6 +908,18 @@ const runTherapiesTests = async () => {
     assert(
       edPdfRes.status === 200 && !edDisp.toLowerCase().includes('shockwave') && !edDisp.toLowerCase().includes('ed-'),
       'ED Treatment Plan PDF keeps filename generic without sensitive modality leaks'
+    );
+
+    const multiPdfRes = await fetch(`${baseUrl}/api/v1/therapies/plans/${multiPlanId}/pdf`, {
+      headers: { Authorization: `Bearer ${tokenDocA}` },
+    });
+    const multiPdfText = (await extractPdfText(Buffer.from(await multiPdfRes.arrayBuffer()))).pagesText.join('\n');
+    assert(
+      multiPdfRes.status === 200 &&
+      multiPdfText.includes('Prescribed Therapies (2)') &&
+      multiPdfText.includes('Manual Physiotherapy') &&
+      multiPdfText.includes('CVFT (Transcranial Magnetic Stimulator)'),
+      'Multi-therapy PDF renders all selected therapies numbered clearly'
     );
 
     const outDir = process.env.THERAPY_TEST_OUT_DIR;
@@ -889,7 +993,7 @@ const runTherapiesTests = async () => {
 
 runTherapiesTests().catch(async (err) => {
   console.error('Unhandled error in Therapies test suite:', err);
-  await closePdfBrowser().catch(() => {});
-  await closeDatabase().catch(() => {});
+  await closePdfBrowser().catch(() => { });
+  await closeDatabase().catch(() => { });
   process.exit(1);
 });

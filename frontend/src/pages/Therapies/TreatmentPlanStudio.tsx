@@ -66,7 +66,7 @@ export const TreatmentPlanStudio: React.FC = () => {
   const [changingPatient, setChangingPatient] = useState(false);
 
   // Clinical Form State (never auto-selects therapy or fabricates schedule/dosage)
-  const [selectedTherapyId, setSelectedTherapyId] = useState('');
+  const [selectedTherapyIds, setSelectedTherapyIds] = useState<string[]>([]);
   const [assignedPractitionerId, setAssignedPractitionerId] = useState('');
   const [treatmentObjective, setTreatmentObjective] = useState('');
   const [clinicalIndication, setClinicalIndication] = useState('');
@@ -109,7 +109,13 @@ export const TreatmentPlanStudio: React.FC = () => {
       scheduled: detail.summary?.scheduled || 0,
       completed: detail.summary?.completed || 0,
     });
-    setSelectedTherapyId(p.therapyId);
+    setSelectedTherapyIds(
+      p.therapyIds && p.therapyIds.length > 0
+        ? p.therapyIds
+        : p.therapyId
+        ? [p.therapyId]
+        : []
+    );
     setAssignedPractitionerId(p.assignedPractitionerId);
     setTreatmentObjective(p.treatmentObjective || '');
     setClinicalIndication(p.clinicalIndication || '');
@@ -152,7 +158,7 @@ export const TreatmentPlanStudio: React.FC = () => {
         } else {
           setLoadedPlan(null);
           setSessions([]);
-          setSelectedTherapyId(
+          setSelectedTherapyIds(
             queryTherapyId &&
               catalogList.some(
                 (t) =>
@@ -161,8 +167,8 @@ export const TreatmentPlanStudio: React.FC = () => {
                   t.isAvailable &&
                   t.verificationStatus === 'APPROVED'
               )
-              ? queryTherapyId
-              : ''
+              ? [queryTherapyId]
+              : []
           );
           if (pracList.length > 0) {
             const selfDoctor = pracList.find((p) => p._id === user?.id);
@@ -231,16 +237,31 @@ export const TreatmentPlanStudio: React.FC = () => {
     };
   }, [isDoctor, id, patientSearch]);
 
-  const selectedTherapy = useMemo(
-    () => allCatalogTherapies.find((t) => t._id === selectedTherapyId) || null,
-    [allCatalogTherapies, selectedTherapyId]
+  const selectedTherapies = useMemo(
+    () =>
+      selectedTherapyIds
+        .map((tid) => allCatalogTherapies.find((t) => t._id === tid))
+        .filter((t): t is ITherapy => Boolean(t)),
+    [allCatalogTherapies, selectedTherapyIds]
   );
 
   useEffect(() => {
-    if (!id && selectedTherapy) {
-      setConsentStatus(selectedTherapy.consentRequired ? 'PENDING' : 'NOT_REQUIRED');
+    if (!id || loadedPlan?.status === 'DRAFT') {
+      const anyReq = selectedTherapies.some((t) => Boolean(t.consentRequired));
+      setConsentStatus((prev) => {
+        if (prev === 'OBTAINED' || prev === 'DECLINED') return prev;
+        return anyReq ? 'PENDING' : 'NOT_REQUIRED';
+      });
     }
-  }, [id, selectedTherapy]);
+  }, [id, loadedPlan?.status, selectedTherapies]);
+
+  const handleToggleTherapy = (therapy: ITherapy) => {
+    setSelectedTherapyIds((prev) =>
+      prev.includes(therapy._id)
+        ? prev.filter((item) => item !== therapy._id)
+        : [...prev, therapy._id]
+    );
+  };
 
   const selectedPractitioner = useMemo(
     () => practitioners.find((p) => p._id === assignedPractitionerId) || null,
@@ -256,9 +277,9 @@ export const TreatmentPlanStudio: React.FC = () => {
       setErrorMessage('Select a patient before saving the treatment plan.');
       return;
     }
-    if (!selectedTherapyId) {
+    if (selectedTherapyIds.length === 0) {
       setIsFinalizeModalOpen(false);
-      setErrorMessage('Select an approved therapy service from the catalog first.');
+      setErrorMessage('Select at least one approved therapy service from the catalog first.');
       return;
     }
     if (!assignedPractitionerId) {
@@ -281,7 +302,8 @@ export const TreatmentPlanStudio: React.FC = () => {
       const res = await therapyApi.createTreatmentPlan({
         patientId: selectedPatient._id,
         chamberId: activeChamber?._id || null,
-        therapyId: selectedTherapyId,
+        therapyId: selectedTherapyIds[0],
+        therapyIds: selectedTherapyIds,
         assignedPractitionerId,
         treatmentObjective,
         clinicalIndication,
@@ -316,9 +338,17 @@ export const TreatmentPlanStudio: React.FC = () => {
     if (!loadedPlan) return;
     setErrorMessage(null);
     setStatusNotice(null);
+    if (loadedPlan.status === 'DRAFT' && selectedTherapyIds.length === 0) {
+      setIsFinalizeModalOpen(false);
+      setErrorMessage('Select at least one approved therapy service before saving.');
+      return;
+    }
     setIsSaving(true);
     try {
       const updated = await therapyApi.updateTreatmentPlan(loadedPlan._id, {
+        ...(loadedPlan.status === 'DRAFT' && selectedTherapyIds.length > 0
+          ? { therapyId: selectedTherapyIds[0], therapyIds: selectedTherapyIds }
+          : {}),
         assignedPractitionerId: assignedPractitionerId || undefined,
         treatmentObjective,
         clinicalIndication,
@@ -405,15 +435,34 @@ export const TreatmentPlanStudio: React.FC = () => {
   const chartNumberDisplay = loadedPlan?.chartNumber || 'TP-NEW-DRAFT';
   const currentStatusDisplay = loadedPlan?.status || planStatus;
   const versionDisplay = loadedPlan?.version || 1;
-  const activeTherapyName = loadedPlan
-    ? loadedPlan.therapySnapshot.name
-    : selectedTherapy?.name || '';
-  const activeTherapyNameBn = loadedPlan
-    ? loadedPlan.therapySnapshot.bengaliName
-    : selectedTherapy?.bengaliName;
-  const activeCategoryName = loadedPlan
-    ? loadedPlan.therapySnapshot.categoryName
-    : selectedTherapy?.categoryName || '';
+  const loadedTherapiesList = useMemo(() => {
+    if (!loadedPlan) return [];
+    if (loadedPlan.therapySnapshots && loadedPlan.therapySnapshots.length > 0) {
+      return loadedPlan.therapySnapshots;
+    }
+    return loadedPlan.therapySnapshot?.name ? [loadedPlan.therapySnapshot] : [];
+  }, [loadedPlan]);
+
+  const activeTherapiesList = useMemo(() => {
+    if (loadedPlan && loadedPlan.status !== 'DRAFT') {
+      return loadedTherapiesList;
+    }
+    if (selectedTherapies.length > 0) {
+      return selectedTherapies.map((t) => ({
+        name: t.name,
+        bengaliName: t.bengaliName,
+        categoryName: t.categoryName,
+      }));
+    }
+    return loadedTherapiesList;
+  }, [loadedPlan, loadedTherapiesList, selectedTherapies]);
+
+  const activeTherapyName = activeTherapiesList.map((t) => t.name).join(', ');
+  const activeTherapyNameBn =
+    activeTherapiesList.length === 1 ? activeTherapiesList[0].bengaliName : undefined;
+  const activeCategoryName = Array.from(
+    new Set(activeTherapiesList.map((t) => t.categoryName).filter(Boolean))
+  ).join(', ');
   const activePractitionerSummary = loadedPlan
     ? [
         loadedPlan.practitionerSnapshot.name,
@@ -440,6 +489,7 @@ export const TreatmentPlanStudio: React.FC = () => {
         therapyName={activeTherapyName}
         therapyNameBn={activeTherapyNameBn}
         categoryName={activeCategoryName}
+        therapiesList={activeTherapiesList}
         practitionerSummary={activePractitionerSummary}
         treatmentObjective={treatmentObjective}
         clinicalIndication={clinicalIndication}
@@ -467,6 +517,7 @@ export const TreatmentPlanStudio: React.FC = () => {
       activeTherapyName,
       activeTherapyNameBn,
       activeCategoryName,
+      activeTherapiesList,
       activePractitionerSummary,
       treatmentObjective,
       clinicalIndication,
@@ -801,27 +852,41 @@ export const TreatmentPlanStudio: React.FC = () => {
           } ${mobileTab === 'builder' ? 'block' : 'hidden xl:block'}`}
         >
           {/* 1. Therapy Service Selection */}
-          {loadedPlan ? (
+          {loadedPlan && loadedPlan.status !== 'DRAFT' ? (
             <section className="bg-white border border-slate-200 rounded-xl p-4 space-y-2">
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <h3 className="text-sm font-semibold text-slate-900">Assigned Therapy Service</h3>
+                <h3 className="text-sm font-medium text-slate-900">
+                  {loadedTherapiesList.length > 1
+                    ? `Assigned Therapy Services (${loadedTherapiesList.length})`
+                    : 'Assigned Therapy Service'}
+                </h3>
                 {loadedPlan.isEdPlan && (
                   <span className="inline-flex items-center gap-1 text-xs text-slate-600">
-                    <Lock className="w-3.5 h-3.5" strokeWidth={1.5} /> ED privacy group
+                    <Lock className="w-4 h-4" strokeWidth={1.5} /> ED privacy group
                   </span>
                 )}
               </div>
-              <div className="p-3 bg-[#f0f9fa] border border-[#aee2e8] rounded-lg text-xs">
-                <div className="font-semibold text-slate-900">{loadedPlan.therapySnapshot.name}</div>
-                <div className="text-slate-600 mt-0.5">{loadedPlan.therapySnapshot.categoryName}</div>
+              <div className="space-y-2">
+                {loadedTherapiesList.map((item, idx) => (
+                  <div
+                    key={`${item.key || item.name}-${idx}`}
+                    className="p-3 bg-[#f0f9fa] border border-[#aee2e8] rounded-lg text-xs"
+                  >
+                    <div className="font-medium text-slate-900">
+                      {loadedTherapiesList.length > 1 ? `${idx + 1}. ${item.name}` : item.name}
+                    </div>
+                    <div className="text-slate-600 mt-0.5">{item.categoryName}</div>
+                  </div>
+                ))}
               </div>
             </section>
           ) : (
             <TherapyCatalogSelectorPanel
               therapies={allCatalogTherapies}
-              selectedTherapyId={selectedTherapyId}
+              selectedTherapyIds={selectedTherapyIds}
               disabled={!isDoctor}
-              onSelectTherapy={(t) => setSelectedTherapyId(t._id)}
+              onToggleTherapy={handleToggleTherapy}
+              onClearSelection={() => setSelectedTherapyIds([])}
             />
           )}
 
@@ -1355,7 +1420,7 @@ export const TreatmentPlanStudio: React.FC = () => {
         isOpen={isScheduleModalOpen}
         onClose={() => setIsScheduleModalOpen(false)}
         title="Schedule Therapy Sessions"
-        subtitle={loadedPlan ? `${loadedPlan.chartNumber} • ${loadedPlan.therapySnapshot.name}` : ''}
+        subtitle={loadedPlan ? `${loadedPlan.chartNumber} • ${activeTherapyName}` : ''}
         maxWidth="max-w-md"
       >
         <form onSubmit={handleAddSessionsSubmit} className="space-y-3">

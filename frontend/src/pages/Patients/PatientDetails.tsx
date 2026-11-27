@@ -446,9 +446,22 @@ export const PatientDetails: React.FC = () => {
                     </div>
 
                     <div className="text-slate-800 font-medium">
-                      {plan.therapySnapshot?.name}
+                      {plan.therapySnapshots && plan.therapySnapshots.length > 0
+                        ? plan.therapySnapshots.map((t) => t?.name).filter(Boolean).join(', ')
+                        : plan.therapySnapshot?.name}
                       <span className="text-slate-500 font-normal ml-1.5">
-                        ({plan.therapySnapshot?.categoryName})
+                        (
+                        {Array.from(
+                          new Set(
+                            (plan.therapySnapshots && plan.therapySnapshots.length > 0
+                              ? plan.therapySnapshots
+                              : [plan.therapySnapshot]
+                            )
+                              .map((t) => t?.categoryName)
+                              .filter(Boolean)
+                          )
+                        ).join(', ')}
+                        )
                       </span>
                     </div>
 

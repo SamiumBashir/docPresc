@@ -142,7 +142,8 @@ export interface TreatmentPlanListResult {
 export interface CreateTreatmentPlanDTO {
   patientId: string;
   chamberId?: string | null;
-  therapyId: string;
+  therapyId?: string;
+  therapyIds?: string[];
   assignedPractitionerId: string;
   treatmentObjective?: string;
   clinicalIndication?: string;
@@ -167,6 +168,8 @@ export interface CreateTreatmentPlanDTO {
 
 export interface UpdateTreatmentPlanDTO {
   chamberId?: string | null;
+  therapyId?: string;
+  therapyIds?: string[];
   assignedPractitionerId?: string;
   treatmentObjective?: string;
   clinicalIndication?: string;

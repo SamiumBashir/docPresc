@@ -137,7 +137,7 @@ export class PatientService {
     const treatmentPlans = await TreatmentPlan.find({ patientId: id, doctorId })
       .sort({ createdAt: -1 })
       .select(
-        'chartNumber status isEdPlan therapySnapshot practitionerSnapshot startDate plannedSessions finalizedAt createdAt'
+        'chartNumber status isEdPlan therapySnapshot therapySnapshots therapyIds practitionerSnapshot startDate plannedSessions finalizedAt createdAt'
       )
       .lean();
 

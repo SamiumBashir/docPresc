@@ -91,15 +91,45 @@ export const buildTreatmentPlanHtml = (
   const signatureSrc = safeMediaSrc(chamberPopulated?.signature || docSnap.signature);
   const planDate = formatDateShort(plan.finalizedAt || plan.createdAt);
 
+  const therapyList =
+    Array.isArray(plan.therapySnapshots) && plan.therapySnapshots.length > 0
+      ? plan.therapySnapshots
+      : therapySnap?.name
+      ? [therapySnap]
+      : [];
+
+  const uniqueCategories = Array.from(
+    new Set(therapyList.map((item) => item.categoryName).filter(Boolean))
+  );
+  const combinedQuals = Array.from(
+    new Set(therapyList.map((item) => item.requiredProviderQualifications).filter(Boolean))
+  ).join(' • ');
+  const combinedEquipment = Array.from(
+    new Set(therapyList.map((item) => item.requiredEquipment).filter(Boolean))
+  ).join(' • ');
+
   // Build clinical parameter rows ONLY for non-empty fields supplied by the clinician
   const parameterRows: Array<{ label: string; value: string }> = [
     {
-      label: 'Prescribed Therapy',
-      value: therapySnap.bengaliName
-        ? `${therapySnap.name} (${therapySnap.bengaliName})`
-        : therapySnap.name,
+      label: therapyList.length > 1 ? `Prescribed Therapies (${therapyList.length})` : 'Prescribed Therapy',
+      value:
+        therapyList.length > 1
+          ? therapyList
+              .map((item, idx) => {
+                const display = item.bengaliName
+                  ? `${item.name} (${item.bengaliName})`
+                  : item.name;
+                return `${idx + 1}. ${display}`;
+              })
+              .join('\n')
+          : therapyList[0]?.bengaliName
+          ? `${therapyList[0].name} (${therapyList[0].bengaliName})`
+          : therapyList[0]?.name || '',
     },
-    { label: 'Therapy Category', value: therapySnap.categoryName },
+    {
+      label: uniqueCategories.length > 1 ? 'Therapy Categories' : 'Therapy Category',
+      value: uniqueCategories.join(', '),
+    },
     {
       label: 'Assigned Practitioner',
       value: [
@@ -144,14 +174,14 @@ export const buildTreatmentPlanHtml = (
         : formatConsentLabel(plan.consentStatus),
     });
   }
-  if (therapySnap.requiredProviderQualifications) {
+  if (combinedQuals) {
     parameterRows.push({
       label: 'Provider Qualification Standard',
-      value: therapySnap.requiredProviderQualifications,
+      value: combinedQuals,
     });
   }
-  if (therapySnap.requiredEquipment) {
-    parameterRows.push({ label: 'Facility Equipment', value: therapySnap.requiredEquipment });
+  if (combinedEquipment) {
+    parameterRows.push({ label: 'Facility Equipment', value: combinedEquipment });
   }
 
   const parametersHtml = parameterRows

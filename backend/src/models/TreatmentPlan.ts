@@ -9,24 +9,28 @@ export type TreatmentPlanStatus =
 
 export type ConsentStatus = 'NOT_REQUIRED' | 'PENDING' | 'OBTAINED' | 'DECLINED';
 
+export interface ITherapySnapshotItem {
+  key: string;
+  name: string;
+  englishName: string;
+  bengaliName?: string;
+  categoryName: string;
+  isEdTreatment: boolean;
+  verificationStatus: string;
+  verificationNotes?: string;
+  requiredProviderQualifications?: string;
+  requiredEquipment?: string;
+}
+
 export interface ITreatmentPlan extends Document {
   chartNumber: string;
   doctorId: Types.ObjectId;
   patientId: Types.ObjectId;
   chamberId?: Types.ObjectId | null;
   therapyId: Types.ObjectId;
-  therapySnapshot: {
-    key: string;
-    name: string;
-    englishName: string;
-    bengaliName?: string;
-    categoryName: string;
-    isEdTreatment: boolean;
-    verificationStatus: string;
-    verificationNotes?: string;
-    requiredProviderQualifications?: string;
-    requiredEquipment?: string;
-  };
+  therapySnapshot: ITherapySnapshotItem;
+  therapyIds: Types.ObjectId[];
+  therapySnapshots: ITherapySnapshotItem[];
   assignedPractitionerId: Types.ObjectId;
   practitionerSnapshot: {
     userId: Types.ObjectId;
@@ -88,6 +92,22 @@ export interface ITreatmentPlan extends Document {
   updatedAt: Date;
 }
 
+const TherapySnapshotSchema = new Schema<ITherapySnapshotItem>(
+  {
+    key: { type: String, required: true },
+    name: { type: String, required: true },
+    englishName: { type: String, required: true },
+    bengaliName: { type: String },
+    categoryName: { type: String, required: true },
+    isEdTreatment: { type: Boolean, default: false },
+    verificationStatus: { type: String, required: true },
+    verificationNotes: { type: String },
+    requiredProviderQualifications: { type: String },
+    requiredEquipment: { type: String },
+  },
+  { _id: false }
+);
+
 const TreatmentPlanSchema = new Schema<ITreatmentPlan>(
   {
     chartNumber: { type: String, required: true, unique: true, index: true },
@@ -95,18 +115,9 @@ const TreatmentPlanSchema = new Schema<ITreatmentPlan>(
     patientId: { type: Schema.Types.ObjectId, ref: 'Patient', required: true, index: true },
     chamberId: { type: Schema.Types.ObjectId, ref: 'Chamber', default: null },
     therapyId: { type: Schema.Types.ObjectId, ref: 'Therapy', required: true, index: true },
-    therapySnapshot: {
-      key: { type: String, required: true },
-      name: { type: String, required: true },
-      englishName: { type: String, required: true },
-      bengaliName: { type: String },
-      categoryName: { type: String, required: true },
-      isEdTreatment: { type: Boolean, default: false },
-      verificationStatus: { type: String, required: true },
-      verificationNotes: { type: String },
-      requiredProviderQualifications: { type: String },
-      requiredEquipment: { type: String },
-    },
+    therapySnapshot: { type: TherapySnapshotSchema, required: true },
+    therapyIds: [{ type: Schema.Types.ObjectId, ref: 'Therapy', index: true }],
+    therapySnapshots: { type: [TherapySnapshotSchema], default: [] },
     assignedPractitionerId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
@@ -191,6 +202,7 @@ TreatmentPlanSchema.index({
   'patientSnapshot.name': 'text',
   'patientSnapshot.patientId': 'text',
   'therapySnapshot.name': 'text',
+  'therapySnapshots.name': 'text',
 });
 
 export const TreatmentPlan = mongoose.model<ITreatmentPlan>(

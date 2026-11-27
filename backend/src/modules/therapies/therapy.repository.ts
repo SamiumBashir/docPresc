@@ -48,6 +48,10 @@ export class TherapyRepository {
     return Therapy.findById(id).exec();
   }
 
+  async findTherapiesByIds(ids: Array<string | Types.ObjectId>): Promise<ITherapy[]> {
+    return Therapy.find({ _id: { $in: ids } }).exec();
+  }
+
   async createTherapy(data: Partial<ITherapy>): Promise<ITherapy> {
     return Therapy.create(data);
   }
@@ -129,7 +133,7 @@ export class TherapyRepository {
     return query
       .populate(
         'treatmentPlanId',
-        'chartNumber status therapySnapshot patientSnapshot practitionerSnapshot isEdPlan consentStatus'
+        'chartNumber status therapySnapshot therapySnapshots therapyIds patientSnapshot practitionerSnapshot isEdPlan consentStatus'
       )
       .lean()
       .exec() as unknown as Promise<any[]>;

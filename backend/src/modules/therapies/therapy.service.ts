@@ -149,6 +149,58 @@ export class TherapyService {
     };
   }
 
+  private async resolveValidatedTherapies(input: {
+    therapyId?: string;
+    therapyIds?: string[];
+  }): Promise<ITherapy[]> {
+    const rawIds =
+      input.therapyIds && input.therapyIds.length > 0
+        ? input.therapyIds
+        : input.therapyId
+        ? [input.therapyId]
+        : [];
+
+    const orderedUniqueIds: string[] = [];
+    const seen = new Set<string>();
+    for (const rawId of rawIds) {
+      const trimmed = String(rawId || '').trim();
+      if (!trimmed || seen.has(trimmed)) continue;
+      this.assertValidObjectId(trimmed, 'therapy');
+      seen.add(trimmed);
+      orderedUniqueIds.push(trimmed);
+    }
+
+    if (orderedUniqueIds.length === 0) {
+      throw new BadRequestError('Select at least one approved therapy.', 'THERAPY_REQUIRED');
+    }
+
+    const docs = await this.repo.findTherapiesByIds(orderedUniqueIds);
+    const byId = new Map(docs.map((doc) => [doc._id.toString(), doc]));
+
+    const resolved: ITherapy[] = [];
+    for (const id of orderedUniqueIds) {
+      const therapy = byId.get(id);
+      if (!therapy) {
+        throw new NotFoundError('Therapy catalog entry not found');
+      }
+      if (!therapy.isActive || !therapy.isAvailable) {
+        throw new BadRequestError(
+          `Therapy "${therapy.name}" is currently disabled or unavailable and cannot be assigned.`,
+          'THERAPY_DISABLED'
+        );
+      }
+      if (therapy.verificationStatus !== 'APPROVED') {
+        throw new BadRequestError(
+          `Therapy "${therapy.name}" has verification status "${therapy.verificationStatus}" and requires clinical approval before assignment.`,
+          'THERAPY_NOT_APPROVED'
+        );
+      }
+      resolved.push(therapy);
+    }
+
+    return resolved;
+  }
+
   private async resolveAuthorizedPractitioner(
     practitionerUserId: string
   ): Promise<ITreatmentPlan['practitionerSnapshot']> {
@@ -757,29 +809,20 @@ export class TherapyService {
     const patient = await this.verifyDoctorPatient(dto.patientId, doctor._id);
     const chamber = await this.resolveDoctorChamber(doctor, dto.chamberId);
 
-    const therapy = await this.getTherapyById(dto.therapyId);
-    if (!therapy.isActive || !therapy.isAvailable) {
-      throw new BadRequestError(
-        `Therapy "${therapy.name}" is currently disabled or unavailable and cannot be assigned.`,
-        'THERAPY_DISABLED'
-      );
-    }
-    if (therapy.verificationStatus !== 'APPROVED') {
-      throw new BadRequestError(
-        `Therapy "${therapy.name}" has verification status "${therapy.verificationStatus}" and requires clinical approval before assignment.`,
-        'THERAPY_NOT_APPROVED'
-      );
-    }
+    const therapies = await this.resolveValidatedTherapies(dto);
+    const primaryTherapy = therapies[0];
+    const anyConsentRequired = therapies.some((t) => Boolean(t.consentRequired));
+    const anyEdTreatment = therapies.some((t) => Boolean(t.isEdTreatment));
 
     const practitionerSnapshot = await this.resolveAuthorizedPractitioner(dto.assignedPractitionerId);
     const nextStatus = dto.status || 'DRAFT';
     const consentStatus: ConsentStatus =
-      dto.consentStatus || (therapy.consentRequired ? 'PENDING' : 'NOT_REQUIRED');
+      dto.consentStatus || (anyConsentRequired ? 'PENDING' : 'NOT_REQUIRED');
 
     this.assertPlanClinicalRequirements({
       status: nextStatus,
       clinicianApprovalConfirmed: Boolean(dto.clinicianApprovalConfirmed),
-      consentRequired: Boolean(therapy.consentRequired),
+      consentRequired: anyConsentRequired,
       consentStatus,
     });
 
@@ -791,8 +834,10 @@ export class TherapyService {
       doctorId: doctor._id,
       patientId: patient._id,
       chamberId: chamber?._id || null,
-      therapyId: therapy._id,
-      therapySnapshot: this.buildTherapySnapshot(therapy),
+      therapyId: primaryTherapy._id,
+      therapySnapshot: this.buildTherapySnapshot(primaryTherapy),
+      therapyIds: therapies.map((t) => t._id),
+      therapySnapshots: therapies.map((t) => this.buildTherapySnapshot(t)),
       assignedPractitionerId: practitionerSnapshot.userId,
       practitionerSnapshot,
       patientSnapshot: this.buildPatientSnapshot(patient),
@@ -812,7 +857,7 @@ export class TherapyService {
       consentStatus,
       consentNotes: dto.consentNotes ?? '',
       consentRecordedAt: consentStatus === 'OBTAINED' || consentStatus === 'DECLINED' ? new Date() : null,
-      isEdPlan: Boolean(therapy.isEdTreatment),
+      isEdPlan: anyEdTreatment,
       version: 1,
       finalizedAt: isFinalizedState ? new Date() : null,
     });
@@ -830,7 +875,7 @@ export class TherapyService {
           treatmentPlanId: createdPlan._id,
           doctorId: doctor._id,
           patientId: patient._id,
-          therapyId: therapy._id,
+          therapyId: primaryTherapy._id,
           assignedPractitionerId: sessPrac.userId,
           assignedPractitionerName: sessPrac.name,
           sessionNumber: i + 1,
@@ -853,6 +898,7 @@ export class TherapyService {
     const skip = (page - 1) * limit;
 
     const filter: FilterQuery<ITreatmentPlan> = {};
+    const andClauses: FilterQuery<ITreatmentPlan>[] = [];
 
     if (options.doctorId) filter.doctorId = options.doctorId;
     if (options.assignedPractitionerId) {
@@ -864,7 +910,8 @@ export class TherapyService {
     }
     if (options.therapyId) {
       this.assertValidObjectId(options.therapyId, 'therapy');
-      filter.therapyId = new Types.ObjectId(options.therapyId);
+      const tObjId = new Types.ObjectId(options.therapyId);
+      andClauses.push({ $or: [{ therapyId: tObjId }, { therapyIds: tObjId }] });
     }
     if (typeof options.isEdPlan === 'boolean') {
       filter.isEdPlan = options.isEdPlan;
@@ -876,13 +923,20 @@ export class TherapyService {
     if (options.search && options.search.trim()) {
       const escaped = options.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(escaped, 'i');
-      filter.$or = [
-        { chartNumber: regex },
-        { 'patientSnapshot.name': regex },
-        { 'patientSnapshot.patientId': regex },
-        { 'therapySnapshot.name': regex },
-        { 'practitionerSnapshot.name': regex },
-      ];
+      andClauses.push({
+        $or: [
+          { chartNumber: regex },
+          { 'patientSnapshot.name': regex },
+          { 'patientSnapshot.patientId': regex },
+          { 'therapySnapshot.name': regex },
+          { 'therapySnapshots.name': regex },
+          { 'practitionerSnapshot.name': regex },
+        ],
+      });
+    }
+
+    if (andClauses.length > 0) {
+      filter.$and = andClauses;
     }
 
     const [plans, total] = await Promise.all([
@@ -949,7 +1003,24 @@ export class TherapyService {
       throw new ForbiddenError('Forbidden: You do not have permission to update this treatment plan');
     }
 
-    const therapy = await this.repo.findTherapyById(existing.therapyId);
+    const updatingTherapies = dto.therapyIds !== undefined || dto.therapyId !== undefined;
+    let effectiveTherapies: ITherapy[];
+    if (updatingTherapies) {
+      if (existing.status !== 'DRAFT') {
+        throw new BadRequestError(
+          'Selected therapies cannot be modified after the treatment plan is finalized.',
+          'PLAN_THERAPIES_LOCKED'
+        );
+      }
+      effectiveTherapies = await this.resolveValidatedTherapies(dto);
+    } else {
+      const existingIds =
+        existing.therapyIds && existing.therapyIds.length > 0
+          ? existing.therapyIds
+          : [existing.therapyId];
+      effectiveTherapies = await this.repo.findTherapiesByIds(existingIds);
+    }
+
     const chamber = await this.resolveDoctorChamber(
       doctor,
       dto.chamberId !== undefined ? dto.chamberId : existing.chamberId?.toString()
@@ -965,7 +1036,7 @@ export class TherapyService {
     this.assertPlanClinicalRequirements({
       status: nextStatus,
       clinicianApprovalConfirmed: nextApproval,
-      consentRequired: Boolean(therapy?.consentRequired),
+      consentRequired: effectiveTherapies.some((t) => Boolean(t.consentRequired)),
       consentStatus: nextConsent,
     });
 
@@ -976,6 +1047,15 @@ export class TherapyService {
       clinicianApprovalConfirmed: nextApproval,
       consentStatus: nextConsent,
     };
+
+    if (updatingTherapies && effectiveTherapies.length > 0) {
+      const primaryTherapy = effectiveTherapies[0];
+      updatePayload.therapyId = primaryTherapy._id;
+      updatePayload.therapySnapshot = this.buildTherapySnapshot(primaryTherapy);
+      updatePayload.therapyIds = effectiveTherapies.map((t) => t._id);
+      updatePayload.therapySnapshots = effectiveTherapies.map((t) => this.buildTherapySnapshot(t));
+      updatePayload.isEdPlan = effectiveTherapies.some((t) => Boolean(t.isEdTreatment));
+    }
 
     if (dto.assignedPractitionerId && dto.assignedPractitionerId !== existing.assignedPractitionerId.toString()) {
       const prac = await this.resolveAuthorizedPractitioner(dto.assignedPractitionerId);
@@ -1031,11 +1111,15 @@ export class TherapyService {
       throw new BadRequestError('Cancelled plans cannot be finalized.', 'PLAN_CANCELLED');
     }
 
-    const therapy = await this.repo.findTherapyById(existing.therapyId);
+    const existingIds =
+      existing.therapyIds && existing.therapyIds.length > 0
+        ? existing.therapyIds
+        : [existing.therapyId];
+    const therapies = await this.repo.findTherapiesByIds(existingIds);
     this.assertPlanClinicalRequirements({
       status: 'FINALIZED',
       clinicianApprovalConfirmed: existing.clinicianApprovalConfirmed,
-      consentRequired: Boolean(therapy?.consentRequired),
+      consentRequired: therapies.some((t) => Boolean(t.consentRequired)),
       consentStatus: existing.consentStatus,
     });
 
